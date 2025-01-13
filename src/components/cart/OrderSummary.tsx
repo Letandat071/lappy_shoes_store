@@ -8,6 +8,7 @@ interface OrderSummaryProps {
   shipping: number;
   tax: number;
   total: number;
+  discount: number;
   items: Array<{
     id: string;
     name: string;
@@ -21,6 +22,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   shipping,
   tax,
   total,
+  discount,
   items
 }) => {
   return (
@@ -46,6 +48,12 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           <span>Tax</span>
           <span>${tax.toFixed(2)}</span>
         </div>
+        {discount > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Discount</span>
+            <span>-${discount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between font-semibold text-lg pt-2 border-t">
           <span>Total</span>
           <span>${total.toFixed(2)}</span>
