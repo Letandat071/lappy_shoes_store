@@ -1,152 +1,206 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/router';
 
 interface FilterSidebarProps {
-  onFilterChange: (filterType: string, value: any) => void;
-  selectedFilters: {
-    categories: string[];
-    priceRange: { min: number; max: number };
-    brands: string[];
-    sizes: string[];
-    colors: string[];
-  };
+  onFilterChange: (filters: FilterState) => void;
 }
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({
-  onFilterChange,
-  selectedFilters
-}) => {
+interface FilterState {
+  priceRange: [number, number];
+  categories: string[];
+  brands: string[];
+  sizes: string[];
+}
+
+const FilterSidebar: React.FC<FilterSidebarProps> = ({ onFilterChange }) => {
+  const [filters, setFilters] = React.useState<FilterState>({
+    priceRange: [0, 500],
+    categories: [],
+    brands: [],
+    sizes: []
+  });
+
+  // Categories
+  const categories = [
+    'Running',
+    'Basketball',
+    'Training',
+    'Casual',
+    'Outdoor'
+  ];
+
+  const handleCategoryChange = (category: string) => {
+    const newCategories = filters.categories.includes(category)
+      ? filters.categories.filter(c => c !== category)
+      : [...filters.categories, category];
+
+    const newFilters = {
+      ...filters,
+      categories: newCategories
+    };
+    
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  // Brands
+  const brands = [
+    'Nike',
+    'Adidas',
+    'Puma',
+    'New Balance',
+    'Under Armour'
+  ];
+
+  const handleBrandChange = (brand: string) => {
+    const newBrands = filters.brands.includes(brand)
+      ? filters.brands.filter(b => b !== brand)
+      : [...filters.brands, brand];
+
+    const newFilters = {
+      ...filters,
+      brands: newBrands
+    };
+    
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  // Sizes
+  const sizes = [
+    'US 7',
+    'US 8',
+    'US 9',
+    'US 10',
+    'US 11'
+  ];
+
+  const handleSizeChange = (size: string) => {
+    const newSizes = filters.sizes.includes(size)
+      ? filters.sizes.filter(s => s !== size)
+      : [...filters.sizes, size];
+
+    const newFilters = {
+      ...filters,
+      sizes: newSizes
+    };
+    
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  // Price Range
+  const handlePriceChange = (value: [number, number]) => {
+    const newFilters = {
+      ...filters,
+      priceRange: value
+    };
+    
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  // Clear filters
+  const handleClearFilters = () => {
+    const defaultFilters: FilterState = {
+      priceRange: [0, 500],
+      categories: [],
+      brands: [],
+      sizes: []
+    };
+    setFilters(defaultFilters);
+    onFilterChange(defaultFilters);
+  };
+
   return (
-    <div className="lg:w-1/4 space-y-6">
-      {/* Categories Filter */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
+    <div className="space-y-6">
+      {/* Categories */}
+      <div>
         <h3 className="font-semibold mb-4">Categories</h3>
         <div className="space-y-2">
-          {['Running', 'Basketball', 'Lifestyle'].map((category) => (
+          {categories.map((category) => (
             <label key={category} className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                className="form-checkbox"
-                checked={selectedFilters.categories.includes(category)}
-                onChange={(e) => onFilterChange('categories', category)}
+              <input
+                type="checkbox"
+                checked={filters.categories.includes(category)}
+                onChange={() => handleCategoryChange(category)}
+                className="rounded border-gray-300 text-black focus:ring-black"
               />
-              {category} (12)
+              <span>{category}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Price Range Filter */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="font-semibold mb-4">Price Range</h3>
-        <div className="space-y-4">
-          <input 
-            type="range" 
-            min="0" 
-            max="500" 
-            className="w-full price-slider"
-            value={selectedFilters.priceRange.max}
-            onChange={(e) => onFilterChange('priceRange', { 
-              ...selectedFilters.priceRange, 
-              max: parseInt(e.target.value) 
-            })}
-          />
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>$0</span>
-            <span>$500</span>
-          </div>
-          <div className="flex gap-2">
-            <input 
-              type="number" 
-              placeholder="Min" 
-              className="w-1/2 px-3 py-1 border rounded-lg"
-              value={selectedFilters.priceRange.min}
-              onChange={(e) => onFilterChange('priceRange', { 
-                ...selectedFilters.priceRange, 
-                min: parseInt(e.target.value) 
-              })}
-            />
-            <input 
-              type="number" 
-              placeholder="Max" 
-              className="w-1/2 px-3 py-1 border rounded-lg"
-              value={selectedFilters.priceRange.max}
-              onChange={(e) => onFilterChange('priceRange', { 
-                ...selectedFilters.priceRange, 
-                max: parseInt(e.target.value) 
-              })}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Brand Filter */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="font-semibold mb-4">Brand</h3>
+      {/* Brands */}
+      <div>
+        <h3 className="font-semibold mb-4">Brands</h3>
         <div className="space-y-2">
-          {['Nike', 'Adidas', 'Puma'].map((brand) => (
+          {brands.map((brand) => (
             <label key={brand} className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                className="form-checkbox"
-                checked={selectedFilters.brands.includes(brand)}
-                onChange={(e) => onFilterChange('brands', brand)}
+              <input
+                type="checkbox"
+                checked={filters.brands.includes(brand)}
+                onChange={() => handleBrandChange(brand)}
+                className="rounded border-gray-300 text-black focus:ring-black"
               />
-              {brand} (15)
+              <span>{brand}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Size Filter */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="font-semibold mb-4">Size</h3>
+      {/* Sizes */}
+      <div>
+        <h3 className="font-semibold mb-4">Sizes</h3>
         <div className="grid grid-cols-3 gap-2">
-          {['US 7', 'US 8', 'US 9', 'US 10', 'US 11'].map((size) => (
-            <label 
+          {sizes.map((size) => (
+            <label
               key={size}
-              className={`text-center border rounded-lg py-2 cursor-pointer hover:border-black ${
-                selectedFilters.sizes.includes(size) ? 'bg-black text-white' : ''
+              className={`text-center border-2 rounded-lg py-2 cursor-pointer transition-colors ${
+                filters.sizes.includes(size)
+                  ? 'bg-black text-white border-black'
+                  : 'border-gray-300 hover:border-black'
               }`}
             >
-              <input 
+              <input
                 type="checkbox"
-                className="hidden"
-                checked={selectedFilters.sizes.includes(size)}
-                onChange={(e) => onFilterChange('sizes', size)}
+                checked={filters.sizes.includes(size)}
+                onChange={() => handleSizeChange(size)}
+                className="sr-only"
               />
-              {size}
+              <span>{size}</span>
             </label>
           ))}
         </div>
       </div>
 
-      {/* Color Filter */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <h3 className="font-semibold mb-4">Color</h3>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { name: 'Black', value: 'bg-black' },
-            { name: 'White', value: 'bg-white' },
-            { name: 'Red', value: 'bg-red-500' },
-            { name: 'Blue', value: 'bg-blue-500' }
-          ].map((color) => (
-            <div 
-              key={color.name}
-              className={`w-8 h-8 rounded-full ${color.value} border-2 cursor-pointer hover:scale-110 transition-transform ${
-                selectedFilters.colors.includes(color.name) ? 'border-black scale-110' : 'border-gray-200'
-              }`}
-              onClick={() => onFilterChange('colors', color.name)}
-            />
-          ))}
+      {/* Price Range */}
+      <div>
+        <h3 className="font-semibold mb-4">Price Range</h3>
+        <div className="px-2">
+          <div className="flex justify-between mb-2">
+            <span>${filters.priceRange[0]}</span>
+            <span>${filters.priceRange[1]}</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="500"
+            step="10"
+            value={filters.priceRange[1]}
+            onChange={(e) => handlePriceChange([filters.priceRange[0], Number(e.target.value)])}
+            className="w-full"
+          />
         </div>
       </div>
 
       {/* Clear Filters */}
-      <button 
-        className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800"
-        onClick={() => onFilterChange('clear', null)}
+      <button
+        onClick={handleClearFilters}
+        className="w-full py-2 text-gray-600 hover:text-black"
       >
         Clear All Filters
       </button>

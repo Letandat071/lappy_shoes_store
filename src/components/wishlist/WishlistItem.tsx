@@ -1,66 +1,57 @@
 import React from 'react';
-import { StarRating } from '../common/StarRating';
+import Link from 'next/link';
+import Image from 'next/image';
+import Button from '@/components/common/Button';
 
 interface WishlistItemProps {
-  product: {
-    id: number;
-    name: string;
-    category: string;
-    price: number;
-    originalPrice?: number;
-    rating: number;
-    reviewCount: number;
-    image: string;
-  };
-  onRemove: (id: number) => void;
-  onAddToCart: (id: number) => void;
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  inStock?: boolean;
+  onRemove: (id: string) => void;
 }
 
-const WishlistItem: React.FC<WishlistItemProps> = ({ product, onRemove, onAddToCart }) => {
+const WishlistItem: React.FC<WishlistItemProps> = ({
+  id,
+  name,
+  price,
+  image,
+  inStock = true,
+  onRemove
+}) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg">
-      <div className="flex items-center gap-6">
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="w-32 h-32 object-cover rounded-lg"
+    <div className="flex items-center gap-6 p-4 bg-white rounded-2xl shadow-lg">
+      <div className="relative w-24 h-24">
+        <Image
+          src={image}
+          alt={name}
+          fill
+          className="object-cover rounded-lg"
         />
-        
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-bold text-xl mb-2">{product.name}</h3>
-              <p className="text-gray-600 mb-2">{product.category}</p>
-              <div className="flex items-center">
-                <StarRating rating={product.rating} />
-                <span className="text-gray-600 ml-2">({product.reviewCount})</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => onRemove(product.id)}
-              className="text-gray-400 hover:text-red-500 transition-colors"
-            >
-              <i className="fas fa-trash"></i>
-            </button>
-          </div>
-          
-          <div className="flex justify-between items-center mt-4">
-            <div>
-              <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-              {product.originalPrice && (
-                <span className="text-gray-400 line-through ml-2">
-                  ${product.originalPrice.toFixed(2)}
-                </span>
-              )}
-            </div>
-            <button 
-              onClick={() => onAddToCart(product.id)}
-              className="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-colors"
-            >
-              Add to Cart
-            </button>
-          </div>
-        </div>
+      </div>
+      
+      <div className="flex-1">
+        <Link href={`/product/${id}`} className="hover:text-blue-600">
+          <h3 className="font-semibold mb-1">{name}</h3>
+        </Link>
+        <span className="font-bold">${price}</span>
+        <p className={`text-sm ${inStock ? 'text-green-500' : 'text-red-500'}`}>
+          {inStock ? 'In Stock' : 'Out of Stock'}
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant="primary">
+          Add to Cart
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => onRemove(id)}
+          className="text-red-500 hover:text-red-600"
+        >
+          <i className="fas fa-trash"></i>
+        </Button>
       </div>
     </div>
   );
