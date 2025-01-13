@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const HeroSection = () => {
   return (
@@ -77,11 +78,13 @@ const HeroSection = () => {
             
             {/* Main product image */}
             <div className="relative">
-              <img 
+              <Image 
                 id="mainProductImage" 
                 src="https://www.pngall.com/wp-content/uploads/13/Nike-Shoes-PNG-Pic.png" 
                 alt="Featured Shoe" 
                 className="w-full max-w-2xl mx-auto transform transition-all duration-700 floating"
+                fill
+                priority
               />
               
               {/* Product Features */}
