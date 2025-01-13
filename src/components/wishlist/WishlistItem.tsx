@@ -1,7 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import Button from '@/components/common/Button';
 
 interface WishlistItemProps {
   id: string;
