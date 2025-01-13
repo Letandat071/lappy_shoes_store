@@ -3,8 +3,7 @@ import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/Footer';
 import FeaturedContent from '../../components/featured/FeaturedContent';
 
-// Định nghĩa các danh mục và thông tin liên quan
-export const categories = {
+const categories = {
   'new-releases': {
     title: 'New Releases',
     description: 'The latest and greatest in sneaker innovation',
@@ -42,8 +41,7 @@ export const categories = {
   }
 };
 
-// Mock data cho sản phẩm
-export const mockProducts = [
+const mockProducts = [
   {
     id: '1',
     name: 'Nike Air Max 270',
@@ -55,7 +53,6 @@ export const mockProducts = [
     image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
     discount: 20
   },
-  // Thêm nhiều sản phẩm mock khác...
 ];
 
 const FeaturedPage = () => {

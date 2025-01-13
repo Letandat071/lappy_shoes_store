@@ -137,9 +137,13 @@ export default function SearchPage() {
                     ? 'grid-cols-1 md:grid-cols-3' 
                     : 'grid-cols-1'
                 }`}>
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+                  {filteredProducts.map((product) => {
+                    const formattedProduct = {
+                      ...product,
+                      id: product.id.toString()
+                    };
+                    return <ProductCard key={product.id} {...formattedProduct} />;
+                  })}
                 </div>
 
                 {/* Pagination */}
