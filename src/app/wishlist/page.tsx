@@ -88,6 +88,7 @@ export default function WishlistPage() {
                   key={item.id}
                   {...item}
                   onRemove={handleRemoveFromWishlist}
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>
