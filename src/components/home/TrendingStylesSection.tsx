@@ -1,48 +1,61 @@
 import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
-const styles = [
+const trendingStyles = [
   {
+    id: 1,
     name: 'Street Style',
-    tag: '#StreetStyle',
-    description: 'Perfect for city adventures',
-    image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a'
+    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
+    description: 'Urban fashion meets comfort'
   },
   {
-    name: 'Athletic Pro Series',
-    tag: '#Performance',
-    description: 'Engineered for performance',
-    image: 'https://images.unsplash.com/photo-1605408499391-6368c628ef42'
+    id: 2,
+    name: 'Athletic Performance',
+    image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa',
+    description: 'Engineered for peak performance'
   },
   {
-    name: 'Everyday Comfort',
-    tag: '#Lifestyle',
-    description: 'Style meets comfort',
-    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519'
+    id: 3,
+    name: 'Casual Comfort',
+    image: 'https://images.unsplash.com/photo-1597248881519-db089d3744a5',
+    description: 'Everyday style and comfort'
   }
 ];
 
 const TrendingStylesSection = () => {
   return (
-    <section className="bg-white py-16">
+    <section className="py-16">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-4xl font-bold mb-12 text-center">Trending Styles</h2>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Trending Styles</h2>
+          <p className="text-gray-600">
+            Discover the latest trends in footwear fashion
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {styles.map((style) => (
-            <div key={style.name} className="group relative overflow-hidden rounded-2xl">
-              <img 
-                src={style.image} 
-                alt={style.name} 
-                className="w-full h-[400px] object-cover transform group-hover:scale-110 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <span className="bg-yellow-400 text-black px-4 py-1 rounded-full text-sm font-medium">
-                  {style.tag}
-                </span>
-                <h3 className="text-white text-2xl font-bold mt-2">{style.name}</h3>
-                <p className="text-gray-200 mt-2">{style.description}</p>
+          {trendingStyles.map((style) => (
+            <Link 
+              key={style.id}
+              href={`/category/${style.name.toLowerCase().replace(' ', '-')}`}
+              className="group"
+            >
+              <div className="relative h-80 rounded-2xl overflow-hidden">
+                <Image
+                  src={style.image}
+                  alt={style.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 transition-opacity duration-300 group-hover:bg-opacity-30">
+                  <div className="absolute bottom-6 left-6 text-white">
+                    <h3 className="text-xl font-semibold mb-2">{style.name}</h3>
+                    <p className="text-sm opacity-90">{style.description}</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
