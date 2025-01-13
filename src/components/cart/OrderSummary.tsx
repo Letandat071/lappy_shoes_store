@@ -1,21 +1,19 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
+import { CartItem } from './CartItems';
 
 interface OrderSummaryProps {
-  subtotal?: number;
-  shipping?: number;
-  tax?: number;
+  items: CartItem[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
   discount?: number;
+  total: number;
 }
 
-const OrderSummary = ({
-  subtotal = 450.00,
-  shipping = 10.00,
-  tax = 45.00,
-  discount = 50.00
-}: OrderSummaryProps) => {
-  const total = subtotal + shipping + tax - discount;
-
+const OrderSummary = ({ items, subtotal, shipping, tax, discount = 0, total }: OrderSummaryProps) => {
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg sticky top-32">
       <h2 className="text-xl font-bold mb-6">Order Summary</h2>
@@ -33,10 +31,12 @@ const OrderSummary = ({
           <span className="text-gray-600">Tax</span>
           <span className="font-semibold">${tax.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-green-500">
-          <span>Discount</span>
-          <span>-${discount.toFixed(2)}</span>
-        </div>
+        {discount > 0 && (
+          <div className="flex justify-between text-green-500">
+            <span>Discount</span>
+            <span>-${discount.toFixed(2)}</span>
+          </div>
+        )}
       </div>
 
       <div className="border-t pt-4 mb-6">

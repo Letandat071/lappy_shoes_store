@@ -2,16 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 
-interface CartItem {
+export interface CartItem {
   id: string;
   name: string;
-  price: number;
-  quantity: number;
+  category: string;
   image: string;
   size: string;
   color: string;
+  price: number;
+  originalPrice: number;
+  quantity: number;
 }
 
 interface CartItemsProps {
@@ -20,63 +21,95 @@ interface CartItemsProps {
   onRemoveItem: (id: string) => void;
 }
 
-const CartItems: React.FC<CartItemsProps> = ({
-  items,
-  onUpdateQuantity,
-  onRemoveItem,
-}) => {
+const CartItems = ({ items, onUpdateQuantity, onRemoveItem }: CartItemsProps) => {
   return (
-    <div className="space-y-8">
+    <>
+      {/* Cart Items */}
       {items.map((item) => (
-        <div key={item.id} className="flex items-center space-x-4">
-          <Link href={`/product/${item.id}`} className="flex-shrink-0">
-            <div className="relative w-24 h-24">
-              <Image
+        <div key={item.id} className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center gap-6">
+            <div className="relative w-32 h-32">
+              <Image 
                 src={item.image}
                 alt={item.name}
                 fill
-                className="rounded-lg object-cover"
-                sizes="(max-width: 768px) 96px, 96px"
+                className="object-cover rounded-lg"
               />
             </div>
-          </Link>
-          
-          <div className="flex-grow">
-            <Link href={`/product/${item.id}`} className="text-lg font-semibold hover:text-primary-600">
-              {item.name}
-            </Link>
-            <div className="text-sm text-gray-500 mt-1">
-              Size: {item.size} | Color: {item.color}
-            </div>
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                  className="w-8 h-8 flex items-center justify-center border rounded-full hover:bg-gray-100"
+            
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-xl mb-2">{item.name}</h3>
+                  <p className="text-gray-600 mb-2">{item.category}</p>
+                  <div className="space-x-4 text-sm">
+                    <span>Size: {item.size}</span>
+                    <span>Color: {item.color}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => onRemoveItem(item.id)}
+                  className="text-gray-400 hover:text-red-500"
                 >
-                  -
-                </button>
-                <span className="w-8 text-center">{item.quantity}</span>
-                <button
-                  onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                  className="w-8 h-8 flex items-center justify-center border rounded-full hover:bg-gray-100"
-                >
-                  +
+                  <i className="fas fa-trash"></i>
                 </button>
               </div>
-              <div className="text-lg font-semibold">${item.price * item.quantity}</div>
+              
+              <div className="flex justify-between items-center mt-4">
+                <div className="flex items-center border-2 rounded-lg">
+                  <button 
+                    className="px-4 py-2 hover:bg-gray-100"
+                    onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                  >
+                    -
+                  </button>
+                  <input 
+                    type="number" 
+                    value={item.quantity}
+                    readOnly
+                    className="w-16 text-center border-x-2"
+                  />
+                  <button 
+                    className="px-4 py-2 hover:bg-gray-100"
+                    onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                  >
+                    +
+                  </button>
+                </div>
+                <div>
+                  <span className="text-2xl font-bold">${item.price.toFixed(2)}</span>
+                  {item.originalPrice && (
+                    <span className="text-gray-400 line-through ml-2">
+                      ${item.originalPrice.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-          
-          <button
-            onClick={() => onRemoveItem(item.id)}
-            className="text-gray-400 hover:text-red-500"
-          >
-            <i className="fas fa-trash"></i>
-          </button>
         </div>
       ))}
-    </div>
+
+      {/* Cart Actions */}
+      <div className="flex justify-between items-center bg-white rounded-xl p-6 shadow-lg">
+        <div className="flex gap-4">
+          <input 
+            type="text"
+            placeholder="Enter coupon code"
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+          />
+          <button className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800">
+            Apply
+          </button>
+        </div>
+        <button 
+          onClick={() => items.forEach(item => onRemoveItem(item.id))}
+          className="text-gray-600 hover:text-black"
+        >
+          Clear Cart
+        </button>
+      </div>
+    </>
   );
 };
 
