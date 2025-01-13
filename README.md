@@ -32,7 +32,7 @@ Lappy Shoes là một website thương mại điện tử hiện đại được
 ## 🎯 Demo
 
 <div align="center">
-  <img src="docs/images/demo.gif" alt="Demo" width="80%">
+  <img src="docs/images/demo.png" alt="Demo" width="80%">
 </div>
 
 Xem demo trực tiếp tại: [Lappy Shoes Demo](https://lappy-shoes.vercel.app)

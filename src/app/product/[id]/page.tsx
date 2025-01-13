@@ -1,47 +1,27 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Button from '@/components/common/Button';
-import ProductCard from '@/components/product/ProductCard';
 
-interface ProductPageProps {
-  params: {
-    id: string;
-  };
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviewCount: number;
-  image: string;
-  discount?: number;
-}
-
-// Mock data - replace with real API call
+// Mock data cho sản phẩm
 const product = {
   id: '1',
   name: 'Nike Air Max 270',
-  category: 'Running Collection',
   price: 159.99,
   originalPrice: 199.99,
+  discount: 20,
   rating: 4.5,
   reviewCount: 128,
-  description: `The Nike Air Max 270 delivers a bold look inspired by Air Max icons. 
-    Featuring Nike's biggest heel Air unit yet, it provides unrivaled comfort and a sleek, 
-    modern design. The shoe's bootie construction delivers a snug fit, while the mesh upper 
-    offers breathable comfort for all-day wear.`,
+  description: `The Nike Air Max 270 delivers visible cushioning under every step. Updated for modern comfort, it features Nike's biggest heel Air unit yet for a super-soft ride that feels as impossible as it looks.`,
   features: [
-    'Mesh and synthetic upper for breathability',
-    'Large Max Air unit delivers enhanced cushioning',
-    'Rubber outsole for durable traction'
+    'Lightweight mesh upper for breathability',
+    'Foam midsole for responsive cushioning',
+    'Rubber outsole for durability',
+    'Heel Air unit for maximum comfort'
   ],
   images: [
     'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
@@ -79,22 +59,38 @@ const product = {
   }
 };
 
-const relatedProducts: Product[] = [
-  // Add related products data
+const relatedProducts = [
+  {
+    id: '2',
+    name: 'Nike Air Zoom Pegasus',
+    price: 129.99,
+    image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa',
+    rating: 4.8,
+    reviewCount: 95
+  },
+  {
+    id: '3',
+    name: 'Nike Free RN',
+    price: 109.99,
+    image: 'https://images.unsplash.com/photo-1605348532760-6753d2c43329',
+    rating: 4.6,
+    reviewCount: 82
+  },
+  {
+    id: '4',
+    name: 'Nike Revolution',
+    price: 89.99,
+    image: 'https://images.unsplash.com/photo-1605408499391-6368c628ef42',
+    rating: 4.4,
+    reviewCount: 67
+  }
 ];
 
-export default function ProductPage({ params }: ProductPageProps) {
-  const [selectedImage, setSelectedImage] = React.useState(product.images[0] || '');
+const ProductPage = () => {
+  const [selectedImage, setSelectedImage] = React.useState(product.images[0]);
   const [selectedSize, setSelectedSize] = React.useState('');
   const [selectedColor, setSelectedColor] = React.useState('');
   const [quantity, setQuantity] = React.useState(1);
-
-  useEffect(() => {
-    // Initialize states after component mounts
-    if (product.images && product.images.length > 0) {
-      setSelectedImage(product.images[0]);
-    }
-  }, []);
 
   const updateQuantity = (change: number) => {
     setQuantity(Math.max(1, quantity + change));
@@ -103,37 +99,33 @@ export default function ProductPage({ params }: ProductPageProps) {
   return (
     <main>
       <Navbar />
-
-      {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
-        <nav className="flex text-gray-500 text-sm">
-          <a href="/" className="hover:text-black">Home</a>
-          <span className="mx-2">/</span>
-          <a href="/shop" className="hover:text-black">Shop</a>
-          <span className="mx-2">/</span>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex mb-8 text-sm">
+          <Link href="/" className="text-gray-500 hover:text-black">
+            Home
+          </Link>
+          <span className="mx-2 text-gray-400">/</span>
+          <Link href="/shop" className="text-gray-500 hover:text-black">
+            Shop
+          </Link>
+          <span className="mx-2 text-gray-400">/</span>
           <span className="text-black">{product.name}</span>
         </nav>
-      </div>
 
-      {/* Product Section */}
-      <section className="max-w-7xl mx-auto px-4 mb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Product Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Product Images */}
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative bg-white rounded-2xl p-8 shadow-lg">
-              {selectedImage && (
-                <Image 
-                  src={selectedImage}
-                  alt={product.name}
-                  width={500}
-                  height={500}
-                  className="w-full h-[500px] object-contain main-image"
-                />
-              )}
-              <button className="absolute top-4 right-4 bg-black text-white px-4 py-2 rounded-full text-sm">
-                <i className="fas fa-360-degrees mr-2"></i>360° View
-              </button>
+              <Image 
+                src={selectedImage}
+                alt={product.name}
+                width={500}
+                height={500}
+                className="w-full h-[500px] object-contain"
+              />
             </div>
 
             {/* Thumbnails */}
@@ -142,13 +134,13 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <button 
                   key={index}
                   onClick={() => setSelectedImage(image)}
-                  className={`thumbnail bg-white rounded-lg p-4 border-2 ${
-                    selectedImage === image ? 'border-black' : 'border-transparent hover:border-black'
+                  className={`bg-white rounded-lg p-4 border-2 ${
+                    selectedImage === image ? 'border-black' : 'border-transparent hover:border-gray-200'
                   }`}
                 >
                   <Image 
                     src={image}
-                    alt={`Thumbnail ${index + 1}`}
+                    alt={`${product.name} view ${index + 1}`}
                     width={100}
                     height={100}
                     className="w-full h-20 object-contain"
@@ -180,10 +172,14 @@ export default function ProductPage({ params }: ProductPageProps) {
               </div>
               <div className="flex items-center gap-4">
                 <span className="text-3xl font-bold">${product.price}</span>
-                <span className="text-gray-400 line-through text-xl">${product.originalPrice}</span>
-                <span className="bg-red-100 text-red-500 px-2 py-1 rounded text-sm">
-                  Save {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
-                </span>
+                {product.originalPrice && (
+                  <>
+                    <span className="text-gray-400 line-through text-xl">${product.originalPrice}</span>
+                    <span className="bg-red-100 text-red-500 px-2 py-1 rounded text-sm">
+                      Save {product.discount}%
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -192,22 +188,16 @@ export default function ProductPage({ params }: ProductPageProps) {
               <h3 className="font-semibold mb-4">Select Color</h3>
               <div className="flex gap-3">
                 {product.colors.map((color) => (
-                  <div key={color}>
-                    <input 
-                      type="radio" 
-                      name="color" 
-                      id={`color-${color}`} 
-                      className="color-option hidden"
-                      checked={selectedColor === color}
-                      onChange={() => setSelectedColor(color)}
-                    />
-                    <label 
-                      htmlFor={`color-${color}`} 
-                      className={`block w-8 h-8 rounded-full bg-${color.toLowerCase()}-500 border-2 border-gray-300 cursor-pointer transition-transform ${
-                        selectedColor === color ? 'transform scale-110 border-black' : ''
-                      }`}
-                    ></label>
-                  </div>
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+                      selectedColor === color 
+                        ? 'border-black scale-110' 
+                        : 'border-gray-300'
+                    }`}
+                    style={{ backgroundColor: color.toLowerCase() }}
+                  />
                 ))}
               </div>
             </div>
@@ -220,24 +210,17 @@ export default function ProductPage({ params }: ProductPageProps) {
               </div>
               <div className="grid grid-cols-4 gap-3">
                 {product.sizes.map((size) => (
-                  <div key={size}>
-                    <input 
-                      type="radio" 
-                      name="size" 
-                      id={`size-${size}`} 
-                      className="size-option hidden"
-                      checked={selectedSize === size}
-                      onChange={() => setSelectedSize(size)}
-                    />
-                    <label 
-                      htmlFor={`size-${size}`} 
-                      className={`block text-center border-2 rounded-lg py-2 cursor-pointer hover:border-black ${
-                        selectedSize === size ? 'bg-black text-white border-black' : ''
-                      }`}
-                    >
-                      {size}
-                    </label>
-                  </div>
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`py-2 border-2 rounded-lg transition-colors ${
+                      selectedSize === size
+                        ? 'bg-black text-white border-black'
+                        : 'border-gray-300 hover:border-black'
+                    }`}
+                  >
+                    {size}
+                  </button>
                 ))}
               </div>
             </div>
@@ -312,11 +295,9 @@ export default function ProductPage({ params }: ProductPageProps) {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Reviews Section */}
-      <section className="max-w-7xl mx-auto px-4 mb-20">
-        <div className="bg-white rounded-2xl p-8 shadow-lg">
+        {/* Reviews Section */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg mb-16">
           <div className="flex justify-between items-start mb-8">
             <div>
               <h2 className="text-2xl font-bold mb-2">Customer Reviews</h2>
@@ -340,8 +321,11 @@ export default function ProductPage({ params }: ProductPageProps) {
               {Object.entries(product.ratingDistribution).reverse().map(([rating, percentage]) => (
                 <div key={rating} className="flex items-center gap-4">
                   <span className="w-16">{rating} stars</span>
-                  <div className="flex-1 review-progress-bar">
-                    <div style={{ width: `${percentage}%` }}></div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-yellow-400 h-2 rounded-full"
+                      style={{ width: `${percentage}%` }}
+                    />
                   </div>
                   <span className="w-16 text-right">{percentage}%</span>
                 </div>
@@ -367,8 +351,8 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
                     <Image 
-                      src={review.user.avatar} 
-                      alt={review.user.name} 
+                      src={review.user.avatar}
+                      alt={review.user.name}
                       width={48}
                       height={48}
                       className="w-full h-full object-cover"
@@ -395,7 +379,7 @@ export default function ProductPage({ params }: ProductPageProps) {
                     <Image 
                       key={index}
                       src={image}
-                      alt="Review Image"
+                      alt={`Review image ${index + 1}`}
                       width={96}
                       height={96}
                       className="w-24 h-24 object-cover rounded-lg"
@@ -417,23 +401,50 @@ export default function ProductPage({ params }: ProductPageProps) {
           <div className="text-center mt-8">
             <Button variant="outline">
               Load More Reviews
-              <i className="fas fa-chevron-down ml-2"></i>
             </Button>
           </div>
         </div>
-      </section>
 
-      {/* Related Products */}
-      <section className="max-w-7xl mx-auto px-4 mb-20">
-        <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {relatedProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
+        {/* Related Products */}
+        <div>
+          <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {relatedProducts.map((product) => (
+              <Link 
+                key={product.id}
+                href={`/product/${product.id}`}
+                className="group"
+              >
+                <div className="bg-white rounded-2xl p-6 shadow-lg">
+                  <div className="relative mb-4 aspect-square">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover rounded-xl group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <h3 className="font-semibold mb-2 group-hover:text-blue-600">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex text-yellow-400">
+                      {[...Array(5)].map((_, i) => (
+                        <i key={i} className={`fas fa-star${i + 1 > product.rating ? '-half-alt' : ''}`}></i>
+                      ))}
+                    </div>
+                    <span className="text-sm text-gray-600">({product.reviewCount})</span>
+                  </div>
+                  <span className="font-bold">${product.price}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
-      </section>
-
+      </div>
       <Footer />
     </main>
   );
-} 
+};
+
+export default ProductPage; 
