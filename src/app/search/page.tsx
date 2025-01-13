@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '../../components/layout/Navbar';
@@ -43,11 +43,65 @@ const sortOptions = [
 ];
 
 export default function SearchPage() {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('q') || '';
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  
+
+  return (
+    <main className="bg-gray-50">
+      <Navbar />
+      
+      <Suspense fallback={
+        <div className="max-w-7xl mx-auto px-4 pt-32">
+          {/* Loading skeleton for breadcrumb */}
+          <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-8" />
+          
+          {/* Loading skeleton for search header */}
+          <div className="mb-8">
+            <div className="h-10 w-96 bg-gray-200 animate-pulse rounded mb-4" />
+            <div className="h-6 w-72 bg-gray-200 animate-pulse rounded" />
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Loading skeleton for filters */}
+            <div className="lg:w-1/4">
+              <div className="h-[600px] bg-gray-200 animate-pulse rounded-xl" />
+            </div>
+            
+            {/* Loading skeleton for products grid */}
+            <div className="lg:w-3/4">
+              <div className="h-16 bg-gray-200 animate-pulse rounded-xl mb-6" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1,2,3,4,5,6].map((i) => (
+                  <div key={i} className="aspect-square bg-gray-200 animate-pulse rounded-xl" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      }>
+        <SearchContent sortBy={sortBy} setSortBy={setSortBy} viewMode={viewMode} setViewMode={setViewMode} />
+      </Suspense>
+
+      <Footer />
+    </main>
+  );
+}
+
+// Tách phần nội dung sử dụng useSearchParams thành component riêng
+function SearchContent({
+  sortBy,
+  setSortBy,
+  viewMode, 
+  setViewMode
+}: {
+  sortBy: string;
+  setSortBy: (value: string) => void;
+  viewMode: 'grid' | 'list';
+  setViewMode: (value: 'grid' | 'list') => void;
+}) {
+  const searchParams = useSearchParams();
+  const query = searchParams.get('q') || '';
+
   // Filter products based on search query
   const filteredProducts = mockProducts.filter(product => 
     product.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -55,9 +109,7 @@ export default function SearchPage() {
   );
 
   return (
-    <main className="bg-gray-50">
-      <Navbar />
-      
+    <>
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
         <nav className="flex text-gray-500 text-sm">
@@ -180,8 +232,6 @@ export default function SearchPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
-    </main>
+    </>
   );
 } 
