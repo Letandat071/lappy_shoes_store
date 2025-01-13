@@ -1,70 +1,69 @@
 import React from 'react';
-import Button from '@/components/common/Button';
-
-const sizes = [
-  { size: '6', inStock: true },
-  { size: '6.5', inStock: true },
-  { size: '7', inStock: true },
-  { size: '7.5', inStock: true },
-  { size: '8', inStock: true },
-  { size: '8.5', inStock: false },
-  { size: '9', inStock: true },
-  { size: '9.5', inStock: true },
-  { size: '10', inStock: true },
-  { size: '10.5', inStock: false },
-  { size: '11', inStock: true },
-  { size: '11.5', inStock: true },
-  { size: '12', inStock: true },
-  { size: '12.5', inStock: false },
-  { size: '13', inStock: true }
-];
+import Link from 'next/link';
+import Image from 'next/image';
 
 const SizesSection = () => {
   return (
-    <section className="bg-gray-100 py-16">
+    <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="bg-white rounded-2xl p-8 md:p-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-4xl font-bold mb-6">Find Your Perfect Size</h2>
-              <p className="text-gray-600 mb-8">
-                Not sure about your size? Use our size guide to find the perfect fit. 
-                We offer a wide range of sizes to ensure maximum comfort for every foot type.
-              </p>
-              <div className="grid grid-cols-5 gap-2 mb-8">
-                {sizes.map((item) => (
-                  <div
-                    key={item.size}
-                    className={`text-center p-3 rounded-lg border ${
-                      item.inStock
-                        ? 'border-black hover:bg-black hover:text-white cursor-pointer'
-                        : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    {item.size}
-                  </div>
-                ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 className="text-3xl font-bold mb-6">Find Your Perfect Fit</h2>
+            <p className="text-gray-600 mb-8">
+              We understand that finding the right size is crucial for comfort and performance.
+              Our comprehensive size guide helps you make the perfect choice every time.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i className="fas fa-ruler text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Accurate Measurements</h3>
+                  <p className="text-gray-600">
+                    Detailed size charts and measuring guides for precise fitting.
+                  </p>
+                </div>
               </div>
-              <div className="space-y-4">
-                <Button variant="primary" size="large" className="w-full">
-                  View Size Guide
-                </Button>
-                <Button variant="outline" size="large" className="w-full">
-                  Contact Support
-                </Button>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i className="fas fa-exchange-alt text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Easy Returns</h3>
+                  <p className="text-gray-600">
+                    Free size exchanges within 30 days of purchase.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <i className="fas fa-comments text-primary-600"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Expert Assistance</h3>
+                  <p className="text-gray-600">
+                    Our team is here to help you find your perfect size.
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1491553895911-0055eca6402d"
-                alt="Size Guide"
-                className="rounded-xl shadow-2xl"
-              />
-              <div className="absolute -bottom-6 -right-6 bg-yellow-400 text-black p-4 rounded-xl">
-                <p className="text-lg font-bold">Free Returns</p>
-                <p className="text-sm">If the size doesn't fit</p>
-              </div>
-            </div>
+            <Link
+              href="/size-guide"
+              className="inline-block mt-8 bg-black text-white px-8 py-4 rounded-full hover:bg-gray-800 transition-colors"
+            >
+              View Size Guide
+            </Link>
+          </div>
+
+          <div className="relative h-[500px] rounded-xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1491553895911-0055eca6402d"
+              alt="Size guide"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
           </div>
         </div>
       </div>
