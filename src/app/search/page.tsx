@@ -72,7 +72,7 @@ export default function SearchPage() {
         {/* Search Header */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">Search Results for "{query}"</h1>
+            <h1 className="text-3xl font-bold">Search Results for &quot;{query}&quot;</h1>
             <p className="text-gray-600">{filteredProducts.length} results found</p>
           </div>
           

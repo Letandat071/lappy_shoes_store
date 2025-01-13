@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FilterSidebar from '@/components/shop/FilterSidebar';
@@ -21,13 +22,15 @@ const products = [
   // Add more products...
 ];
 
+type FilterValue = string | number | string[] | { min: number; max: number };
+
 interface Filters {
   categories: string[];
   priceRange: { min: number; max: number };
   brands: string[];
   sizes: string[];
   colors: string[];
-  [key: string]: any; // Add index signature
+  [key: string]: FilterValue | FilterValue[]; // Updated index signature
 }
 
 export default function ShopPage() {
@@ -39,7 +42,7 @@ export default function ShopPage() {
     colors: []
   });
 
-  const handleFilterChange = (filterType: string, value: any) => {
+  const handleFilterChange = (filterType: string, value: FilterValue) => {
     if (filterType === 'clear') {
       setSelectedFilters({
         categories: [],
@@ -53,12 +56,13 @@ export default function ShopPage() {
 
     setSelectedFilters(prev => {
       if (Array.isArray(prev[filterType])) {
-        const array = prev[filterType] as any[];
-        const index = array.indexOf(value);
+        const array = prev[filterType] as string[];
+        const valueStr = value as string;
+        const index = array.indexOf(valueStr);
         if (index === -1) {
-          return { ...prev, [filterType]: [...array, value] };
+          return { ...prev, [filterType]: [...array, valueStr] };
         }
-        return { ...prev, [filterType]: array.filter(item => item !== value) };
+        return { ...prev, [filterType]: array.filter(item => item !== valueStr) };
       }
       return { ...prev, [filterType]: value };
     });
@@ -71,7 +75,7 @@ export default function ShopPage() {
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
         <nav className="flex text-gray-500 text-sm">
-          <a href="/" className="hover:text-black">Home</a>
+          <Link href="/" className="hover:text-black">Home</Link>
           <span className="mx-2">/</span>
           <span className="text-black">Shop</span>
         </nav>
@@ -101,9 +105,15 @@ export default function ShopPage() {
           {/* Popular Searches */}
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="text-sm text-gray-600">Popular:</span>
-            <a href="#" className="text-sm text-gray-600 hover:text-black">Running Shoes</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-black">Basketball</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-black">Lifestyle</a>
+            <Link href="/search?q=Running%20Shoes" className="text-sm text-gray-600 hover:text-black">
+              Running Shoes
+            </Link>
+            <Link href="/search?q=Basketball" className="text-sm text-gray-600 hover:text-black">
+              Basketball
+            </Link>
+            <Link href="/search?q=Lifestyle" className="text-sm text-gray-600 hover:text-black">
+              Lifestyle
+            </Link>
           </div>
         </div>
 
