@@ -11,49 +11,40 @@ import ProductCard from '@/components/common/ProductCard';
 // Mock data - trong thực tế sẽ lấy từ API
 const mockWishlistItems = [
   {
-    id: 1,
+    id: '1',
     name: 'Nike Air Max 270',
-    category: 'Running Collection',
     price: 150,
-    originalPrice: 189.99,
-    rating: 4.5,
-    reviewCount: 128,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff'
+    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
+    inStock: true
   },
   {
-    id: 2,
+    id: '2',
     name: 'Adidas Ultraboost',
-    category: 'Performance Series',
     price: 180,
-    rating: 5,
-    reviewCount: 95,
-    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519'
+    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
+    inStock: true
   }
 ];
 
 const recommendedProducts = [
   {
-    id: 3,
+    id: '3',
     name: 'Nike Air Force 1',
     price: 120,
-    originalPrice: 140,
-    rating: 4.8,
-    reviewCount: 256,
     image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
-    category: 'Lifestyle',
-    discount: 10
+    discount: 10,
+    rating: 4.8
   }
-  // Thêm các sản phẩm khác
 ];
 
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState(mockWishlistItems);
 
-  const handleRemoveFromWishlist = (id: number) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+  const handleRemoveFromWishlist = (id: string) => {
+    setWishlistItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
-  const handleAddToCart = (id: number) => {
+  const handleAddToCart = (id: string) => {
     // Thêm logic thêm vào giỏ hàng ở đây
     console.log('Add to cart:', id);
   };
@@ -95,9 +86,8 @@ export default function WishlistPage() {
               {wishlistItems.map(item => (
                 <WishlistItem
                   key={item.id}
-                  product={item}
+                  {...item}
                   onRemove={handleRemoveFromWishlist}
-                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>
@@ -112,7 +102,15 @@ export default function WishlistPage() {
         <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {recommendedProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard 
+              key={product.id}
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
+              discount={product.discount}
+              rating={product.rating}
+            />
           ))}
         </div>
       </section>
