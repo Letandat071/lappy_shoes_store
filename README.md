@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 👟 Lappy Shoes - Premium Shoe Store
 
-## Getting Started
+<div align="center">
+  <img src="docs/images/hero.png" alt="Lappy Shoes Hero" width="100%">
+</div>
 
-First, run the development server:
+Lappy Shoes là một website thương mại điện tử hiện đại được xây dựng bằng Next.js 13+, TypeScript và Tailwind CSS. Website cung cấp trải nghiệm mua sắm giày dép trực tuyến mượt mà và thân thiện với người dùng.
 
-```bash
+## 📸 Screenshots
+
+<div align="center">
+  <img src="docs/images/home.png" alt="Homepage" width="45%">
+  <img src="docs/images/collection.PNG" alt="Shop Page" width="45%">
+</div>
+
+<div align="center">
+  <img src="docs/images/product.png" alt="Product Detail" width="45%">
+  <img src="docs/images/payment.PNG" alt="Shopping Cart" width="45%">
+</div>
+
+## ✨ Tính năng
+
+- 🎨 Giao diện người dùng hiện đại và responsive
+- 🛍️ Hiển thị sản phẩm với bộ lọc và tìm kiếm
+- 🛒 Giỏ hàng và thanh toán
+- 👤 Xác thực và quản lý tài khoản người dùng
+- ❤️ Danh sách yêu thích
+- 🏷️ Quản lý danh mục sản phẩm
+- 🌟 Bộ sưu tập nổi bật
+- 📱 Tối ưu hóa cho thiết bị di động
+
+## 🎯 Demo
+
+<div align="center">
+  <img src="docs/images/demo.gif" alt="Demo" width="80%">
+</div>
+
+Xem demo trực tiếp tại: [Lappy Shoes Demo](https://lappy-shoes.vercel.app)
+
+## 🚀 Tech Stack
+
+- [Next.js 13+](https://nextjs.org/) - Framework React
+- [TypeScript](https://www.typescriptlang.org/) - Ngôn ngữ lập trình
+- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS
+- [Font Awesome](https://fontawesome.com/) - Icon library
+
+## 📱 Responsive Design
+
+<div align="center">
+  <img src="docs/images/responsive.png" alt="Responsive Design" width="100%">
+</div>
+
+## 📦 Cài đặt
+
+1. Clone repository:
+\`\`\`bash
+git clone https://github.com/your-username/lappy-shoes.git
+\`\`\`
+
+2. Di chuyển vào thư mục dự án:
+\`\`\`bash
+cd lappy-shoes
+\`\`\`
+
+3. Cài đặt dependencies:
+\`\`\`bash
+npm install
+# hoặc
+yarn install
+\`\`\`
+
+4. Tạo file môi trường:
+\`\`\`bash
+cp .env.example .env.local
+\`\`\`
+
+5. Khởi động development server:
+\`\`\`bash
 npm run dev
-# or
+# hoặc
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+\`\`\`
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌐 Môi trường
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Tạo file \`.env.local\` trong thư mục gốc và thêm các biến môi trường sau:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+\`\`\`env
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME="Lappy Shoes"
 
-## Learn More
+# API URLs
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+\`\`\`
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Cấu trúc thư mục
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+\`\`\`
+src/
+├── app/                # App router pages
+├── components/         # React components
+│   ├── home/          # Homepage components
+│   ├── layout/        # Layout components
+│   ├── shop/          # Shop components
+│   └── common/        # Common components
+├── styles/            # Global styles
+└── types/             # TypeScript types
+\`\`\`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔨 Scripts
 
-## Deploy on Vercel
+- \`npm run dev\` - Khởi động development server
+- \`npm run build\` - Build dự án cho production
+- \`npm run start\` - Khởi động production server
+- \`npm run lint\` - Kiểm tra lỗi với ESLint
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🤝 Đóng góp
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Mọi đóng góp đều được chào đón! Vui lòng:
+
+1. Fork dự án
+2. Tạo branch tính năng (\`git checkout -b feature/amazing-feature\`)
+3. Commit thay đổi (\`git commit -m 'Add some amazing feature'\`)
+4. Push lên branch (\`git push origin feature/amazing-feature\`)
+5. Mở Pull Request
+
+## 📝 License
+
+Dự án này được cấp phép theo giấy phép MIT - xem file [LICENSE](LICENSE) để biết thêm chi tiết.
+
+## 👨‍💻 Tác giả
+
+- **Nguyên Kỷ** - [Website](https://lappyhacking.onrender.com/)
+
+## 🙏 Cảm ơn
+
+- [Next.js](https://nextjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Font Awesome](https://fontawesome.com/)
+- [Vercel](https://vercel.com/)
