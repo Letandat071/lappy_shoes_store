@@ -9,9 +9,20 @@ export const metadata: Metadata = {
     icon: '/lappy.ico'
   },
   openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://lappy-shoes.vercel.app/',
+    siteName: 'Lappy Shoes',
     title: 'Lappy Shoes - Premium Shoe Store',
     description: 'Find your perfect pair of shoes at Lappy Shoes',
-    images: ['https://cdn.donmai.us/original/fd/5e/__texas_lappland_texas_and_lappland_the_decadenza_arknights_drawn_by_xhongxi__fd5e73bbedeefc7e534f29315e07b2fc.png'],
+    images: [
+      {
+        url: 'https://cdn.donmai.us/original/fd/5e/__texas_lappland_texas_and_lappland_the_decadenza_arknights_drawn_by_xhongxi__fd5e73bbedeefc7e534f29315e07b2fc.png',
+        width: 1200,
+        height: 630,
+        alt: 'Lappy Shoes Banner'
+      }
+    ],
   }
 };
 
