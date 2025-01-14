@@ -77,13 +77,16 @@ const HeroSection = () => {
             <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-600 rounded-full filter blur-[100px] opacity-50 floating-delay"></div>
             
             {/* Main product image */}
-            <div className="relative">
+            <div className="relative h-[600px] w-full group">
               <Image 
                 id="mainProductImage" 
                 src="https://www.pngall.com/wp-content/uploads/13/Nike-Shoes-PNG-Pic.png" 
                 alt="Featured Shoe" 
-                className="w-full max-w-2xl mx-auto transform transition-all duration-700 floating"
+                className="w-full h-full object-contain transform transition-all duration-500 
+                group-hover:scale-110 group-hover:rotate-6 hover:cursor-pointer floating"
                 fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                style={{ objectFit: 'contain' }}
                 priority
               />
               

@@ -35,6 +35,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
     onFilterChange('brands', brand);
   };
 
+  const handleCategorySelect = (category: string) => {
+    onFilterChange('categories', category);
+  };
+
   return (
     <div className="lg:w-1/4">
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -122,6 +126,50 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
                 }`}
               >
                 {brand}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Categories</h3>
+          <div className="space-y-2">
+            {[
+              'Running',
+              'Basketball',
+              'Training',
+              'Lifestyle',
+              'Soccer',
+              'Tennis'
+            ].map((category) => (
+              <button
+                key={category}
+                onClick={() => handleCategorySelect(category)}
+                className={`block w-full text-left px-3 py-2 rounded transition-colors ${
+                  selectedFilters.categories.includes(category)
+                    ? 'bg-black text-white'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{category}</span>
+                  {selectedFilters.categories.includes(category) && (
+                    <svg 
+                      className="w-4 h-4" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M5 13l4 4L19 7" 
+                      />
+                    </svg>
+                  )}
+                </div>
               </button>
             ))}
           </div>

@@ -53,3 +53,43 @@
 body {
   font-family: 'Poppins', sans-serif;
 }
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Thêm hiệu ứng shine khi hover */
+.group:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transform: skewX(-25deg);
+  animation: shine 1.5s ease-in-out;
+}
+
+@keyframes shine {
+  100% {
+    left: 200%;
+  }
+}
