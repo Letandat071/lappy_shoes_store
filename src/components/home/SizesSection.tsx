@@ -66,7 +66,7 @@ const SizesSection = () => {
             />
             <div className="absolute -bottom-6 -right-6 bg-yellow-400 text-black p-4 rounded-xl shadow-lg">
               <p className="font-semibold">Pro Tip:</p>
-              <p className="text-sm">Measure your feet in the evening when they're at their largest</p>
+              <p className="text-sm">Measure your feet in the evening when they&apos;re at their largest</p>
             </div>
           </div>
         </div>
