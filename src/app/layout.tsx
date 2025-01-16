@@ -1,29 +1,13 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
+import { Inter } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Lappy Shoes - Premium Shoe Store',
-  description: 'Find your perfect pair of shoes at Lappy Shoes',
-  icons: {
-    icon: '/lappy.ico'
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://lappy-shoes.vercel.app/',
-    siteName: 'Lappy Shoes',
-    title: 'Lappy Shoes - Premium Shoe Store',
-    description: 'Find your perfect pair of shoes at Lappy Shoes',
-    images: [
-      {
-        url: 'https://cdn.donmai.us/original/fd/5e/__texas_lappland_texas_and_lappland_the_decadenza_arknights_drawn_by_xhongxi__fd5e73bbedeefc7e534f29315e07b2fc.png',
-        width: 1200,
-        height: 630,
-        alt: 'Lappy Shoes Banner'
-      }
-    ],
-  }
+  title: 'Lappy Shoes',
+  description: 'Premium Shoe Store',
 };
 
 export default function RootLayout({
@@ -32,14 +16,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        {children}
-        <Script
-          src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"
-          strategy="lazyOnload"
-          crossOrigin="anonymous"
+    <html lang="vi">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
         />
+      </head>
+      <body className={inter.className}>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

@@ -1,31 +1,80 @@
-import React from 'react';
-import Link from 'next/link';
-import Navbar from '../../components/layout/Navbar';
-import Footer from '../../components/layout/Footer';
-import AuthTabs from '../../components/auth/AuthTabs';
+"use client";
 
-const AuthPage = () => {
+import { useState } from "react";
+import Image from "next/image";
+import SignInForm from "@/components/auth/SignInForm";
+import SignUpForm from "@/components/auth/SignUpForm";
+
+export default function AuthPage() {
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+
   return (
-    <>
-      <Navbar />
-      <main className="min-h-screen bg-gray-50 pt-32 pb-16">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Breadcrumb */}
-          <nav className="flex text-gray-500 text-sm mb-8">
-            <Link href="/" className="hover:text-black">Home</Link>
-            <span className="mx-2">/</span>
-            <span className="text-black">Sign In</span>
-          </nav>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <Image
+            src="/images/logo.png"
+            alt="Logo"
+            width={100}
+            height={100}
+            className="h-20 w-auto"
+          />
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          {activeTab === "login" ? "Đăng nhập" : "Đăng ký tài khoản"}
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          {activeTab === "login" ? (
+            <>
+              Chưa có tài khoản?{" "}
+              <button
+                onClick={() => setActiveTab("register")}
+                className="font-medium text-black hover:text-gray-800"
+              >
+                Đăng ký ngay
+              </button>
+            </>
+          ) : (
+            <>
+              Đã có tài khoản?{" "}
+              <button
+                onClick={() => setActiveTab("login")}
+                className="font-medium text-black hover:text-gray-800"
+              >
+                Đăng nhập
+              </button>
+            </>
+          )}
+        </p>
+      </div>
 
-          {/* Auth Container */}
-          <div className="max-w-md mx-auto">
-            <AuthTabs />
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
+          {activeTab === "login" ? <SignInForm /> : <SignUpForm />}
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Hoặc tiếp tục với
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                <i className="fab fa-google text-xl"></i>
+              </button>
+              <button className="w-full inline-flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                <i className="fab fa-facebook text-xl"></i>
+              </button>
+            </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </>
+      </div>
+    </div>
   );
-};
-
-export default AuthPage; 
+} 

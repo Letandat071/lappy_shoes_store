@@ -4,40 +4,28 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.pravatar.cc',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.pngall.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'raw.githubusercontent.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'i.pinimg.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.donmai.us',
-      },
-      {
-        protocol: 'https',
-        hostname: 'static.zerochan.net',
+        pathname: '/**',
       }
-    ]
-  },
-  reactStrictMode: true,
-  compiler: {
-    styledComponents: true
-  },
-  experimental: {
-    scrollRestoration: false
+    ],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60
   }
 }
 

@@ -2,14 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import UserAvatar from '@/components/common/UserAvatar';
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -20,6 +25,16 @@ const Navbar = () => {
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setIsSearchOpen(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setIsProfileOpen(false);
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -109,10 +124,53 @@ const Navbar = () => {
                 </button>
               </form>
 
-              {/* Account */}
-              <Link href="/auth" className="hover:text-gray-600 hidden sm:block">
-                <i className="far fa-user text-xl"></i>
-              </Link>
+              {/* User Account */}
+              <div className="relative">
+                {user ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      className="flex items-center space-x-2 hover:text-gray-600"
+                    >
+                      <UserAvatar name={user.name} image={user.avatar} size={32} />
+                      <span className="hidden lg:inline">{user.name}</span>
+                    </button>
+
+                    {/* Profile Dropdown */}
+                    {isProfileOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1">
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          Hồ sơ
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          Đơn hàng
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Đăng xuất
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href="/auth"
+                    className="hover:text-gray-600 hidden sm:block"
+                  >
+                    Đăng nhập / Đăng ký
+                  </Link>
+                )}
+              </div>
 
               {/* Wishlist */}
               <Link href="/wishlist" className="hover:text-gray-600 hidden sm:block">
@@ -186,7 +244,11 @@ const Navbar = () => {
                 <div className="px-4 py-2 space-y-2">
                   <Link href="/about" className="block text-gray-600">About Us</Link>
                   <Link href="/help" className="block text-gray-600">Help</Link>
-                  <Link href="/auth" className="block text-gray-600 sm:hidden">Account</Link>
+                  {!user && (
+                    <Link href="/auth" className="block text-gray-600 sm:hidden">
+                      Đăng nhập / Đăng ký
+                    </Link>
+                  )}
                   <Link href="/wishlist" className="block text-gray-600 sm:hidden">Wishlist</Link>
                 </div>
               </div>
