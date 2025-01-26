@@ -14,6 +14,7 @@ import { Feature } from '../../../types/feature';
 import { Category } from '../../../types/category';
 import ProductsReview from '@/components/product/ProductsReview';
 import ProductSuggest from '@/components/product/ProductSuggest';
+import { formatPrice } from '@/utils/format';
 
 interface Image {
   url: string;
@@ -38,10 +39,6 @@ interface Product {
   category: Category;
   features: Feature[];
 }
-
-const formatPrice = (price: number) => {
-  return price.toLocaleString('vi-VN');
-};
 
 const ProductPage = () => {
   const { id } = useParams();

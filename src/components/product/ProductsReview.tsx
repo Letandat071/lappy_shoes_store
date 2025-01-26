@@ -1,6 +1,11 @@
 import React from 'react'
 import Button from '@/components/common/Button';
 import Image from 'next/image';
+
+interface ProductsReviewProps {
+  productId: string;
+}
+
 const product = {
     id: '1',
     name: 'Nike Air Max 270',
@@ -79,7 +84,7 @@ const product = {
     }
   ];
   
-const ProductsReview = () => {
+const ProductsReview: React.FC<ProductsReviewProps> = ({ productId }) => {
   return (
     <div> {/* Reviews Section */}
     <div className="bg-white rounded-2xl p-8 shadow-lg mb-16">

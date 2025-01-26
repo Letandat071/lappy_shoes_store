@@ -1,6 +1,12 @@
 import React from 'react'
 import Link from 'next/link';
 import Image from 'next/image';
+
+interface ProductSuggestProps {
+  categoryId: string;
+  currentProductId: string;
+}
+
 const product = {
     id: '1',
     name: 'Nike Air Max 270',
@@ -78,7 +84,8 @@ const product = {
       reviewCount: 67
     }
   ];
-const ProductSuggest = () => {
+
+const ProductSuggest: React.FC<ProductSuggestProps> = ({ categoryId, currentProductId }) => {
   return (
     <div>
           <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>

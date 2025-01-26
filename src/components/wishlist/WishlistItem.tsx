@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import { formatPrice } from '@/utils/format';
 
 interface WishlistItemProps {
   id: string;
@@ -32,9 +33,9 @@ const WishlistItem: React.FC<WishlistItemProps> = ({
         />
         <div>
           <h3 className="font-medium">{name}</h3>
-          <p className="text-gray-600">${price}</p>
+          <p className="text-gray-600">{formatPrice(price)}đ</p>
           <p className={`text-sm ${inStock ? 'text-green-600' : 'text-red-600'}`}>
-            {inStock ? 'In Stock' : 'Out of Stock'}
+            {inStock ? 'Còn hàng' : 'Hết hàng'}
           </p>
         </div>
       </div>
@@ -44,13 +45,13 @@ const WishlistItem: React.FC<WishlistItemProps> = ({
           disabled={!inStock}
           className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Add to Cart
+          Thêm vào giỏ hàng
         </button>
         <button
           onClick={() => onRemove(id)}
           className="text-gray-500 hover:text-red-500 transition-colors"
         >
-          Remove
+          Xóa
         </button>
       </div>
     </div>

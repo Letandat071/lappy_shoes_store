@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { StarIcon } from '@heroicons/react/24/outline';
+import { formatPrice } from '@/utils/format';
 
 export interface ProductCardProps {
   id: string;
@@ -50,11 +51,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <h3 className="font-medium mb-1">{name}</h3>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold">
-              {price.toLocaleString()}đ
+              {formatPrice(price)}đ
             </span>
             {originalPrice && (
               <span className="text-gray-500 line-through">
-                {originalPrice.toLocaleString()}đ
+                {formatPrice(originalPrice)}đ
               </span>
             )}
           </div>
