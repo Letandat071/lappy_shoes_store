@@ -1,38 +1,75 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { StarIcon } from '@heroicons/react/24/outline';
 
-interface ProductCardProps {
+export interface ProductCardProps {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
+  rating?: number;
+  reviewCount?: number;
   image: string;
-  rating: number;
+  category: string;
+  discount?: number;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ id, name, price, image, rating }) => {
+const ProductCard: React.FC<ProductCardProps> = ({
+  id,
+  name,
+  price,
+  originalPrice,
+  rating = 0,
+  reviewCount = 0,
+  image,
+  category,
+  discount
+}) => {
   return (
     <Link href={`/product/${id}`} className="group">
-      <div className="bg-white rounded-2xl p-6 shadow-lg">
-        <div className="relative mb-4 aspect-square">
+      <div className="bg-white rounded-2xl p-6 shadow-lg transition-all duration-300 hover:shadow-xl">
+        {/* Product Image */}
+        <div className="relative group">
           <Image
-            src={image}
+            src={image || '/placeholder-product.jpg'}
             alt={name}
-            fill
-            className="object-cover rounded-xl group-hover:scale-105 transition-transform"
+            width={400}
+            height={400}
+            className="w-full aspect-square object-cover rounded-xl"
           />
+          {discount && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
+              -{discount}%
+            </div>
+          )}
         </div>
-        <h3 className="font-semibold mb-2 group-hover:text-blue-600">
-          {name}
-        </h3>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex text-yellow-400">
+
+        {/* Product Info */}
+        <div className="mt-4">
+          <h3 className="font-medium mb-1">{name}</h3>
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold">
+              {price.toLocaleString()}đ
+            </span>
+            {originalPrice && (
+              <span className="text-gray-500 line-through">
+                {originalPrice.toLocaleString()}đ
+              </span>
+            )}
+          </div>
+          <div className="flex items-center mt-2">
             {[...Array(5)].map((_, i) => (
-              <i key={i} className={`fas fa-star${i + 1 > rating ? '-half-alt' : ''}`}></i>
+              <StarIcon
+                key={i}
+                className={`h-4 w-4 ${
+                  i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300'
+                }`}
+              />
             ))}
+            <span className="text-sm text-gray-500 ml-2">({reviewCount})</span>
           </div>
         </div>
-        <span className="font-bold">${price}</span>
       </div>
     </Link>
   );

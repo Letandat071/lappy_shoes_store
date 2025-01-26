@@ -14,15 +14,18 @@ if (!globalWithMongoose.mongoose) {
 
 async function connectDB() {
   if (globalWithMongoose.mongoose.conn) {
+    console.log("Reusing existing MongoDB connection");
     return globalWithMongoose.mongoose.conn;
   }
 
   if (!globalWithMongoose.mongoose.promise) {
+    console.log("Creating new MongoDB connection...");
     const opts = {
       bufferCommands: true,
     };
 
     globalWithMongoose.mongoose.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("MongoDB connected successfully");
       return mongoose;
     });
   }
@@ -30,6 +33,7 @@ async function connectDB() {
   try {
     globalWithMongoose.mongoose.conn = await globalWithMongoose.mongoose.promise;
   } catch (e) {
+    console.error("MongoDB connection error:", e);
     globalWithMongoose.mongoose.promise = null;
     throw e;
   }

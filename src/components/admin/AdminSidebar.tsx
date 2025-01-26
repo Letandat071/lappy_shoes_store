@@ -22,7 +22,7 @@ const navigation = [
   { name: "Danh mục", href: "/admin/categories", icon: TagIcon },
   { name: "Banner", href: "/admin/banner", icon: PhotoIcon },
   { name: "Thông báo", href: "/admin/announcements", icon: MegaphoneIcon },
-  { name: "Thống kê", href: "/admin/analytics", icon: ChartBarIcon },
+  { name: "Features", href: "/admin/features", icon: ChartBarIcon },
   { name: "Cài đặt", href: "/admin/settings", icon: Cog6ToothIcon },
 ];
 

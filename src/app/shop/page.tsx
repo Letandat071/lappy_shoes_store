@@ -2,25 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { useSearchParams, usePathname } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import FilterSidebar from '@/components/shop/FilterSidebar';
 import ProductCard from '@/components/product/ProductCard';
-
-const products = [
-  {
-    id: '1',
-    name: 'Nike Air Max 270',
-    category: 'Running Collection',
-    price: 159.99,
-    originalPrice: 199.99,
-    rating: 4.5,
-    reviewCount: 128,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
-    discount: 20
-  },
-  // Add more products...
-];
+import { useProducts } from '@/hooks/useProducts';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import ProductSkeleton from '@/components/shop/ProductSkeleton';
 
 type FilterValue = string | number | string[] | { min: number; max: number };
 
@@ -30,27 +19,137 @@ interface Filters {
   brands: string[];
   sizes: string[];
   colors: string[];
-  [key: string]: FilterValue | FilterValue[]; // Updated index signature
+  sort: string;
+  feature: string;
+  audience: string;
+  [key: string]: FilterValue | FilterValue[];
 }
 
 export default function ShopPage() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
   const [selectedFilters, setSelectedFilters] = React.useState<Filters>({
     categories: [],
-    priceRange: { min: 0, max: 500 },
+    priceRange: { min: 0, max: 10000000 },
     brands: [],
     sizes: [],
-    colors: []
+    colors: [],
+    sort: '-createdAt',
+    feature: '',
+    audience: ''
   });
+
+  const [page, setPage] = React.useState(1);
+  const [search, setSearch] = React.useState('');
+
+  // Update filters when URL changes
+  React.useEffect(() => {
+    const category = searchParams.get('category');
+    const searchQuery = searchParams.get('search');
+    const brand = searchParams.get('brand');
+    const feature = searchParams.get('feature');
+    const audience = searchParams.get('audience');
+
+    // Reset filters first
+    setSelectedFilters(prev => ({
+      ...prev,
+      categories: [],
+      brands: [],
+      feature: '',
+      audience: ''
+    }));
+
+    // Then apply new filters from URL
+    if (category) {
+      setSelectedFilters(prev => ({
+        ...prev,
+        categories: [category]
+      }));
+    }
+
+    if (searchQuery) {
+      setSearch(searchQuery);
+    }
+
+    if (brand) {
+      setSelectedFilters(prev => ({
+        ...prev,
+        brands: [brand]
+      }));
+    }
+
+    if (feature) {
+      setSelectedFilters(prev => ({
+        ...prev,
+        feature
+      }));
+    }
+
+    if (audience) {
+      setSelectedFilters(prev => ({
+        ...prev,
+        audience
+      }));
+    }
+
+    // Reset page when filters change
+    setPage(1);
+  }, [searchParams]); // Re-run when searchParams changes
+
+  const { products, loading, error, pagination } = useProducts({
+    page,
+    limit: 12,
+    category: selectedFilters.categories[0],
+    minPrice: selectedFilters.priceRange.min > 0 ? selectedFilters.priceRange.min : undefined,
+    maxPrice: selectedFilters.priceRange.max < 10000000 ? selectedFilters.priceRange.max : undefined,
+    search,
+    sort: selectedFilters.sort,
+    brands: selectedFilters.brands,
+    sizes: selectedFilters.sizes,
+    colors: selectedFilters.colors,
+    feature: selectedFilters.feature,
+    audience: selectedFilters.audience
+  });
+
+  console.log("Shop page - Filters:", {
+    page,
+    limit: 12,
+    category: selectedFilters.categories[0],
+    minPrice: selectedFilters.priceRange.min,
+    maxPrice: selectedFilters.priceRange.max,
+    search,
+    sort: selectedFilters.sort,
+    brands: selectedFilters.brands,
+    sizes: selectedFilters.sizes,
+    colors: selectedFilters.colors,
+    feature: selectedFilters.feature,
+    audience: selectedFilters.audience
+  });
+
+  console.log("Shop page - Products:", products);
+  console.log("Shop page - Pagination:", pagination);
+  console.log("Shop page - Loading:", loading);
+  console.log("Shop page - Error:", error);
 
   const handleFilterChange = (filterType: string, value: FilterValue) => {
     if (filterType === 'clear') {
       setSelectedFilters({
         categories: [],
-        priceRange: { min: 0, max: 500 },
+        priceRange: { min: 0, max: 10000000 },
         brands: [],
         sizes: [],
-        colors: []
+        colors: [],
+        sort: '-createdAt',
+        feature: '',
+        audience: ''
       });
+      setPage(1);
+      return;
+    }
+
+    if (filterType === 'sort') {
+      setSelectedFilters(prev => ({ ...prev, sort: value as string }));
       return;
     }
 
@@ -66,6 +165,15 @@ export default function ShopPage() {
       }
       return { ...prev, [filterType]: value };
     });
+    setPage(1);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const searchInput = form.querySelector('input') as HTMLInputElement;
+    setSearch(searchInput.value);
+    setPage(1);
   };
 
   return (
@@ -87,33 +195,45 @@ export default function ShopPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold">All Products</h1>
-            <p className="text-gray-600">{products.length} results found</p>
+            {pagination && (
+              <p className="text-gray-600">{pagination.total} results found</p>
+            )}
           </div>
           
           {/* Search Bar */}
-          <div className="relative max-w-2xl">
+          <form onSubmit={handleSearch} className="relative max-w-2xl">
             <input 
               type="text"
               placeholder="Search products..."
+              defaultValue={search}
               className="w-full px-6 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black pr-12"
             />
-            <button className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black">
+            <button type="submit" className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black">
               <i className="fas fa-search text-lg"></i>
             </button>
-          </div>
+          </form>
 
           {/* Popular Searches */}
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="text-sm text-gray-600">Popular:</span>
-            <Link href="/search?q=Running%20Shoes" className="text-sm text-gray-600 hover:text-black">
+            <button 
+              onClick={() => setSearch('Running Shoes')}
+              className="text-sm text-gray-600 hover:text-black"
+            >
               Running Shoes
-            </Link>
-            <Link href="/search?q=Basketball" className="text-sm text-gray-600 hover:text-black">
+            </button>
+            <button 
+              onClick={() => setSearch('Basketball')}
+              className="text-sm text-gray-600 hover:text-black"
+            >
               Basketball
-            </Link>
-            <Link href="/search?q=Lifestyle" className="text-sm text-gray-600 hover:text-black">
+            </button>
+            <button 
+              onClick={() => setSearch('Lifestyle')}
+              className="text-sm text-gray-600 hover:text-black"
+            >
               Lifestyle
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -126,46 +246,79 @@ export default function ShopPage() {
 
           {/* Results Grid */}
           <div className="lg:w-3/4">
-            {/* Sort Options */}
-            <div className="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-lg">
-              <div className="flex items-center gap-4">
-                <span className="text-gray-600">Sort by:</span>
-                <select className="border-0 focus:ring-0">
-                  <option>Relevance</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Latest</option>
-                </select>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <ProductSkeleton key={i} />
+                ))}
               </div>
-              <div className="flex gap-2">
-                <button className="p-2 rounded-lg hover:bg-gray-100">
-                  <i className="fas fa-th-large"></i>
-                </button>
-                <button className="p-2 rounded-lg hover:bg-gray-100">
-                  <i className="fas fa-list"></i>
+            ) : error ? (
+              <div className="text-center py-20">
+                <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                </div>
+                <h2 className="text-2xl font-bold mb-4">Lỗi Khi tải sản phẩm</h2>
+                <p className="text-gray-600 mb-8">Có thể sản phẩm của bạn không tồn tại hoặc đã bị xóa</p>
+                {/* <p className="text-gray-600 mb-8">{error}</p> */}
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800"
+                >
+                  Try Again
                 </button>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Products Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {products.map((product) => (
+                    <ProductCard 
+                      key={product._id}
+                      id={product._id}
+                      name={product.name}
+                      price={product.price}
+                      originalPrice={product.originalPrice}
+                      rating={product.rating || 0}
+                      reviewCount={product.reviewCount || 0}
+                      image={product.images[0]?.url || ''}
+                      category={product.category.name}
+                      discount={product.discount}
+                    />
+                  ))}
+                </div>
 
-            {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {products.map((product) => (
-                <ProductCard key={product.id} {...product} />
-              ))}
-            </div>
-
-            {/* Pagination */}
-            <div className="flex justify-center mt-8 gap-2">
-              <button className="px-4 py-2 border rounded-lg hover:bg-gray-100">
-                <i className="fas fa-chevron-left"></i>
-              </button>
-              <button className="px-4 py-2 border rounded-lg bg-black text-white">1</button>
-              <button className="px-4 py-2 border rounded-lg hover:bg-gray-100">2</button>
-              <button className="px-4 py-2 border rounded-lg hover:bg-gray-100">3</button>
-              <button className="px-4 py-2 border rounded-lg hover:bg-gray-100">
-                <i className="fas fa-chevron-right"></i>
-              </button>
-            </div>
+                {/* Pagination */}
+                {pagination && pagination.totalPages > 1 && (
+                  <div className="flex justify-center mt-8 gap-2">
+                    <button 
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={page === 1}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                    >
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+                    {[...Array(pagination.totalPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPage(i + 1)}
+                        className={`px-4 py-2 border rounded-lg ${
+                          page === i + 1 ? 'bg-black text-white' : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
+                      disabled={page === pagination.totalPages}
+                      className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                    >
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>

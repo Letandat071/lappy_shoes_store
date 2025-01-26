@@ -1,92 +1,125 @@
 import mongoose from 'mongoose';
 
-interface Review {
-  rating: number;
-  comment?: string;
-  user?: mongoose.Types.ObjectId;
-  createdAt: Date;
-}
+export const PRODUCT_STATUS = {
+  IN_STOCK: 'in-stock',
+  OUT_OF_STOCK: 'out-of-stock',
+  COMING_SOON: 'coming-soon'
+} as const;
 
-interface IProduct {
-  name: string;
-  images: string[];
-  price: number;
-  reviews: Review[];
-  averageRating: number;
-  category: mongoose.Types.ObjectId;
-  features: mongoose.Types.ObjectId[];
-  targetAudience: string;
-  sizes: { size: string; quantity: number }[];
-  brand: string;
-  colors: string[];
-  totalQuantity: number;
-  status: 'in-stock' | 'out-of-stock' | 'coming-soon';
-  description: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+const imageSchema = new mongoose.Schema({
+  url: {
+    type: String,
+    required: true
+  },
+  color: String,
+  version: String
+}, { _id: false });
 
-interface IProductMethods {
-  calculateAverageRating(): number;
-  checkStock(size: string, quantity: number): boolean;
-}
+const sizeSchema = new mongoose.Schema({
+  size: {
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+}, { _id: false });
 
-type ProductDocument = mongoose.Document & IProduct & IProductMethods;
-type ProductModel = mongoose.Model<ProductDocument>;
-
-const reviewSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  rating: { type: Number, required: true },
-  comment: { type: String },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const productSchema = new mongoose.Schema<ProductDocument>({
-  name: { type: String, required: true },
-  images: [{ type: String, required: true }],
-  price: { type: Number, required: true },
-  reviews: [reviewSchema],
-  averageRating: { type: Number, default: 0 },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
-  features: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Feature' }],
-  targetAudience: { type: String, required: true },
-  sizes: [{
-    size: { type: String, required: true },
-    quantity: { type: Number, required: true }
+const productSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  originalPrice: {
+    type: Number
+  },
+  discount: {
+    type: Number
+  },
+  images: [imageSchema],
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
+  features: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Feature'
   }],
-  brand: { type: String, required: true },
-  colors: [{ type: String, required: true }],
-  totalQuantity: { type: Number, required: true },
-  status: { type: String, enum: ['in-stock', 'out-of-stock', 'coming-soon'], default: 'in-stock' },
-  description: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
+  sizes: [sizeSchema],
+  colors: [String],
+  status: {
+    type: String,
+    enum: Object.values(PRODUCT_STATUS),
+    default: PRODUCT_STATUS.IN_STOCK
+  },
+  rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 0
+  },
+  reviewCount: {
+    type: Number,
+    default: 0
+  },
+  totalQuantity: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  brand: {
+    type: String,
+    required: true
+  },
+  targetAudience: [{
+    type: String,
+    enum: ['men', 'women', 'kids', 'unisex']
+  }],
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 }, {
   timestamps: true
 });
 
-productSchema.index({ name: 'text', description: 'text' });
-productSchema.index({ category: 1 });
-productSchema.index({ status: 1 });
-
-productSchema.methods.calculateAverageRating = function(this: ProductDocument) {
-  if (this.reviews.length === 0) return 0;
-  const sum = this.reviews.reduce((acc: number, review: Review) => acc + review.rating, 0);
-  this.averageRating = sum / this.reviews.length;
-  return this.averageRating;
-};
-
-productSchema.methods.checkStock = function(this: ProductDocument, size: string, quantity: number) {
-  const sizeItem = this.sizes.find((s: { size: string; quantity: number }) => s.size === size);
-  if (!sizeItem) return false;
-  return sizeItem.quantity >= quantity;
-};
-
-productSchema.pre('save', function(this: ProductDocument, next) {
-  if (this.isModified('reviews')) {
-    this.calculateAverageRating();
+// Tính toán totalQuantity trước khi lưu
+productSchema.pre('save', function(next) {
+  if (this.sizes) {
+    this.totalQuantity = this.sizes.reduce((total, size) => total + size.quantity, 0);
   }
   next();
 });
 
-export default mongoose.models.Product || mongoose.model<ProductDocument>('Product', productSchema); 
+// Tính toán discount trước khi lưu
+productSchema.pre('save', function(next) {
+  if (this.originalPrice && this.price) {
+    this.discount = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
+  }
+  next();
+});
+
+// Tự động cập nhật status dựa trên totalQuantity
+productSchema.pre('save', function(next) {
+  if (this.totalQuantity === 0) {
+    this.status = PRODUCT_STATUS.OUT_OF_STOCK;
+  } else if (this.status === PRODUCT_STATUS.OUT_OF_STOCK && this.totalQuantity > 0) {
+    this.status = PRODUCT_STATUS.IN_STOCK;
+  }
+  next();
+});
+
+const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
+
+export default Product; 

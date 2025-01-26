@@ -1,122 +1,101 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import WishlistItem from '@/components/wishlist/WishlistItem';
-import EmptyWishlist from '@/components/wishlist/EmptyWishlist';
-import ProductCard from '@/components/common/ProductCard';
-
-// Mock data - trong thực tế sẽ lấy từ API
-const mockWishlistItems = [
-  {
-    id: '1',
-    name: 'Nike Air Max 270',
-    price: 150,
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
-    inStock: true
-  },
-  {
-    id: '2',
-    name: 'Adidas Ultraboost',
-    price: 180,
-    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
-    inStock: true
-  }
-];
-
-const recommendedProducts = [
-  {
-    id: '3',
-    name: 'Nike Air Force 1',
-    price: 120,
-    image: 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519',
-    discount: 10,
-    rating: 4.8
-  }
-];
+import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useCartContext } from '@/contexts/CartContext';
 
 export default function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState(mockWishlistItems);
-
-  const handleRemoveFromWishlist = (id: string) => {
-    setWishlistItems(prevItems => prevItems.filter(item => item.id !== id));
-  };
-
-  const handleAddToCart = (id: string) => {
-    // Thêm logic thêm vào giỏ hàng ở đây
-    console.log('Add to cart:', id);
-  };
-
-  const handleClearAll = () => {
-    setWishlistItems([]);
-  };
+  const { wishlist, removeFromWishlist } = useWishlistContext();
+  const { addToCart } = useCartContext();
 
   return (
-    <main className="bg-gray-50">
+    <>
       <Navbar />
-      
-      {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
-        <nav className="flex text-gray-500 text-sm">
-          <Link href="/" className="hover:text-black">Home</Link>
-          <span className="mx-2">/</span>
-          <span className="text-black">Wishlist</span>
-        </nav>
-      </div>
+      <main>
+        {/* Breadcrumb */}
+        <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
+          <nav className="flex text-gray-500 text-sm">
+            <Link href="/" className="hover:text-black">Trang chủ</Link>
+            <span className="mx-2">/</span>
+            <span className="text-black">Danh sách yêu thích</span>
+          </nav>
+        </div>
 
-      {/* Wishlist Section */}
-      <section className="max-w-7xl mx-auto px-4 mb-20">
-        {wishlistItems.length > 0 ? (
-          <>
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-3xl font-bold">
-                My Wishlist ({wishlistItems.length})
-              </h1>
-              <button 
-                onClick={handleClearAll}
-                className="text-gray-600 hover:text-black transition-colors"
-              >
-                Clear All
-              </button>
-            </div>
+        {/* Wishlist Section */}
+        <section className="max-w-7xl mx-auto px-4 mb-20">
+          <h1 className="text-3xl font-bold mb-8">Danh sách yêu thích ({wishlist.totalItems})</h1>
 
-            <div className="grid grid-cols-1 gap-6">
-              {wishlistItems.map(item => (
-                <WishlistItem
-                  key={item.id}
-                  {...item}
-                  onRemove={handleRemoveFromWishlist}
-                  onAddToCart={handleAddToCart}
-                />
+          {wishlist.items.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {wishlist.items.map((item) => (
+                <div key={item._id} className="bg-white rounded-lg shadow-sm p-4">
+                  {/* Product Image */}
+                  <div className="relative aspect-square mb-4">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover rounded-md"
+                    />
+                  </div>
+
+                  {/* Product Details */}
+                  <div>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold">{item.name}</h3>
+                      <button
+                        onClick={() => removeFromWishlist(item._id)}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+
+                    <p className="text-gray-500 mb-4">{item.price.toLocaleString('vi-VN')}₫</p>
+
+                    {/* Add to Cart Button */}
+                    <button
+                      onClick={() => {
+                        // Thêm sản phẩm vào giỏ hàng với size mặc định
+                        const defaultSize = item.sizes[0];
+                        if (defaultSize) {
+                          addToCart({
+                            ...item,
+                            size: defaultSize,
+                            stock: item.stock[defaultSize] || 0
+                          });
+                        }
+                      }}
+                      className="w-full bg-black text-white py-2 rounded-full hover:bg-gray-800"
+                    >
+                      Thêm vào giỏ hàng
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
-          </>
-        ) : (
-          <EmptyWishlist />
-        )}
-      </section>
-
-      {/* Product Recommendations */}
-      <section className="max-w-7xl mx-auto px-4 mb-20">
-        <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {recommendedProducts.map(product => (
-            <ProductCard 
-              key={product.id}
-              id={product.id}
-              name={product.name}
-              price={product.price}
-              image={product.image}
-              discount={product.discount}
-              rating={product.rating}
-            />
-          ))}
-        </div>
-      </section>
-
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fas fa-heart text-4xl text-gray-400"></i>
+              </div>
+              <h2 className="text-2xl font-bold mb-4">Danh sách yêu thích trống</h2>
+              <p className="text-gray-600 mb-8">Hãy khám phá các sản phẩm của chúng tôi</p>
+              <Link 
+                href="/shop" 
+                className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800 inline-block"
+              >
+                Tiếp tục mua sắm
+              </Link>
+            </div>
+          )}
+        </section>
+      </main>
       <Footer />
-    </main>
+    </>
   );
 } 

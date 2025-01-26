@@ -7,67 +7,45 @@ interface OrderSummaryProps {
   subtotal: number;
   shipping: number;
   tax: number;
-  total: number;
-  discount: number;
-  items: Array<{
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-  }>;
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({
-  subtotal,
-  shipping,
-  tax,
-  total,
-  discount,
-  items
-}) => {
+export default function OrderSummary({ subtotal, shipping, tax }: OrderSummaryProps) {
+  const total = subtotal + shipping + tax;
+
   return (
-    <div className="bg-gray-50 p-6 rounded-xl">
-      <h2 className="text-lg font-semibold mb-6">Order Summary</h2>
-      
-      {/* Items Summary */}
-      <div className="mb-4 text-sm text-gray-600">
-        <p>{items.length} items in cart</p>
-      </div>
+    <div className="bg-white p-6 rounded-lg shadow-sm">
+      <h2 className="text-xl font-bold mb-6">Tổng đơn hàng</h2>
 
-      {/* Summary */}
-      <div className="border-t pt-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Subtotal</span>
-          <span>${subtotal.toFixed(2)}</span>
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between">
+          <span>Tạm tính:</span>
+          <span>{subtotal.toLocaleString('vi-VN')}₫</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span>Shipping</span>
-          <span>${shipping.toFixed(2)}</span>
+
+        <div className="flex justify-between">
+          <span>Phí vận chuyển:</span>
+          <span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')}₫`}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span>Tax</span>
-          <span>${tax.toFixed(2)}</span>
+
+        <div className="flex justify-between">
+          <span>Thuế (10%):</span>
+          <span>{tax.toLocaleString('vi-VN')}₫</span>
         </div>
-        {discount > 0 && (
-          <div className="flex justify-between text-sm text-green-600">
-            <span>Discount</span>
-            <span>-${discount.toFixed(2)}</span>
+
+        <div className="border-t pt-4">
+          <div className="flex justify-between font-bold">
+            <span>Tổng cộng:</span>
+            <span>{total.toLocaleString('vi-VN')}₫</span>
           </div>
-        )}
-        <div className="flex justify-between font-semibold text-lg pt-2 border-t">
-          <span>Total</span>
-          <span>${total.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Checkout Button */}
-      <Link href="/checkout" className="block">
-        <button className="w-full bg-black text-white py-3 rounded-lg mt-6 hover:bg-gray-800 transition-colors">
-          Proceed to Checkout
-        </button>
+      <Link
+        href="/checkout"
+        className="w-full bg-black text-white py-3 rounded-full text-center block hover:bg-gray-800"
+      >
+        Thanh toán
       </Link>
     </div>
   );
-};
-
-export default OrderSummary; 
+} 
