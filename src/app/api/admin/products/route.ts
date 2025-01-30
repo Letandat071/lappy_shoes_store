@@ -140,11 +140,11 @@ export async function GET(request: NextRequest) {
     const formattedProducts = products.map((product: any) => ({
       ...product,
       _id: product._id.toString(),
-      images: Array.isArray(product.images) ? product.images.map(img => ({
+      images: Array.isArray(product.images) ? product.images.map((img: ProductImage) => ({
         url: img.url || '',
         color: img.color || '',
         version: img.version || ''
-      })).filter(img => img.url) : [],
+      })).filter((img: ProductImage) => img.url) : [],
       category: product.category && typeof product.category === 'object' ? {
         _id: product.category._id.toString(),
         name: product.category.name

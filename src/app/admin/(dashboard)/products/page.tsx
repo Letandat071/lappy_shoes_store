@@ -260,7 +260,7 @@ export default function ProductsPage() {
   };
 
   // Handle delete
-  const handleDelete = async (id: mongoose.Types.ObjectId) => {
+  const handleDelete = async (id: string | mongoose.Types.ObjectId) => {
     if (window.confirm("Bạn có chắc muốn xóa sản phẩm này?")) {
       try {
         const response = await fetch(`/api/admin/products?id=${id}`, {
@@ -721,7 +721,7 @@ export default function ProductsPage() {
                     <select
                       value={formData.targetAudience}
                       onChange={(e) =>
-                        setFormData({ ...formData, targetAudience: e.target.value })
+                        setFormData({ ...formData, targetAudience: [e.target.value] })
                       }
                       className="w-full border rounded-lg p-2"
                       required

@@ -5,49 +5,28 @@ import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ShippingForm from '@/components/checkout/ShippingForm';
-import PaymentForm from '@/components/checkout/PaymentForm';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
+import { useCartContext } from '@/contexts/CartContext';
 
-interface CheckoutItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  size: string;
-  color: string;
+interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
 }
 
-// Mock checkout data
-const mockCheckoutItems: CheckoutItem[] = [
-  {
-    id: "1",
-    name: "Nike Air Max 270",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-    size: "US 9",
-    color: "Black",
-    price: 150.00,
-    quantity: 1
-  },
-  {
-    id: "2",
-    name: "Adidas Ultra Boost",
-    image: "https://images.unsplash.com/photo-1608231387042-66d1773070a5",
-    size: "US 10",
-    color: "White",
-    price: 180.00,
-    quantity: 1
-  }
-];
-
 export default function CheckoutPage() {
-  const [items] = useState<CheckoutItem[]>(mockCheckoutItems);
+  const { cart } = useCartContext();
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddress | null>(null);
 
   // Calculate totals
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 10.00;
-  const tax = subtotal * 0.1;
-  const total = subtotal + shipping + tax;
+  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = subtotal >= 1000000 ? 0 : 30000; // Miễn phí ship cho đơn >= 1tr
+  const total = subtotal + shipping;
+
+  const handleShippingSubmit = (address: ShippingAddress) => {
+    setShippingAddress(address);
+  };
 
   return (
     <>
@@ -56,31 +35,32 @@ export default function CheckoutPage() {
         {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
           <nav className="flex text-gray-500 text-sm">
-            <Link href="/" className="hover:text-black">Home</Link>
+            <Link href="/" className="hover:text-black">Trang chủ</Link>
             <span className="mx-2">/</span>
-            <Link href="/cart" className="hover:text-black">Cart</Link>
+            <Link href="/cart" className="hover:text-black">Giỏ hàng</Link>
             <span className="mx-2">/</span>
-            <span className="text-black">Checkout</span>
+            <span className="text-black">Thanh toán</span>
           </nav>
         </div>
 
         {/* Checkout Section */}
         <section className="max-w-7xl mx-auto px-4 mb-20">
+          <h1 className="text-3xl font-bold mb-8">Thanh toán</h1>
+          
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Checkout Forms */}
-            <div className="lg:w-2/3">
-              <ShippingForm />
-              <PaymentForm />
+            <div className="lg:w-2/3 space-y-6">
+              <ShippingForm onSubmit={handleShippingSubmit} />
             </div>
 
             {/* Order Summary */}
             <div className="lg:w-1/3">
               <CheckoutSummary 
-                items={items}
+                items={cart.items}
                 subtotal={subtotal}
                 shipping={shipping}
-                tax={tax}
                 total={total}
+                shippingAddress={shippingAddress || undefined}
               />
             </div>
           </div>

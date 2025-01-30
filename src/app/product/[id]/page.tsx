@@ -103,7 +103,7 @@ const ProductPage = () => {
     }
 
     addToCart({
-      _id: product._id,
+      productId: product._id,
       name: product.name,
       price: product.price,
       image: product.images[0].url,
@@ -111,6 +111,8 @@ const ProductPage = () => {
       quantity: quantity,
       stock: selectedSizeObj.quantity
     });
+
+    toast.success('Đã thêm vào giỏ hàng');
   };
 
   const toggleWishlist = () => {

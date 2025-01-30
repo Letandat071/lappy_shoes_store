@@ -96,8 +96,22 @@ const productSchema = new mongoose.Schema({
 
 // Tính toán totalQuantity trước khi lưu
 productSchema.pre('save', function(next) {
-  if (this.sizes) {
-    this.totalQuantity = this.sizes.reduce((total, size) => total + size.quantity, 0);
+  if (this.isModified('sizes')) {
+    // console.log('Pre-save hook - Old totalQuantity:', this.totalQuantity);
+    
+    this.totalQuantity = this.sizes.reduce(
+      (sum, size) => sum + size.quantity,
+      0
+    );
+    
+    // console.log('Pre-save hook - New totalQuantity:', this.totalQuantity);
+    
+    // Cập nhật status
+    if (this.totalQuantity === 0) {
+      this.status = PRODUCT_STATUS.OUT_OF_STOCK;
+    } else if (this.status === PRODUCT_STATUS.OUT_OF_STOCK && this.totalQuantity > 0) {
+      this.status = PRODUCT_STATUS.IN_STOCK;
+    }
   }
   next();
 });
@@ -106,16 +120,6 @@ productSchema.pre('save', function(next) {
 productSchema.pre('save', function(next) {
   if (this.originalPrice && this.price) {
     this.discount = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
-  }
-  next();
-});
-
-// Tự động cập nhật status dựa trên totalQuantity
-productSchema.pre('save', function(next) {
-  if (this.totalQuantity === 0) {
-    this.status = PRODUCT_STATUS.OUT_OF_STOCK;
-  } else if (this.status === PRODUCT_STATUS.OUT_OF_STOCK && this.totalQuantity > 0) {
-    this.status = PRODUCT_STATUS.IN_STOCK;
   }
   next();
 });

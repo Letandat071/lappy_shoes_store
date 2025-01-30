@@ -1,41 +1,100 @@
-import React from 'react';
+'use client'
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 
-const orders = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    status: 'Delivered',
-    total: 199.99,
-    items: [
-      {
-        id: '1',
-        name: 'Nike Air Max 270',
-        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
-        price: 159.99,
-        quantity: 1
-      }
-    ]
-  },
-  {
-    id: '2', 
-    date: '2024-01-10',
-    status: 'Processing',
-    total: 299.99,
-    items: [
-      {
-        id: '2',
-        name: 'Nike Air Zoom Pegasus',
-        image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa',
-        price: 129.99,
-        quantity: 2
-      }
-    ]
-  }
-];
+interface Product {
+  _id: string;
+  name: string;
+  images: { url: string }[];
+  price: number;
+}
+
+interface OrderItem {
+  product: {
+    _id: string;
+    name: string;
+    image: string | null;
+    price: number;
+  };
+  quantity: number;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  status: string;
+  total: number;
+  items: OrderItem[];
+}
 
 const RecentOrders = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/orders');
+        const data = await response.json();
+        
+        if (response.ok) {
+          const ordersWithProducts = await Promise.all(data.orders.map(async (order: Order) => {
+            const itemsWithProducts = await Promise.all(order.items.map(async (item) => {
+              try {
+                const productResponse = await fetch(`/api/products/${item.product._id}`);
+                if (!productResponse.ok) throw new Error('Failed to fetch product');
+                
+                const productData = await productResponse.json();
+                return {
+                  ...item,
+                  product: {
+                    ...item.product,
+                    image: productData.images?.[0]?.url || null,
+                    name: productData.name || 'Unknown Product',
+                    price: productData.price || 0
+                  }
+                };
+              } catch (error) {
+                console.error('Error fetching product:', error);
+                return {
+                  ...item,
+                  product: {
+                    ...item.product,
+                    image: null,
+                    name: 'Unknown Product',
+                    price: 0
+                  }
+                };
+              }
+            }));
+            return { 
+              ...order,
+              items: itemsWithProducts
+            };
+          }));
+
+          const filteredOrders = ordersWithProducts.filter(order => 
+            order.status !== 'cancelled' && order.status !== 'delivered'
+          );
+          
+          setOrders(filteredOrders);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Recent Orders</h2>
@@ -56,20 +115,27 @@ const RecentOrders = () => {
               </span>
             </div>
             
-            {order.items.map((item) => (
-              <div key={item.id} className="flex gap-4">
+            {order.items.map((item, index) => (
+              <div key={`${item.product._id}-${index}`} className="flex gap-4">
                 <div className="relative w-24 h-24">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
+                  {item.product.image ? (
+                    <Image
+                      src={item.product.image}
+                      alt={item.product.name || 'Product image'}
+                      fill
+                      className="object-cover rounded-lg"
+                      priority={index < 3}
+                    />
+                  ) : (
+                    <div className="bg-gray-100 w-full h-full flex items-center justify-center rounded-lg">
+                      <span className="text-gray-400 text-sm">Đang tải ảnh...</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{item.name}</h3>
+                  <h3 className="font-semibold">{item.product.name}</h3>
                   <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
-                  <p className="font-bold">${item.price}</p>
+                  <p className="font-bold">${item.product.price}</p>
                 </div>
               </div>
             ))}
@@ -90,4 +156,4 @@ const RecentOrders = () => {
   );
 };
 
-export default RecentOrders; 
+export default dynamic(() => Promise.resolve(RecentOrders), { ssr: false }); 

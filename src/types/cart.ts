@@ -1,5 +1,6 @@
 export interface CartItem {
-  _id: string;
+  _id: string;      // ID của sản phẩm trong giỏ hàng
+  productId: string; // ID của sản phẩm trong database
   name: string;
   price: number;
   image: string;

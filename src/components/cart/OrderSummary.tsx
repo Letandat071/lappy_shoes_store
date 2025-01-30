@@ -2,50 +2,53 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { formatPrice } from '@/utils/format';
 
 interface OrderSummaryProps {
   subtotal: number;
   shipping: number;
-  tax: number;
 }
 
-export default function OrderSummary({ subtotal, shipping, tax }: OrderSummaryProps) {
-  const total = subtotal + shipping + tax;
+const OrderSummary: React.FC<OrderSummaryProps> = ({ subtotal, shipping = 30000 }) => {
+  const total = subtotal + shipping;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-      <h2 className="text-xl font-bold mb-6">Tổng đơn hàng</h2>
-
-      <div className="space-y-4 mb-6">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
+      <h2 className="text-lg font-semibold mb-4">Tổng đơn hàng</h2>
+      
+      <div className="space-y-2 mb-4">
         <div className="flex justify-between">
-          <span>Tạm tính:</span>
-          <span>{subtotal.toLocaleString('vi-VN')}₫</span>
+          <span className="text-gray-600">Tạm tính:</span>
+          <span>{formatPrice(subtotal)}₫</span>
         </div>
-
         <div className="flex justify-between">
-          <span>Phí vận chuyển:</span>
-          <span>{shipping === 0 ? 'Miễn phí' : `${shipping.toLocaleString('vi-VN')}₫`}</span>
-        </div>
-
-        <div className="flex justify-between">
-          <span>Thuế (10%):</span>
-          <span>{tax.toLocaleString('vi-VN')}₫</span>
-        </div>
-
-        <div className="border-t pt-4">
-          <div className="flex justify-between font-bold">
-            <span>Tổng cộng:</span>
-            <span>{total.toLocaleString('vi-VN')}₫</span>
-          </div>
+          <span className="text-gray-600">Phí vận chuyển:</span>
+          <span>{subtotal >= 1000000 ? 'Miễn phí' : `${formatPrice(shipping)}₫`}</span>
         </div>
       </div>
 
-      <Link
-        href="/checkout"
-        className="w-full bg-black text-white py-3 rounded-full text-center block hover:bg-gray-800"
-      >
-        Thanh toán
-      </Link>
+      <div className="border-t pt-4">
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-semibold">Tổng cộng:</span>
+          <span className="text-xl font-bold">{formatPrice(total)}₫</span>
+        </div>
+
+        <Link 
+          href="/checkout"
+          className="block w-full bg-black text-white text-center py-3 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          Thanh toán
+        </Link>
+      </div>
+
+      {/* Free Shipping Notice */}
+      {subtotal < 1000000 && (
+        <div className="mt-4 text-sm text-gray-600">
+          Mua thêm <span className="font-medium">{formatPrice(1000000 - subtotal)}₫</span> để được miễn phí vận chuyển
+        </div>
+      )}
     </div>
   );
-} 
+};
+
+export default OrderSummary; 

@@ -5,18 +5,18 @@ import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     // Kết nối database
     await connectDB();
     
-    // Lấy id từ params
-    const { id } = context.params;
+    // Sửa tại đây - await params trước khi destructure
+    const id = (await params).id;
 
     if (!mongoose.isValidObjectId(id)) {
       return NextResponse.json(
-        { error: 'ID sản phẩm không hợp lệ' },
+        { error: 'Invalid product ID' },
         { status: 400 }
       );
     }
@@ -29,16 +29,22 @@ export async function GET(
 
     if (!product) {
       return NextResponse.json(
-        { error: 'Không tìm thấy sản phẩm' },
+        { error: 'Product not found' },
         { status: 404 }
       );
     }
 
+    console.log('Product details:', {
+      id: product._id,
+      sizes: product.sizes,
+      totalQuantity: product.totalQuantity
+    });
+
     return NextResponse.json(product);
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Lỗi khi lấy thông tin sản phẩm' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
