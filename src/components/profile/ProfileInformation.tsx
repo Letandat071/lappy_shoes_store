@@ -35,7 +35,7 @@ const ProfileInformation = () => {
             email: data.user.email || '',
             phone: data.user.phone || '',
             address: data.user.address || '',
-            avatar: data.user.avatar || 'https://i.pravatar.cc/100?img=1'
+            avatar: data.user.avatar || 'https://i.pravatar.cc/100?img=2'
           });
           console.log("3. Form data được set:", data.user);
         }

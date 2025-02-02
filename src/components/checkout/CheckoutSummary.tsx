@@ -17,6 +17,8 @@ interface CheckoutSummaryProps {
     address: string;
     city: string;
   };
+  onPlaceOrder: () => void;
+  isProcessing: boolean;
 }
 
 const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
@@ -24,67 +26,27 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   subtotal,
   shipping,
   total,
-  shippingAddress
+  shippingAddress,
+  onPlaceOrder,
+  isProcessing
 }) => {
   const router = useRouter();
   const { clearCart } = useCartContext();
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'ONLINE'>('COD');
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = () => {
     if (!shippingAddress) {
       toast.error('Vui lòng nhập thông tin giao hàng');
       return;
     }
 
-    setIsProcessing(true);
-    
-    try {
-      if (paymentMethod === 'ONLINE') {
-        // Chuyển đến trang thanh toán
-        router.push('/checkout/payment');
-      } else {
-        // Xử lý đặt hàng COD
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            items: items.map(item => ({
-              product: item.productId,
-              quantity: item.quantity,
-              size: item.size,
-              price: item.price,
-              color: 'default'
-            })),
-            totalAmount: total,
-            shippingAddress,
-            paymentMethod: 'COD'
-          }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Xóa giỏ hàng (không hiển thị thông báo)
-          clearCart();
-          // Hiển thị thông báo đặt hàng thành công
-          toast.success('Đặt hàng thành công!');
-          // Chuyển đến trang success
-          window.location.href = '/checkout/success';
-        } else {
-          toast.error(data.error || 'Có lỗi xảy ra khi đặt hàng');
-          window.location.href = '/checkout/failed';
-        }
-      }
-    } catch (error) {
-      console.error('Error placing order:', error);
-      toast.error('Có lỗi xảy ra khi đặt hàng');
-      router.push('/checkout/failed');
-    } finally {
-      setIsProcessing(false);
+    if (paymentMethod === 'ONLINE') {
+      router.push('/checkout/payment');
+      return;
     }
+
+    // Gọi hàm onPlaceOrder từ parent component
+    onPlaceOrder();
   };
 
   return (

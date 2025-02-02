@@ -202,7 +202,7 @@ const HeroSection = ({ banner }: Props) => {
       )}
 
       <div className="max-w-7xl mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="flex flex-col lg:flex-row gap-12 items-center">
           {/* Left Content */}
           <div className="text-white space-y-8 max-h-[calc(100vh-200px)] overflow-y-auto scrollbar-hide">
             <div className="space-y-4">
@@ -317,21 +317,28 @@ const HeroSection = ({ banner }: Props) => {
             
             {/* Main product image */}
             <div className="relative">
-              {localBanner.image && (
-                <Image 
-                  id="mainProductImage" 
-                  src={localBanner.image}
-                  alt="Featured Shoe" 
-                  className="w-full max-w-2xl mx-auto transform transition-all duration-700 floating"
-                  width={500}
-                  height={500}
-                  style={{ objectFit: 'contain' }}
-                  priority
-                />
-              )}
+              <div style={{ transform: 'translateX(-200px)' }}>
+                {localBanner.image && (
+                  <Image 
+                    id="mainProductImage" 
+                    src={localBanner.image}
+                    alt="Featured Shoe" 
+                    className="w-full max-w-[800px] mx-auto transform transition-all duration-700 floating"
+                    width={1500}
+                    height={1500}
+                    style={{ objectFit: 'contain' }}
+                    priority
+                  />
+                )}
+              </div>
               
               {/* Product Features */}
-              <div className="absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2 space-y-4">
+              <div 
+                className="absolute top-1/2 right-0 space-y-4"
+                style={{
+                  transform: 'translate(-100px, -50%)'
+                }}
+              >
                 {localBanner.features.map((feature, index) => (
                   <div key={index} className="product-feature bg-white/10 backdrop-blur-md rounded-xl p-4 cursor-pointer">
                     <div className="flex items-center gap-3">

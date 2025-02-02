@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Vui lòng nhập email'],
-    unique: true,
+    // unique: true,  // tạm comment dòng này
     trim: true,
     lowercase: true,
     match: [/^\S+@\S+\.\S+$/, 'Email không hợp lệ'],
@@ -49,6 +49,7 @@ userSchema.pre('save', function(next) {
   this.updatedAt = new Date();
   next();
 });
+
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 

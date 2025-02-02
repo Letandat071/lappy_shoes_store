@@ -137,24 +137,33 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [name]: value
+      };
 
-    // Reset dependent fields
-    if (name === 'province') {
-      setFormData(prev => ({
-        ...prev,
-        district: '',
-        ward: ''
-      }));
-    } else if (name === 'district') {
-      setFormData(prev => ({
-        ...prev,
-        ward: ''
-      }));
-    }
+      // Reset dependent fields
+      if (name === 'province') {
+        newFormData.district = '';
+        newFormData.ward = '';
+      } else if (name === 'district') {
+        newFormData.ward = '';
+      }
+
+      // Gọi onSubmit khi đủ thông tin
+      const { fullName, phone, province, district, ward, address } = newFormData;
+      if (fullName && phone && province && district && ward && address) {
+        onSubmit({
+          fullName,
+          phone,
+          address: `${address}, ${ward}, ${district}`,
+          city: province
+        });
+      }
+
+      return newFormData;
+    });
   };
 
   const handleAddressSelect = (address: Address) => {
@@ -176,19 +185,6 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
       city: address.province
     });
   };
-
-  // Validate and submit form
-  useEffect(() => {
-    const { fullName, phone, province, district, ward, address } = formData;
-    if (fullName && phone && province && district && ward && address) {
-      onSubmit({
-        fullName,
-        phone,
-        address: `${address}, ${ward}, ${district}`,
-        city: province
-      });
-    }
-  }, [formData, onSubmit]);
 
   if (loading) {
     return (

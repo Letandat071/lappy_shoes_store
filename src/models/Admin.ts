@@ -57,9 +57,6 @@ adminSchema.pre('save', function(next) {
   next();
 });
 
-// Đảm bảo email là unique
-adminSchema.index({ email: 1 }, { unique: true });
-
 const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
 
 export default Admin; 

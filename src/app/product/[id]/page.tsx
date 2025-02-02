@@ -88,6 +88,18 @@ const ProductPage = () => {
     }
   };
 
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (product && selectedSize) {
+      const selectedSizeObj = product.sizes.find(s => s.size === selectedSize);
+      if (selectedSizeObj) {
+        const newQuantity = parseInt(e.target.value) || 1;
+        if (newQuantity >= 1 && newQuantity <= selectedSizeObj.quantity) {
+          setQuantity(newQuantity);
+        }
+      }
+    }
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -111,8 +123,6 @@ const ProductPage = () => {
       quantity: quantity,
       stock: selectedSizeObj.quantity
     });
-
-    toast.success('Đã thêm vào giỏ hàng');
   };
 
   const toggleWishlist = () => {
@@ -279,21 +289,22 @@ const ProductPage = () => {
                 <button 
                   className="px-4 py-2 hover:bg-gray-100" 
                   onClick={() => updateQuantity(-1)}
-                  disabled={!selectedSize}
+                  disabled={!selectedSize || quantity <= 1}
                 >
                   -
                 </button>
                 <input 
                   type="number" 
                   value={quantity} 
-                  min="1" 
+                  onChange={handleQuantityChange}
+                  min="1"
+                  max={selectedSize ? product.sizes.find(s => s.size === selectedSize)?.quantity || 1 : 1}
                   className="w-16 text-center border-x-2"
-                  readOnly
                 />
                 <button 
                   className="px-4 py-2 hover:bg-gray-100" 
                   onClick={() => updateQuantity(1)}
-                  disabled={!selectedSize}
+                  disabled={!selectedSize || quantity >= (product.sizes.find(s => s.size === selectedSize)?.quantity || 1)}
                 >
                   +
                 </button>

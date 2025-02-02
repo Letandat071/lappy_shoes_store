@@ -36,7 +36,7 @@ export default function CartPage() {
                 <CartItems 
                   items={cart.items}
                   onUpdateQuantity={updateQuantity}
-                  onRemoveItem={(id, size) => removeFromCart(id, size)}
+                  onRemoveItem={removeFromCart}
                 />
               </div>
 

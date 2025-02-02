@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ShippingForm from '@/components/checkout/ShippingForm';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import { useCartContext } from '@/contexts/CartContext';
+import { toast } from 'react-hot-toast';
 
 interface ShippingAddress {
   fullName: string;
@@ -16,8 +18,10 @@ interface ShippingAddress {
 }
 
 export default function CheckoutPage() {
-  const { cart } = useCartContext();
+  const router = useRouter();
+  const { cart, setCart } = useCartContext();
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Calculate totals
   const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -26,6 +30,61 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (address: ShippingAddress) => {
     setShippingAddress(address);
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!shippingAddress) {
+      toast.error('Vui lòng nhập thông tin giao hàng');
+      return;
+    }
+
+    const isConfirmed = window.confirm('Bạn có chắc muốn đặt hàng không?');
+    if (!isConfirmed) {
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          items: cart.items.map(item => ({
+            product: item.productId,
+            quantity: item.quantity,
+            size: item.size,
+            price: item.price,
+            color: 'default'
+          })),
+          totalAmount: total,
+          shippingAddress: {
+            fullName: shippingAddress.fullName,
+            phone: shippingAddress.phone,
+            address: shippingAddress.address,
+            city: shippingAddress.city
+          },
+          paymentMethod: 'COD'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Đặt hàng thất bại');
+      }
+
+      toast.success('Đặt hàng thành công!');
+      setCart({ items: [], totalItems: 0, totalPrice: 0 });
+      window.location.href = '/checkout/success';
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast.error('Có lỗi xảy ra khi đặt hàng');
+      window.location.href = '/checkout/failed';
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -61,6 +120,8 @@ export default function CheckoutPage() {
                 shipping={shipping}
                 total={total}
                 shippingAddress={shippingAddress || undefined}
+                onPlaceOrder={handlePlaceOrder}
+                isProcessing={isProcessing}
               />
             </div>
           </div>

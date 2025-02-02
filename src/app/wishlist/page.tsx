@@ -6,13 +6,40 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useWishlistContext } from '../../contexts/WishlistContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/format';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlistContext();
   const { addToCart } = useCartContext();
+  const { user } = useAuth();
+
+  // Nếu chưa đăng nhập, hiển thị thông báo
+  if (!user) {
+    return (
+      <>
+        <Navbar />
+        <main className="min-h-screen bg-gray-50 pt-32">
+          <div className="max-w-7xl mx-auto px-4 text-center py-20">
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <i className="fas fa-lock text-4xl text-gray-400"></i>
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Vui lòng đăng nhập</h2>
+            <p className="text-gray-600 mb-8">Để xem danh sách yêu thích của bạn</p>
+            <Link 
+              href="/auth" 
+              className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800 inline-block"
+            >
+              Đăng nhập ngay
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

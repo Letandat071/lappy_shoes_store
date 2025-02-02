@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Swal from 'sweetalert2';
 
 const SignUpForm = () => {
   const [formData, setFormData] = useState({
@@ -12,28 +13,56 @@ const SignUpForm = () => {
     confirmPassword: '',
     agreeToTerms: false
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setLoading(true);
 
     // Kiểm tra mật khẩu khớp
     if (formData.password !== formData.confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: 'Mật khẩu xác nhận không khớp',
+        icon: 'error',
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#000'
+      });
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-
     try {
       await register(formData.fullName, formData.email, formData.password);
-      router.push('/'); // Chuyển về trang chủ sau khi đăng ký
+      
+      // Hiển thị thông báo thành công
+      await Swal.fire({
+        title: 'Đăng ký thành công!',
+        text: 'Vui lòng đăng nhập để tiếp tục',
+        icon: 'success',
+        confirmButtonText: 'Đăng nhập ngay',
+        confirmButtonColor: '#000'
+      });
+
+      // Chuyển về form login và reset form
+      router.push('/auth?tab=login');
+      setFormData({
+        fullName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        agreeToTerms: false
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: err instanceof Error ? err.message : 'Đã có lỗi xảy ra',
+        icon: 'error',
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#000'
+      });
     } finally {
       setLoading(false);
     }
@@ -49,12 +78,6 @@ const SignUpForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
       <div>
         <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
           Họ và tên

@@ -38,6 +38,19 @@ export default function RootLayout({
                   style: {
                     background: '#333',
                     color: '#fff',
+                  },
+                  success: {
+                    iconTheme: {
+                      //màu xanh lá
+                      primary: '#4CAF50', //xanh lá
+                      secondary: '#333',
+                    },
+                  },
+                  error: {
+                    iconTheme: {
+                      primary: '#FF0000',
+                      secondary: '#333',
+                    },
                   }
                 }}
               />

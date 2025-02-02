@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import Image from "next/image";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
-
+import Navbar from "../../components/layout/Navbar";
+import Footer from "../../components/layout/Footer";
 export default function AuthPage() {
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
+  // Đọc tab từ URL khi component mount
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'register' || tab === 'login') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   return (
+    <>
+    <Navbar />
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
@@ -76,5 +89,7 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 } 

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Swal from 'sweetalert2';
 
 const SignInForm = () => {
   const [formData, setFormData] = useState({
@@ -23,9 +24,25 @@ const SignInForm = () => {
 
     try {
       await login(formData.email, formData.password);
-      router.push('/'); // Chuyển về trang chủ sau khi đăng nhập
+      
+      // Thông báo đăng nhập thành công
+      await Swal.fire({
+        title: 'Thành công!',
+        text: 'Đăng nhập thành công',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      router.push('/'); // Chuyển về trang chủ
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã có lỗi xảy ra');
+      Swal.fire({
+        title: 'Lỗi!',
+        text: err instanceof Error ? err.message : 'Đã có lỗi xảy ra',
+        icon: 'error',
+        confirmButtonText: 'Đóng',
+        confirmButtonColor: '#000'
+      });
     } finally {
       setLoading(false);
     }

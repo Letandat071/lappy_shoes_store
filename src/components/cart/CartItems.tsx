@@ -2,69 +2,93 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { formatPrice } from '@/utils/format';
 import { CartItem } from '@/types/cart';
 
 interface CartItemsProps {
   items: CartItem[];
-  onUpdateQuantity: (id: string, size: string, quantity: number) => void;
-  onRemoveItem: (id: string, size: string) => void;
+  onUpdateQuantity: (productId: string, size: string, quantity: number) => void;
+  onRemoveItem: (productId: string, size: string) => void;
 }
 
-export default function CartItems({ items, onUpdateQuantity, onRemoveItem }: CartItemsProps) {
+const CartItems = ({ items, onUpdateQuantity, onRemoveItem }: CartItemsProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {items.map((item) => (
-        <div key={`${item._id}-${item.size}`} className="flex gap-6 p-4 bg-white rounded-lg shadow-sm">
-          {/* Product Image */}
-          <div className="relative w-24 h-24">
-            <Image
-              src={item.image}
-              alt={item.name}
-              fill
-              className="object-cover rounded-md"
-            />
-          </div>
+        <div key={`${item.productId}-${item.size}`} className="bg-white p-4 rounded-lg shadow">
+          <div className="flex items-center gap-4">
+            <Link href={`/product/${item.productId}`} className="shrink-0">
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={100}
+                height={100}
+                className="rounded-md object-cover"
+              />
+            </Link>
 
-          {/* Product Details */}
-          <div className="flex-1">
-            <div className="flex justify-between mb-2">
-              <h3 className="font-semibold">{item.name}</h3>
-              <button
-                onClick={() => onRemoveItem(item._id, item.size)}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between">
+                <div>
+                  <Link 
+                    href={`/product/${item.productId}`}
+                    className="text-lg font-medium hover:text-primary-600"
+                  >
+                    {item.name}
+                  </Link>
+                  <p className="text-gray-600 text-sm">Size: {item.size}</p>
+                </div>
+                <button
+                  onClick={() => onRemoveItem(item.productId, item.size)}
+                  className="text-gray-400 hover:text-red-500"
+                >
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
 
-            <div className="text-sm text-gray-500 mb-4">
-              <p>Size: {item.size}</p>
-              <p>Giá: {item.price.toLocaleString('vi-VN')}₫</p>
-            </div>
-
-            {/* Quantity Controls */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onUpdateQuantity(item._id, item.size, item.quantity - 1)}
-                className="w-8 h-8 flex items-center justify-center border rounded-full hover:bg-gray-100"
-                disabled={item.quantity <= 1}
-              >
-                <i className="fas fa-minus text-sm"></i>
-              </button>
-
-              <span className="w-12 text-center">{item.quantity}</span>
-
-              <button
-                onClick={() => onUpdateQuantity(item._id, item.size, item.quantity + 1)}
-                className="w-8 h-8 flex items-center justify-center border rounded-full hover:bg-gray-100"
-                disabled={item.quantity >= item.stock}
-              >
-                <i className="fas fa-plus text-sm"></i>
-              </button>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center border rounded-lg">
+                  <button
+                    onClick={() => onUpdateQuantity(item.productId, item.size, item.quantity - 1)}
+                    className="px-3 py-1 hover:bg-gray-100"
+                    disabled={item.quantity <= 1}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max={item.stock}
+                    value={item.quantity}
+                    onChange={(e) => onUpdateQuantity(item.productId, item.size, parseInt(e.target.value) || 1)}
+                    className="w-16 text-center border-x py-1"
+                  />
+                  <button
+                    onClick={() => onUpdateQuantity(item.productId, item.size, item.quantity + 1)}
+                    className="px-3 py-1 hover:bg-gray-100"
+                    disabled={item.quantity >= item.stock}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-medium">
+                    {formatPrice(item.price * item.quantity)}₫
+                  </div>
+                  {item.originalPrice && (
+                    <div className="text-sm text-gray-500 line-through">
+                      {formatPrice(item.originalPrice * item.quantity)}₫
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       ))}
     </div>
   );
-} 
+};
+
+export default CartItems; 

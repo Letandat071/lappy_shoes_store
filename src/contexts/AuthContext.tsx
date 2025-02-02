@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 interface User {
   _id: string;
@@ -20,9 +22,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     checkUser();
@@ -65,13 +68,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
-    setUser(data.user);
+    return data;
   };
 
   const logout = async () => {
-    const res = await fetch('/api/auth/logout', { method: 'POST' });
-    if (res.ok) {
-      setUser(null);
+    const isConfirmed = window.confirm('Bạn có chắc muốn đăng xuất không?');
+    if (!isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setUser(null);
+        toast.success('Đăng xuất thành công');
+        router.push('/login');
+      } else {
+        toast.error('Có lỗi xảy ra khi đăng xuất');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Có lỗi xảy ra khi đăng xuất');
     }
   };
 
@@ -84,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export function useAuth() {
   const context = useContext(AuthContext);

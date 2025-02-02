@@ -58,4 +58,22 @@ const WishlistItem: React.FC<WishlistItemProps> = ({
   );
 };
 
-export default WishlistItem; 
+export default WishlistItem;
+
+const WISHLIST_KEY_PREFIX = 'user_wishlist_';
+
+export const getWishlistKey = (userId: string) => {
+  return `${WISHLIST_KEY_PREFIX}${userId}`;
+}
+
+export const getUserWishlist = (userId: string) => {
+  if (typeof window === 'undefined') return [];
+  const key = getWishlistKey(userId);
+  const wishlist = localStorage.getItem(key);
+  return wishlist ? JSON.parse(wishlist) : [];
+}
+
+export const saveUserWishlist = (userId: string, wishlist: any[]) => {
+  const key = getWishlistKey(userId);
+  localStorage.setItem(key, JSON.stringify(wishlist));
+} 
