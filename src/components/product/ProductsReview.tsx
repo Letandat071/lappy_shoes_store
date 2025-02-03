@@ -2,6 +2,10 @@ import React from "react";
 import Button from "@/components/common/Button";
 import Image from "next/image";
 
+interface ProductsReviewProps {
+  productId: string;
+}
+
 const product = {
   id: "1",
   name: "Nike Air Max 270",
@@ -53,7 +57,7 @@ const product = {
   },
 };
 
-const ProductsReview = () => {
+function ProductsReview({ productId }: ProductsReviewProps) {
   return (
     <div>
       {" "}
@@ -182,6 +186,6 @@ const ProductsReview = () => {
       </div>
     </div>
   );
-};
+}
 
 export default ProductsReview;
