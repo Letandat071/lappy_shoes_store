@@ -7,13 +7,15 @@ import { formatPrice } from "@/utils/format";
 interface OrderSummaryProps {
   subtotal: number;
   shipping: number;
+  tax?: number;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
   subtotal,
   shipping = 30000,
+  tax = 0,
 }) => {
-  const total = subtotal + shipping;
+  const total = subtotal + shipping + tax;
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-sm">
@@ -30,6 +32,12 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             {subtotal >= 1000000 ? "Miễn phí" : `${formatPrice(shipping)}₫`}
           </span>
         </div>
+        {tax > 0 && (
+          <div className="flex justify-between">
+            <span className="text-gray-600">Thuế:</span>
+            <span>{formatPrice(tax)}₫</span>
+          </div>
+        )}
       </div>
 
       <div className="border-t pt-4">
