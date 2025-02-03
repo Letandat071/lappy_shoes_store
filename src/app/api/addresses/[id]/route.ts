@@ -3,10 +3,17 @@ import connectDB from "@/lib/mongoose";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
+// Thêm kiểu RequestContext từ Next.js
+type RequestContext = {
+  params: {
+    id: string
+  }
+}
+
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RequestContext
 ) {
   try {
     await connectDB();
@@ -32,7 +39,7 @@ export async function PUT(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: params.id,
+      _id: context.params.id,
       user: userId
     });
 
@@ -71,7 +78,7 @@ export async function PUT(
 // Xóa địa chỉ
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RequestContext
 ) {
   try {
     await connectDB();
