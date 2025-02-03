@@ -2,24 +2,46 @@ import React from "react";
 import Image from "next/image";
 import mongoose from "mongoose";
 
-type Product = {
-  _id: mongoose.Types.ObjectId | string;
+type ProductResponse = {
+  _id: mongoose.Types.ObjectId;
   name: string;
+  description: string;
   price: number;
+  originalPrice?: number;
+  discount?: number;
   images: Array<{
     url: string;
     color?: string;
     version?: string;
   }>;
-  category: { name: string } | null;
-  brand: string;
+  category: {
+    _id: mongoose.Types.ObjectId;
+    name: string;
+  } | null;
+  features: Array<{
+    _id: mongoose.Types.ObjectId;
+    name: string;
+    icon: string;
+  }>;
   status: string;
+  rating?: number;
+  reviewCount?: number;
+  brand: string;
+  colors: string[];
+  sizes: Array<{
+    size: string;
+    quantity: number;
+  }>;
+  totalQuantity: number;
+  createdAt: Date;
+  updatedAt: Date;
+  __v: number;
 };
 
 interface ProductCardProps {
-  product: Product;
-  onEdit: (product: Product) => void;
-  onDelete: (id: mongoose.Types.ObjectId | string) => void;
+  product: ProductResponse;
+  onEdit: (product: ProductResponse) => void;
+  onDelete: (id: string | mongoose.Types.ObjectId) => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({

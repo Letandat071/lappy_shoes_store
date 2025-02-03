@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface ProductImage {
   url: string;
@@ -45,16 +45,14 @@ interface Pagination {
   totalPages: number;
 }
 
-interface UseProductsOptions {
+interface UseProductsParams {
   page?: number;
   limit?: number;
-  category?: string;
-  status?: string;
-  search?: string;
+  categories?: string[];
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
   sort?: string;
-  brand?: string;
   brands?: string[];
   sizes?: string[];
   colors?: string[];
@@ -62,13 +60,32 @@ interface UseProductsOptions {
   audience?: string;
 }
 
-export function useProducts(options: UseProductsOptions = {}) {
+export function useProducts({
+  page = 1,
+  limit = 10,
+  ...filters
+}: UseProductsParams) {
+  // Add console.log to track when hook is called
+  console.log('useProducts called with:', { page, limit, ...filters });
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
 
+  // Combine all filters into one object
+  const filterParams = useMemo(() => {
+    // Log all filter values
+    console.log('Filter values:', Object.values(filters));
+    return {
+      page,
+      limit,
+      ...filters
+    };
+  }, [page, limit, ...Object.values(filters)]);
+
   useEffect(() => {
+    console.log('useEffect triggered with filterParams:', filterParams);
     let isMounted = true;
     const fetchProducts = async () => {
       try {
@@ -76,20 +93,22 @@ export function useProducts(options: UseProductsOptions = {}) {
         setError(null);
 
         const queryParams = new URLSearchParams({
-          page: options.page?.toString() || '1',
-          limit: options.limit?.toString() || '10',
-          ...(options.category && { category: options.category }),
-          ...(options.minPrice && { minPrice: options.minPrice?.toString() }),
-          ...(options.maxPrice && { maxPrice: options.maxPrice?.toString() }),
-          ...(options.search && { search: options.search }),
-          ...(options.sort && { sort: options.sort }),
-          ...(options.brand && { brand: options.brand }),
-          ...(options.brands?.length && { brands: options.brands.join(',') }),
-          ...(options.sizes?.length && { sizes: options.sizes.join(',') }),
-          ...(options.colors?.length && { colors: options.colors.join(',') }),
-          ...(options.feature && { feature: options.feature }),
-          ...(options.audience && { audience: options.audience })
+          page: filterParams.page.toString(),
+          limit: filterParams.limit.toString(),
+          sort: filterParams.sort || "-createdAt",
+          ...(filterParams.minPrice && { minPrice: filterParams.minPrice.toString() }),
+          ...(filterParams.maxPrice && { maxPrice: filterParams.maxPrice.toString() }),
+          ...(filterParams.search && { search: filterParams.search }),
+          ...(filterParams.brands && { brands: filterParams.brands.join(',') }),
+          ...(filterParams.sizes && { sizes: filterParams.sizes.join(',') }),
+          ...(filterParams.colors && { colors: filterParams.colors.join(',') }),
+          ...(filterParams.feature && { feature: filterParams.feature }),
+          ...(filterParams.audience && { audience: filterParams.audience })
         });
+
+        if (filterParams.categories && filterParams.categories.length > 0) {
+          filterParams.categories.forEach(cat => queryParams.append("categories[]", cat));
+        }
 
         const res = await fetch(`/api/products?${queryParams}`);
         const data = await res.json();
@@ -120,21 +139,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     return () => {
       isMounted = false;
     };
-  }, [
-    options.page,
-    options.limit,
-    options.category,
-    options.minPrice,
-    options.maxPrice,
-    options.search,
-    options.sort,
-    options.brand,
-    options.brands,
-    options.sizes,
-    options.colors,
-    options.feature,
-    options.audience
-  ]);
+  }, [filterParams]); // Chỉ một dependency
 
   return { products, loading, error, pagination };
 } 

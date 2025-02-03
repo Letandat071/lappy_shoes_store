@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -11,6 +11,7 @@ interface Category {
 
 interface CategoryWithImage extends Category {
   latestProductImage?: string;
+  productCount?: number;
 }
 
 const CategorySection = () => {
@@ -20,102 +21,110 @@ const CategorySection = () => {
   );
   const [loading, setLoading] = useState(true);
 
+  // Thêm ref để track mounted state và prevent memory leak
+  const isMounted = useRef(true);
+  // Thêm ref để track nếu data đã được fetch
+  const dataFetched = useRef(false);
+
   useEffect(() => {
+    // Cleanup function
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Nếu data đã được fetch thì không fetch lại
+    if (dataFetched.current) return;
+
     const fetchData = async () => {
       try {
-        // Fetch categories
-        const categoriesRes = await fetch("/api/admin/categories", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!categoriesRes.ok) {
-          throw new Error(`Categories API error: ${categoriesRes.statusText}`);
+        // Check if we have cached data
+        const cachedData = sessionStorage.getItem("categoryData");
+        if (cachedData) {
+          const { categories: cachedCategories, counts: cachedCounts } =
+            JSON.parse(cachedData);
+          setCategories(cachedCategories);
+          setProductCounts(cachedCounts);
+          setLoading(false);
+          return;
         }
 
-        const categoriesData = await categoriesRes.json();
+        const [categoriesRes, productsRes] = await Promise.all([
+          fetch("/api/admin/categories"),
+          fetch("/api/products?limit=1000"),
+        ]);
 
-        // Fetch latest product image for each category
-        const categoriesWithImages = await Promise.all(
-          categoriesData.categories.map(async (category: Category) => {
-            try {
-              const productRes = await fetch(
-                `/api/products?categoryId=${category._id}`,
-                {
-                  method: "GET",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
+        if (!categoriesRes.ok || !productsRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
 
-              if (!productRes.ok) {
-                console.warn(
-                  `Failed to fetch products for category ${category._id}`
-                );
-                return {
-                  ...category,
-                  latestProductImage: "/placeholder-image.jpg",
-                };
-              }
+        const [categoriesData, productsData] = await Promise.all([
+          categoriesRes.json(),
+          productsRes.json(),
+        ]);
 
-              const productData = await productRes.json();
-              return {
-                ...category,
-                latestProductImage:
-                  productData.product?.images?.[0]?.url ||
-                  "/placeholder-image.jpg",
-              };
-            } catch (error) {
-              console.warn(
-                `Error fetching product for category ${category._id}:`,
-                error
-              );
-              return {
-                ...category,
-                latestProductImage: "/placeholder-image.jpg",
-              };
+        const productsByCategory = productsData.products.reduce(
+          (acc: any, product: any) => {
+            const categoryId = product.category._id;
+            if (!acc[categoryId]) {
+              acc[categoryId] = [];
             }
-          })
+            acc[categoryId].push(product);
+            return acc;
+          },
+          {}
         );
 
-        // Fetch all products for counts
-        const productsRes = await fetch("/api/products", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        const categoriesWithData = categoriesData.categories.map(
+          (category: Category) => {
+            const categoryProducts = productsByCategory[category._id] || [];
+            return {
+              ...category,
+              latestProductImage:
+                categoryProducts[0]?.images[0]?.url || "/placeholder-image.jpg",
+              productCount: categoryProducts.length,
+            };
+          }
+        );
 
-        if (!productsRes.ok) {
-          throw new Error(`Products API error: ${productsRes.statusText}`);
-        }
+        const newCounts = categoriesWithData.reduce(
+          (acc: any, cat: any) => ({
+            ...acc,
+            [cat._id]: cat.productCount,
+          }),
+          {}
+        );
 
-        const productsData = await productsRes.json();
+        // Only update state if component is still mounted
+        if (isMounted.current) {
+          setCategories(categoriesWithData);
+          setProductCounts(newCounts);
 
-        // Calculate product counts per category
-        const counts: { [key: string]: number } = {};
-        categoriesData.categories.forEach((cat: Category) => {
-          const categoryProducts = productsData.products.filter(
-            (product: { category?: { _id?: string } }) =>
-              product.category?._id === cat._id
+          // Cache the data
+          sessionStorage.setItem(
+            "categoryData",
+            JSON.stringify({
+              categories: categoriesWithData,
+              counts: newCounts,
+              timestamp: Date.now(),
+            })
           );
-          counts[cat._id] = categoryProducts.length;
-        });
 
-        setCategories(categoriesWithImages);
-        setProductCounts(counts);
+          // Mark as fetched
+          dataFetched.current = true;
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        setLoading(false);
+        if (isMounted.current) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, []);
+  }, []); // Empty dependency array
 
   if (loading) {
     return (

@@ -39,7 +39,7 @@ interface UpdateProductData {
   brand?: string;
   targetAudience?: string[];
   totalQuantity?: number;
-  [key: string]: any; // Add index signature
+  [key: string]: string | number | boolean | ProductImage[] | ProductSize[] | string[] | undefined;
 }
 
 interface ProductDocument extends mongoose.Document {

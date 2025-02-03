@@ -62,36 +62,6 @@ interface ProductResponse {
   __v: number;
 }
 
-interface Product {
-  _id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  images: Array<{
-    url: string;
-    color?: string;
-    version?: string;
-  }>;
-  category: {
-    _id: string;
-    name: string;
-  } | null;
-  features: Array<{
-    _id: string;
-    name: string;
-    icon: string;
-  }>;
-  status: "in-stock" | "out-of-stock" | "coming-soon";
-  brand: string;
-  colors: string[];
-  sizes: Array<{
-    size: string;
-    quantity: number;
-  }>;
-  totalQuantity: number;
-}
-
 interface Pagination {
   total: number;
   page: number;
@@ -124,12 +94,10 @@ interface ApiResponse {
   pagination: Pagination;
 }
 
-interface CategoryResponse {
-  categories: Category[];
-}
-
-interface FeatureResponse {
-  features: Feature[];
+interface ProductCardProps {
+  product: ProductResponse;
+  onEdit: (product: ProductResponse) => void;
+  onDelete: (id: string | mongoose.Types.ObjectId) => void;
 }
 
 export default function ProductsPage() {
@@ -192,7 +160,7 @@ export default function ProductsPage() {
           setProducts(data.products);
           setPagination(data.pagination);
         }
-      } catch (_error) {
+      } catch (_) {
         toast.error("Lỗi khi tải sản phẩm");
       } finally {
         setLoading(false);
@@ -214,7 +182,7 @@ export default function ProductsPage() {
 
       if (categoriesData.categories) setCategories(categoriesData.categories);
       if (featuresData.features) setFeatures(featuresData.features);
-    } catch (_error) {
+    } catch (_) {
       toast.error("Lỗi khi tải danh mục và tính năng");
     }
   };
@@ -355,7 +323,7 @@ export default function ProductsPage() {
             };
             return { ...prev, images: updatedImages };
           });
-        } catch (error) {
+        } catch (_) {
           toast.error(`Lỗi khi tải ảnh ${file.name}`);
           setFormData((prev) => {
             const updatedImages = prev.images.filter(

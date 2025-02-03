@@ -48,8 +48,8 @@ const SavedAddresses = () => {
         const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
         const data = await res.json();
         setRegionData(data);
-      } catch (_error: unknown) {
-        console.error("Error fetching region mapping:", _error);
+      } catch (_) {
+        console.error("Error fetching region mapping:");
       }
     }
     fetchRegionMapping();
@@ -64,7 +64,7 @@ const SavedAddresses = () => {
       } else {
         toast.error("Không thể tải danh sách địa chỉ");
       }
-    } catch (_error: unknown) {
+    } catch (_) {
       toast.error("Có lỗi xảy ra khi tải địa chỉ");
     } finally {
       setLoading(false);
@@ -93,7 +93,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể xóa địa chỉ");
       }
-    } catch (_error: unknown) {
+    } catch (_) {
       toast.error("Có lỗi xảy ra khi xóa địa chỉ");
     }
   };
@@ -121,7 +121,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể cập nhật địa chỉ");
       }
-    } catch (_error: unknown) {
+    } catch (_) {
       toast.error("Có lỗi xảy ra khi cập nhật địa chỉ");
     }
   };
@@ -155,7 +155,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể lưu địa chỉ");
       }
-    } catch (_error: unknown) {
+    } catch (_) {
       toast.error("Có lỗi xảy ra khi lưu địa chỉ");
     }
   };

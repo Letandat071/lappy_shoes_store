@@ -15,7 +15,8 @@ interface Filters {
   brands: string[];
   sizes: string[];
   colors: string[];
-  [key: string]: FilterValue | FilterValue[];
+  sort?: string;
+  [key: string]: FilterValue | FilterValue[] | undefined;
 }
 
 interface FilterSidebarProps {
@@ -67,19 +68,35 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const handleColorSelect = (color: string) => {
-    onFilterChange("colors", color);
+    const currentColors = selectedFilters.colors;
+    const newColors = currentColors.includes(color)
+      ? currentColors.filter((c) => c !== color)
+      : [...currentColors, color];
+    onFilterChange("colors", newColors);
   };
 
   const handleSizeSelect = (size: string) => {
-    onFilterChange("sizes", size);
+    const currentSizes = selectedFilters.sizes;
+    const newSizes = currentSizes.includes(size)
+      ? currentSizes.filter((s) => s !== size)
+      : [...currentSizes, size];
+    onFilterChange("sizes", newSizes);
   };
 
   const handleBrandSelect = (brand: string) => {
-    onFilterChange("brands", brand);
+    const currentBrands = selectedFilters.brands;
+    const newBrands = currentBrands.includes(brand)
+      ? currentBrands.filter((b) => b !== brand)
+      : [...currentBrands, brand];
+    onFilterChange("brands", newBrands);
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    onFilterChange("categories", categoryId);
+    const currentCategories = selectedFilters.categories;
+    const newCategories = currentCategories.includes(categoryId)
+      ? currentCategories.filter((c) => c !== categoryId)
+      : [...currentCategories, categoryId];
+    onFilterChange("categories", newCategories);
   };
 
   if (loading) {
@@ -233,7 +250,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <select
             onChange={(e) => onFilterChange("sort", e.target.value)}
             className="w-full border rounded-lg p-2"
-            value={(selectedFilters as any).sort}
+            value={selectedFilters.sort || "-createdAt"}
           >
             <option value="-createdAt">Mới nhất</option>
             <option value="price">Giá: Thấp đến cao</option>

@@ -36,7 +36,6 @@ const relatedProducts = [
 
 const ProductSuggest: React.FC<ProductSuggestProps> = ({
   currentProductId,
-  categoryId: _unusedCategoryId,
 }) => {
   const filteredProducts = relatedProducts.filter(
     (prod) => prod.id !== currentProductId

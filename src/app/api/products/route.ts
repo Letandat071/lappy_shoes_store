@@ -22,23 +22,6 @@ interface ProductSize {
   _id?: string;
 }
 
-interface UpdateProductData {
-  name?: string;
-  description?: string;
-  price?: number;
-  originalPrice?: number;
-  images?: ProductImage[];
-  category?: string;
-  features?: string[];
-  sizes?: ProductSize[];
-  colors?: string[];
-  status?: string;
-  brand?: string;
-  targetAudience?: string[];
-  totalQuantity?: number;
-  [key: string]: unknown;
-}
-
 // Sử dụng interface này trong generic của hàm lean()
 export interface ProductDocument extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
@@ -73,6 +56,11 @@ interface CategoryDoc {
   name: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface UpdateProductData {
+  // ... interface content
+}
+
 // Get all products with pagination and filters
 export async function GET(request: NextRequest) {
   try {
@@ -90,7 +78,6 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Filters
-    const category = searchParams.get("category");
     const statusFilter = searchParams.get("status");
     const search = searchParams.get("search");
     const minPrice = searchParams.get("minPrice");
@@ -99,7 +86,13 @@ export async function GET(request: NextRequest) {
 
     // Build query với kiểu FilterQuery<ProductDocument>
     const query: FilterQuery<ProductDocument> = {};
-    if (category) query.category = category;
+
+    // Xử lý filter theo categories
+    const categories = searchParams.getAll("categories[]");
+    if (categories.length > 0) {
+      query.category = { $in: categories };
+    }
+
     if (statusFilter) query.status = statusFilter;
     if (search) {
       query.$or = [

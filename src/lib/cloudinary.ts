@@ -47,15 +47,9 @@ export const useImageUpload = () => {
           reject(error);
         };
       });
-      console.log('✅ File đã chuyển đổi sang base64');
-
-      console.log('📝 Chuẩn bị form data với config:', {
-        cloudName: CLOUD_NAME,
-        uploadPreset: UPLOAD_PRESET
-      });
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', base64Data);  // Sử dụng base64Data thay vì file
       formData.append('upload_preset', UPLOAD_PRESET);
       formData.append('cloud_name', CLOUD_NAME);
 

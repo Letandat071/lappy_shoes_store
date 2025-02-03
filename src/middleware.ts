@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
       }
 
       return NextResponse.next();
-    } catch (_error) {
+    } catch (_) {
       // Token không hợp lệ
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
 
     return NextResponse.next();
-  } catch (_error) {
+  } catch (_) {
     // Token không hợp lệ
     if (protectedRoutes.some(route => pathname.startsWith(route))) {
       return NextResponse.redirect(new URL('/auth', request.url));

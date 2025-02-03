@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
+import React, { useState, useEffect, useCallback } from "react";
 
 interface Province {
   code: string;
@@ -27,6 +26,19 @@ interface Address {
   ward: string;
   address: string;
   isDefault: boolean;
+}
+
+interface RegionData {
+  code: number;
+  name: string;
+  districts: {
+    code: number;
+    name: string;
+    wards: {
+      code: number;
+      name: string;
+    }[];
+  }[];
 }
 
 interface ShippingFormProps {
@@ -59,7 +71,33 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [regionMapping, setRegionMapping] = useState<any[]>([]);
+  const [regionMapping, setRegionMapping] = useState<RegionData[]>([]);
+
+  // Bọc handleAddressSelect trong useCallback
+  const handleAddressSelect = useCallback(
+    (address: Address) => {
+      setFormData({
+        ...formData,
+        fullName: address.fullName,
+        phone: address.phone,
+        province: address.province,
+        district: address.district,
+        ward: address.ward,
+        address: address.address,
+      });
+
+      // Gọi onSubmit để cập nhật địa chỉ giao hàng
+      onSubmit({
+        fullName: address.fullName,
+        phone: address.phone,
+        address: address.address,
+        province: address.province,
+        district: address.district,
+        ward: address.ward,
+      });
+    },
+    [formData, onSubmit]
+  );
 
   // Fetch saved addresses
   useEffect(() => {
@@ -69,7 +107,6 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
         const data = await response.json();
         if (response.ok) {
           setSavedAddresses(data.addresses);
-          // Tự động chọn địa chỉ mặc định nếu có
           const defaultAddress = data.addresses.find(
             (addr: Address) => addr.isDefault
           );
@@ -88,7 +125,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
       }
     };
     fetchAddresses();
-  }, []);
+  }, [handleAddressSelect]);
 
   // Fetch provinces on mount
   useEffect(() => {
@@ -196,28 +233,6 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
     });
   };
 
-  const handleAddressSelect = (address: Address) => {
-    setFormData({
-      ...formData,
-      fullName: address.fullName,
-      phone: address.phone,
-      province: address.province,
-      district: address.district,
-      ward: address.ward,
-      address: address.address,
-    });
-
-    // Gọi onSubmit để cập nhật địa chỉ giao hàng
-    onSubmit({
-      fullName: address.fullName,
-      phone: address.phone,
-      address: address.address,
-      province: address.province,
-      district: address.district,
-      ward: address.ward,
-    });
-  };
-
   // Hàm chuyển đổi mã thành tên địa danh đầy đủ
   const getRegionName = (
     provinceCode: number | string,
@@ -232,13 +247,13 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
     let result = province.name;
     if (districtCode) {
       const district = province.districts.find(
-        (d: any) => String(d.code) === String(districtCode)
+        (d) => String(d.code) === String(districtCode)
       );
       if (district) {
         result = `${district.name}, ${result}`;
         if (wardCode) {
           const ward = district.wards.find(
-            (w: any) => String(w.code) === String(wardCode)
+            (w) => String(w.code) === String(wardCode)
           );
           if (ward) {
             result = `${ward.name}, ${result}`;

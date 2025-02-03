@@ -84,7 +84,7 @@ export default function UsersManagement() {
         const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
         const data = await res.json();
         setRegionData(data);
-      } catch (_error) {
+      } catch (_) {
         console.error("Error fetching region mapping:");
       }
     }

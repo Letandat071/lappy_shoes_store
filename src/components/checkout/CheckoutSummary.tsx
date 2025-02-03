@@ -1,27 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/utils/format";
 import { CartItem } from "@/types/cart";
 import { useCartContext } from "@/contexts/CartContext";
-import { toast } from "react-hot-toast";
-
-interface ShippingAddress {
-  fullName: string;
-  phone: string;
-  address: string;
-  province: string; // Mã tỉnh (vd: "22")
-  district: string; // Mã huyện (vd: "205")
-  ward: string; // Mã phường (vd: "7075")
-}
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   subtotal: number;
   shipping: number;
-  total: number;
   estimatedTime: string;
   onPlaceOrder: () => void;
   isProcessing: boolean;
@@ -31,7 +20,6 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   items,
   subtotal,
   shipping,
-  total,
   estimatedTime,
   onPlaceOrder,
   isProcessing,

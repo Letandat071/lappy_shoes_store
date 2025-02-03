@@ -2,8 +2,6 @@ import React from "react";
 import Button from "@/components/common/Button";
 import Image from "next/image";
 
-interface ProductsReviewProps {}
-
 const product = {
   id: "1",
   name: "Nike Air Max 270",
@@ -55,7 +53,7 @@ const product = {
   },
 };
 
-const ProductsReview: React.FC<ProductsReviewProps> = () => {
+const ProductsReview = () => {
   return (
     <div>
       {" "}
