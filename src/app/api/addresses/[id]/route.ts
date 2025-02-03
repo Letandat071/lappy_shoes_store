@@ -13,7 +13,7 @@ type RequestContext = {
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  context: RequestContext
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -39,7 +39,7 @@ export async function PUT(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -78,7 +78,7 @@ export async function PUT(
 // Xóa địa chỉ
 export async function DELETE(
   request: NextRequest,
-  context: RequestContext
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -93,7 +93,7 @@ export async function DELETE(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const address = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -108,7 +108,7 @@ export async function DELETE(
     if (address.isDefault) {
       const anotherAddress = await Address.findOne({
         user: userId,
-        _id: { $ne: context.params.id }
+        _id: { $ne: params.id }
       });
       if (anotherAddress) {
         anotherAddress.isDefault = true;
