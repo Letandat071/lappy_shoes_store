@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 interface Province {
   code: string;
@@ -34,40 +34,45 @@ interface ShippingFormProps {
     fullName: string;
     phone: string;
     address: string;
-    city: string;
+    province: string;
+    district: string;
+    ward: string;
   }) => void;
 }
 
 const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    fullName: '',
-    phone: '',
-    province: '',
-    district: '',
-    ward: '',
-    address: '',
-    note: ''
+    email: "",
+    fullName: "",
+    phone: "",
+    province: "",
+    district: "",
+    ward: "",
+    address: "",
+    note: "",
   });
 
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [loading, setLoading] = useState(true);
+  const [regionMapping, setRegionMapping] = useState<any[]>([]);
 
   // Fetch saved addresses
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const response = await fetch('/api/addresses');
+        const response = await fetch("/api/addresses");
         const data = await response.json();
         if (response.ok) {
           setSavedAddresses(data.addresses);
           // Tự động chọn địa chỉ mặc định nếu có
-          const defaultAddress = data.addresses.find((addr: Address) => addr.isDefault);
+          const defaultAddress = data.addresses.find(
+            (addr: Address) => addr.isDefault
+          );
           if (defaultAddress) {
             setSelectedAddressId(defaultAddress._id);
             handleAddressSelect(defaultAddress);
@@ -76,7 +81,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
           }
         }
       } catch (error) {
-        console.error('Error fetching addresses:', error);
+        console.error("Error fetching addresses:", error);
         setUseNewAddress(true);
       } finally {
         setLoading(false);
@@ -89,11 +94,11 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch('https://provinces.open-api.vn/api/p/');
+        const response = await fetch("https://provinces.open-api.vn/api/p/");
         const data = await response.json();
         setProvinces(data);
       } catch (error) {
-        console.error('Error fetching provinces:', error);
+        console.error("Error fetching provinces:", error);
       }
     };
     fetchProvinces();
@@ -107,11 +112,13 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
         return;
       }
       try {
-        const response = await fetch(`https://provinces.open-api.vn/api/p/${formData.province}?depth=2`);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/p/${formData.province}?depth=2`
+        );
         const data = await response.json();
         setDistricts(data.districts);
       } catch (error) {
-        console.error('Error fetching districts:', error);
+        console.error("Error fetching districts:", error);
       }
     };
     fetchDistricts();
@@ -125,40 +132,63 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
         return;
       }
       try {
-        const response = await fetch(`https://provinces.open-api.vn/api/d/${formData.district}?depth=2`);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/d/${formData.district}?depth=2`
+        );
         const data = await response.json();
         setWards(data.wards);
       } catch (error) {
-        console.error('Error fetching wards:', error);
+        console.error("Error fetching wards:", error);
       }
     };
     fetchWards();
   }, [formData.district]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  // Fetch region mapping
+  useEffect(() => {
+    const fetchRegionMapping = async () => {
+      try {
+        const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
+        const data = await res.json();
+        setRegionMapping(data);
+      } catch (error) {
+        console.error("Error fetching region mapping:", error);
+      }
+    };
+    fetchRegionMapping();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => {
+    setFormData((prev) => {
       const newFormData = {
         ...prev,
-        [name]: value
+        [name]: value,
       };
 
       // Reset dependent fields
-      if (name === 'province') {
-        newFormData.district = '';
-        newFormData.ward = '';
-      } else if (name === 'district') {
-        newFormData.ward = '';
+      if (name === "province") {
+        newFormData.district = "";
+        newFormData.ward = "";
+      } else if (name === "district") {
+        newFormData.ward = "";
       }
 
       // Gọi onSubmit khi đủ thông tin
-      const { fullName, phone, province, district, ward, address } = newFormData;
+      const { fullName, phone, province, district, ward, address } =
+        newFormData;
       if (fullName && phone && province && district && ward && address) {
         onSubmit({
           fullName,
           phone,
           address: `${address}, ${ward}, ${district}`,
-          city: province
+          province,
+          district,
+          ward,
         });
       }
 
@@ -174,16 +204,49 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
       province: address.province,
       district: address.district,
       ward: address.ward,
-      address: address.address
+      address: address.address,
     });
 
     // Gọi onSubmit để cập nhật địa chỉ giao hàng
     onSubmit({
       fullName: address.fullName,
       phone: address.phone,
-      address: `${address.address}, ${address.ward}, ${address.district}`,
-      city: address.province
+      address: address.address,
+      province: address.province,
+      district: address.district,
+      ward: address.ward,
     });
+  };
+
+  // Hàm chuyển đổi mã thành tên địa danh đầy đủ
+  const getRegionName = (
+    provinceCode: number | string,
+    districtCode?: number | string,
+    wardCode?: number | string
+  ): string => {
+    if (!regionMapping || regionMapping.length === 0) return "";
+    const province = regionMapping.find(
+      (p) => String(p.code) === String(provinceCode)
+    );
+    if (!province) return "";
+    let result = province.name;
+    if (districtCode) {
+      const district = province.districts.find(
+        (d: any) => String(d.code) === String(districtCode)
+      );
+      if (district) {
+        result = `${district.name}, ${result}`;
+        if (wardCode) {
+          const ward = district.wards.find(
+            (w: any) => String(w.code) === String(wardCode)
+          );
+          if (ward) {
+            result = `${ward.name}, ${result}`;
+          }
+        }
+      }
+    }
+    return result;
   };
 
   if (loading) {
@@ -215,7 +278,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
               onClick={() => setUseNewAddress(!useNewAddress)}
               className="text-blue-600 hover:underline"
             >
-              {useNewAddress ? 'Chọn địa chỉ đã lưu' : 'Thêm địa chỉ mới'}
+              {useNewAddress ? "Chọn địa chỉ đã lưu" : "Thêm địa chỉ mới"}
             </button>
           </div>
 
@@ -226,8 +289,8 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                   key={address._id}
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                     selectedAddressId === address._id
-                      ? 'border-black bg-gray-50'
-                      : 'hover:border-gray-400'
+                      ? "border-black bg-gray-50"
+                      : "hover:border-gray-400"
                   }`}
                   onClick={() => {
                     setSelectedAddressId(address._id);
@@ -238,7 +301,9 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                     <div>
                       <h4 className="font-medium">{address.fullName}</h4>
                       {address.isDefault && (
-                        <span className="text-sm text-green-600">Địa chỉ mặc định</span>
+                        <span className="text-sm text-green-600">
+                          Địa chỉ mặc định
+                        </span>
                       )}
                     </div>
                     <input
@@ -253,10 +318,15 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                     />
                   </div>
                   <p className="text-sm text-gray-600">
-                    {address.phone}<br />
-                    {address.address}<br />
-                    {address.ward}, {address.district}<br />
-                    {address.province}
+                    {address.phone}
+                    <br />
+                    {address.address}
+                    <br />
+                    {getRegionName(
+                      address.province,
+                      address.district,
+                      address.ward
+                    )}
                   </p>
                 </div>
               ))}
@@ -270,8 +340,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
         <form className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
                 type="email"
                 name="email"
                 value={formData.email}
@@ -280,10 +352,12 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               />
             </div>
-            
+
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Họ và tên</label>
-              <input 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Họ và tên
+              </label>
+              <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
@@ -294,8 +368,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Số điện thoại</label>
-              <input 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Số điện thoại
+              </label>
+              <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
@@ -306,15 +382,17 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tỉnh/Thành phố</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tỉnh/Thành phố
+              </label>
+              <select
                 name="province"
                 value={formData.province}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
               >
                 <option value="">Chọn Tỉnh/Thành phố</option>
-                {provinces.map(province => (
+                {provinces.map((province) => (
                   <option key={province.code} value={province.code}>
                     {province.name}
                   </option>
@@ -323,8 +401,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quận/Huyện</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quận/Huyện
+              </label>
+              <select
                 name="district"
                 value={formData.district}
                 onChange={handleChange}
@@ -332,7 +412,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                 disabled={!formData.province}
               >
                 <option value="">Chọn Quận/Huyện</option>
-                {districts.map(district => (
+                {districts.map((district) => (
                   <option key={district.code} value={district.code}>
                     {district.name}
                   </option>
@@ -341,8 +421,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Phường/Xã</label>
-              <select 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phường/Xã
+              </label>
+              <select
                 name="ward"
                 value={formData.ward}
                 onChange={handleChange}
@@ -350,7 +432,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
                 disabled={!formData.district}
               >
                 <option value="">Chọn Phường/Xã</option>
-                {wards.map(ward => (
+                {wards.map((ward) => (
                   <option key={ward.code} value={ward.code}>
                     {ward.name}
                   </option>
@@ -359,8 +441,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Địa chỉ cụ thể</label>
-              <input 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Địa chỉ cụ thể
+              </label>
+              <input
                 type="text"
                 name="address"
                 value={formData.address}
@@ -371,8 +455,10 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
-              <textarea 
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ghi chú
+              </label>
+              <textarea
                 name="note"
                 value={formData.note}
                 onChange={handleChange}
@@ -388,4 +474,4 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
   );
 };
 
-export default ShippingForm; 
+export default ShippingForm;

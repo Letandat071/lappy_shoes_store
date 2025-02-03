@@ -7,6 +7,7 @@ export interface CartItem {
   size: string;
   quantity: number;
   stock: number;
+  originalPrice?: number;
 }
 
 export interface Cart {

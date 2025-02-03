@@ -82,7 +82,7 @@ interface Product {
     name: string;
     icon: string;
   }>;
-  status: 'in-stock' | 'out-of-stock' | 'coming-soon';
+  status: "in-stock" | "out-of-stock" | "coming-soon";
   brand: string;
   colors: string[];
   sizes: Array<{
@@ -102,16 +102,16 @@ interface Pagination {
 interface FormData {
   name: string;
   description: string;
-  price: number;
-  originalPrice: number;
+  price: string;
+  originalPrice: string;
   images: ProductImage[];
   category: string;
   features: string[];
-  targetAudience: string[];
+  targetAudience: string;
   sizes: ProductSize[];
   brand: string;
   colors: string[];
-  status: 'in-stock' | 'out-of-stock' | 'coming-soon';
+  status: "in-stock" | "out-of-stock" | "coming-soon";
 }
 
 interface ProductSize {
@@ -157,16 +157,16 @@ export default function ProductsPage() {
   const initialFormData: FormData = {
     name: "",
     description: "",
-    price: 0,
-    originalPrice: 0,
+    price: "",
+    originalPrice: "",
     images: [],
     category: "",
     features: [],
-    targetAudience: [],
+    targetAudience: "",
     sizes: [],
     brand: "",
     colors: [],
-    status: "in-stock"
+    status: "in-stock",
   };
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -180,9 +180,11 @@ export default function ProductsPage() {
         ...filters,
       });
 
-      const response = await fetch("/api/admin/products?" + queryParams.toString());
+      const response = await fetch(
+        "/api/admin/products?" + queryParams.toString()
+      );
       const data: ApiResponse = await response.json();
-      
+
       if (data.products) {
         setProducts(data.products);
         setPagination(data.pagination);
@@ -201,7 +203,7 @@ export default function ProductsPage() {
         fetch("/api/admin/categories"),
         fetch("/api/admin/features"),
       ]);
-      
+
       const categoriesData: CategoryResponse = await categoriesRes.json();
       const featuresData: FeatureResponse = await featuresRes.json();
 
@@ -288,41 +290,43 @@ export default function ProductsPage() {
       price: product.price,
       originalPrice: product.originalPrice,
       images: product.images,
-      category: product.category ? {
-        _id: product.category._id.toString(),
-        name: product.category.name
-      } : null,
-      features: product.features.map(f => ({
+      category: product.category
+        ? {
+            _id: product.category._id.toString(),
+            name: product.category.name,
+          }
+        : null,
+      features: product.features.map((f) => ({
         _id: f._id.toString(),
         name: f.name,
-        icon: f.icon
+        icon: f.icon,
       })),
-      status: product.status as 'in-stock' | 'out-of-stock' | 'coming-soon',
+      status: product.status as "in-stock" | "out-of-stock" | "coming-soon",
       brand: product.brand,
       colors: product.colors,
       sizes: product.sizes,
-      totalQuantity: product.totalQuantity
+      totalQuantity: product.totalQuantity,
     });
 
     setFormData({
       name: product.name,
       description: product.description,
-      price: product.price,
-      originalPrice: product.originalPrice || 0,
-      images: product.images.map(image => ({
+      price: product.price.toString(),
+      originalPrice: product.originalPrice?.toString() || "",
+      images: product.images.map((image) => ({
         url: image.url,
         color: image.color,
         version: image.version,
         isUploading: false,
-        uploadProgress: 0
+        uploadProgress: 0,
       })),
       category: product.category?._id.toString() || "",
-      features: product.features.map(f => f._id.toString()),
-      targetAudience: [],
+      features: product.features.map((f) => f._id.toString()),
+      targetAudience: "",
       sizes: product.sizes,
       brand: product.brand,
       colors: product.colors,
-      status: product.status as 'in-stock' | 'out-of-stock' | 'coming-soon'
+      status: product.status as "in-stock" | "out-of-stock" | "coming-soon",
     });
     setModalOpen(true);
   };
@@ -334,58 +338,61 @@ export default function ProductsPage() {
   };
 
   // Xử lý upload ảnh
-  const handleImageUpload = useCallback(async (files: FileList) => {
-    const newImages: ProductImage[] = Array.from(files).map(file => ({
-      url: URL.createObjectURL(file),
-      isUploading: true,
-      uploadProgress: 0
-    }));
+  const handleImageUpload = useCallback(
+    async (files: FileList) => {
+      const newImages: ProductImage[] = Array.from(files).map((file) => ({
+        url: URL.createObjectURL(file),
+        isUploading: true,
+        uploadProgress: 0,
+      }));
 
-    setFormData(prev => ({
-      ...prev,
-      images: [...prev.images, ...newImages]
-    }));
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newImages],
+      }));
 
-    const uploadPromises = Array.from(files).map(async (file, index) => {
-      try {
-        const url = await uploadImage(file);
-        setFormData(prev => {
-          const updatedImages = [...prev.images];
-          const currentIndex = prev.images.length - files.length + index;
-          updatedImages[currentIndex] = {
-            url,
-            color: "",
-            version: "",
-            isUploading: false,
-            uploadProgress: 100
-          };
-          return { ...prev, images: updatedImages };
-        });
-      } catch (error) {
-        toast.error(`Lỗi khi tải ảnh ${file.name}`);
-        setFormData(prev => {
-          const updatedImages = prev.images.filter((_, i) => 
-            i !== prev.images.length - files.length + index
-          );
-          return { ...prev, images: updatedImages };
-        });
-      }
-    });
+      const uploadPromises = Array.from(files).map(async (file, index) => {
+        try {
+          const url = await uploadImage(file);
+          setFormData((prev) => {
+            const updatedImages = [...prev.images];
+            const currentIndex = prev.images.length - files.length + index;
+            updatedImages[currentIndex] = {
+              url,
+              color: "",
+              version: "",
+              isUploading: false,
+              uploadProgress: 100,
+            };
+            return { ...prev, images: updatedImages };
+          });
+        } catch (error) {
+          toast.error(`Lỗi khi tải ảnh ${file.name}`);
+          setFormData((prev) => {
+            const updatedImages = prev.images.filter(
+              (_, i) => i !== prev.images.length - files.length + index
+            );
+            return { ...prev, images: updatedImages };
+          });
+        }
+      });
 
-    await Promise.all(uploadPromises);
-  }, [uploadImage]);
+      await Promise.all(uploadPromises);
+    },
+    [uploadImage]
+  );
 
   // Xử lý xóa ảnh
   const handleRemoveImage = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
   // Xử lý cập nhật thông tin ảnh
   const handleImageUpdate = (index: number, updates: Partial<ProductImage>) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const updatedImages = [...prev.images];
       updatedImages[index] = { ...updatedImages[index], ...updates };
       return { ...prev, images: updatedImages };
@@ -473,7 +480,10 @@ export default function ProductsPage() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+            <div
+              key={i}
+              className="bg-white rounded-lg shadow-sm p-4 animate-pulse"
+            >
               <div className="flex gap-4">
                 <div className="w-20 h-20 bg-gray-200 rounded-md"></div>
                 <div className="flex-grow space-y-2">
@@ -523,7 +533,9 @@ export default function ProductsPage() {
               ))}
               <button
                 onClick={() =>
-                  fetchProducts(Math.min(pagination.totalPages, pagination.page + 1))
+                  fetchProducts(
+                    Math.min(pagination.totalPages, pagination.page + 1)
+                  )
                 }
                 disabled={pagination.page === pagination.totalPages}
                 className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
@@ -567,9 +579,13 @@ export default function ProductsPage() {
                   <span className="text-2xl">&times;</span>
                 </button>
               </div>
-              
+
               <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-                <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
+                <form
+                  id="product-form"
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                >
                   <div>
                     <label className="block mb-2">Tên sản phẩm</label>
                     <input
@@ -587,9 +603,11 @@ export default function ProductsPage() {
                     <label className="block mb-2">Hình ảnh sản phẩm</label>
                     <div className="space-y-4">
                       {/* Image Upload Area */}
-                      <div 
+                      <div
                         className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-500"
-                        onClick={() => document.getElementById('image-upload')?.click()}
+                        onClick={() =>
+                          document.getElementById("image-upload")?.click()
+                        }
                       >
                         <input
                           id="image-upload"
@@ -597,7 +615,9 @@ export default function ProductsPage() {
                           multiple
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+                          onChange={(e) =>
+                            e.target.files && handleImageUpload(e.target.files)
+                          }
                         />
                         <p>Kéo thả ảnh vào đây hoặc click để chọn ảnh</p>
                       </div>
@@ -605,7 +625,10 @@ export default function ProductsPage() {
                       {/* Image Preview List */}
                       <div className="grid grid-cols-2 gap-4">
                         {formData.images.map((image, index) => (
-                          <div key={index} className="relative border rounded-lg p-2">
+                          <div
+                            key={index}
+                            className="relative border rounded-lg p-2"
+                          >
                             {image.url && (
                               <div className="relative h-40 mb-2">
                                 <Image
@@ -621,7 +644,9 @@ export default function ProductsPage() {
                                       <div className="bg-gray-200 rounded-full h-2.5">
                                         <div
                                           className="bg-blue-600 h-2.5 rounded-full"
-                                          style={{ width: `${image.uploadProgress}%` }}
+                                          style={{
+                                            width: `${image.uploadProgress}%`,
+                                          }}
                                         ></div>
                                       </div>
                                     </div>
@@ -635,14 +660,22 @@ export default function ProductsPage() {
                                 type="text"
                                 placeholder="Màu sắc"
                                 value={image.color || ""}
-                                onChange={(e) => handleImageUpdate(index, { color: e.target.value })}
+                                onChange={(e) =>
+                                  handleImageUpdate(index, {
+                                    color: e.target.value,
+                                  })
+                                }
                                 className="w-full border rounded px-2 py-1 text-sm"
                               />
                               <input
                                 type="text"
                                 placeholder="Phiên bản"
                                 value={image.version || ""}
-                                onChange={(e) => handleImageUpdate(index, { version: e.target.value })}
+                                onChange={(e) =>
+                                  handleImageUpdate(index, {
+                                    version: e.target.value,
+                                  })
+                                }
                                 className="w-full border rounded px-2 py-1 text-sm"
                               />
                               <button
@@ -666,13 +699,26 @@ export default function ProductsPage() {
                       type="number"
                       value={formData.price}
                       onChange={(e) =>
-                        setFormData({ ...formData, price: Number(e.target.value) })
+                        setFormData({ ...formData, price: e.target.value })
                       }
                       className="w-full border rounded-lg p-2"
                       required
                     />
                   </div>
-
+                  <div>
+                    <label className="block mb-2">Giá gốc</label>
+                    <input
+                      type="number"
+                      value={formData.originalPrice}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          originalPrice: e.target.value,
+                        })
+                      }
+                      className="w-full border rounded-lg p-2"
+                    />
+                  </div>
                   <div>
                     <label className="block mb-2">Danh mục</label>
                     <select
@@ -721,7 +767,10 @@ export default function ProductsPage() {
                     <select
                       value={formData.targetAudience}
                       onChange={(e) =>
-                        setFormData({ ...formData, targetAudience: [e.target.value] })
+                        setFormData({
+                          ...formData,
+                          targetAudience: e.target.value,
+                        })
                       }
                       className="w-full border rounded-lg p-2"
                       required
@@ -780,7 +829,10 @@ export default function ProductsPage() {
                         onClick={() =>
                           setFormData({
                             ...formData,
-                            sizes: [...formData.sizes, { size: "", quantity: 0 }],
+                            sizes: [
+                              ...formData.sizes,
+                              { size: "", quantity: 0 },
+                            ],
                           })
                         }
                         className="text-blue-500"
@@ -811,7 +863,9 @@ export default function ProductsPage() {
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          colors: e.target.value.split(",").map((c) => c.trim()),
+                          colors: e.target.value
+                            .split(",")
+                            .map((c) => c.trim()),
                         })
                       }
                       className="w-full border rounded-lg p-2"
@@ -843,7 +897,10 @@ export default function ProductsPage() {
                     <textarea
                       value={formData.description}
                       onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
                       }
                       className="w-full border rounded-lg p-2"
                       rows={4}
@@ -878,4 +935,4 @@ export default function ProductsPage() {
       )}
     </div>
   );
-} 
+}

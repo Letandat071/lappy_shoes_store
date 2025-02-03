@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
-import AddressForm from './AddressForm';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import AddressForm from "./AddressForm";
 
 interface Address {
   _id: string;
@@ -20,22 +20,33 @@ const SavedAddresses = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [regionData, setRegionData] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAddresses();
+    async function fetchRegionMapping() {
+      try {
+        const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
+        const data = await res.json();
+        setRegionData(data);
+      } catch (error) {
+        console.error("Error fetching region mapping:", error);
+      }
+    }
+    fetchRegionMapping();
   }, []);
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch('/api/addresses');
+      const response = await fetch("/api/addresses");
       const data = await response.json();
       if (response.ok) {
         setAddresses(data.addresses);
       } else {
-        toast.error('Không thể tải danh sách địa chỉ');
+        toast.error("Không thể tải danh sách địa chỉ");
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi tải địa chỉ');
+      toast.error("Có lỗi xảy ra khi tải địa chỉ");
     } finally {
       setLoading(false);
     }
@@ -47,83 +58,115 @@ const SavedAddresses = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa địa chỉ này?')) {
+    if (!window.confirm("Bạn có chắc muốn xóa địa chỉ này?")) {
       return;
     }
 
     try {
       const response = await fetch(`/api/addresses/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
 
       if (response.ok) {
-        toast.success('Xóa địa chỉ thành công');
+        toast.success("Xóa địa chỉ thành công");
         fetchAddresses();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Không thể xóa địa chỉ');
+        toast.error(data.error || "Không thể xóa địa chỉ");
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi xóa địa chỉ');
+      toast.error("Có lỗi xảy ra khi xóa địa chỉ");
     }
   };
 
   const handleSetDefault = async (id: string) => {
     try {
-      const address = addresses.find(a => a._id === id);
+      const address = addresses.find((a) => a._id === id);
       if (!address) return;
 
       const response = await fetch(`/api/addresses/${id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...address,
-          isDefault: true
-        })
+          isDefault: true,
+        }),
       });
 
       if (response.ok) {
-        toast.success('Đã đặt làm địa chỉ mặc định');
+        toast.success("Đã đặt làm địa chỉ mặc định");
         fetchAddresses();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Không thể cập nhật địa chỉ');
+        toast.error(data.error || "Không thể cập nhật địa chỉ");
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi cập nhật địa chỉ');
+      toast.error("Có lỗi xảy ra khi cập nhật địa chỉ");
     }
   };
 
-  const handleFormSubmit = async (formData: Omit<Address, '_id'>) => {
+  const handleFormSubmit = async (formData: Omit<Address, "_id">) => {
     try {
-      const url = editingAddress 
+      const url = editingAddress
         ? `/api/addresses/${editingAddress._id}`
-        : '/api/addresses';
-      
-      const method = editingAddress ? 'PUT' : 'POST';
+        : "/api/addresses";
+
+      const method = editingAddress ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        toast.success(editingAddress ? 'Cập nhật địa chỉ thành công' : 'Thêm địa chỉ thành công');
+        toast.success(
+          editingAddress
+            ? "Cập nhật địa chỉ thành công"
+            : "Thêm địa chỉ thành công"
+        );
         setShowForm(false);
         setEditingAddress(null);
         fetchAddresses();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Không thể lưu địa chỉ');
+        toast.error(data.error || "Không thể lưu địa chỉ");
       }
     } catch (error) {
-      toast.error('Có lỗi xảy ra khi lưu địa chỉ');
+      toast.error("Có lỗi xảy ra khi lưu địa chỉ");
     }
+  };
+
+  const getRegionName = (
+    provinceCode: number | string,
+    districtCode?: number | string,
+    wardCode?: number | string
+  ): string => {
+    if (!regionData || regionData.length === 0)
+      return `${wardCode || ""}, ${districtCode || ""}, ${provinceCode || ""}`;
+    const province = regionData.find((p) => p.code == provinceCode);
+    if (!province)
+      return `${wardCode || ""}, ${districtCode || ""}, ${provinceCode || ""}`;
+    let result = province.name;
+    if (districtCode && province.districts && province.districts.length > 0) {
+      const district = province.districts.find(
+        (d: any) => d.code == districtCode
+      );
+      if (district) {
+        result = `${district.name}, ${result}`;
+        if (wardCode && district.wards && district.wards.length > 0) {
+          const ward = district.wards.find((w: any) => w.code == wardCode);
+          if (ward) {
+            result = `${ward.name}, ${result}`;
+          }
+        }
+      }
+    }
+    return result;
   };
 
   if (loading) {
@@ -144,7 +187,7 @@ const SavedAddresses = () => {
     <div className="bg-white rounded-xl shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Địa chỉ đã lưu</h3>
-        <button 
+        <button
           onClick={() => {
             setEditingAddress(null);
             setShowForm(true);
@@ -158,7 +201,7 @@ const SavedAddresses = () => {
       {showForm && (
         <div className="mb-6">
           <AddressForm
-            initialData={editingAddress}
+            initialData={editingAddress || undefined}
             onSubmit={handleFormSubmit}
             onCancel={() => {
               setShowForm(false);
@@ -170,32 +213,36 @@ const SavedAddresses = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {addresses.map((address) => (
-          <div 
-            key={address._id} 
-            className={`border rounded-lg p-4 ${address.isDefault ? 'border-black' : ''}`}
+          <div
+            key={address._id}
+            className={`border rounded-lg p-4 ${
+              address.isDefault ? "border-black" : ""
+            }`}
           >
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h4 className="font-semibold">{address.fullName}</h4>
                 {address.isDefault && (
-                  <span className="text-sm text-green-600">Địa chỉ mặc định</span>
+                  <span className="text-sm text-green-600">
+                    Địa chỉ mặc định
+                  </span>
                 )}
               </div>
               <div className="space-x-2">
-                <button 
+                <button
                   onClick={() => handleEdit(address)}
                   className="text-gray-600 hover:text-black"
                 >
                   <i className="fas fa-edit"></i>
                 </button>
-                <button 
+                <button
                   onClick={() => handleDelete(address._id)}
                   className="text-gray-600 hover:text-red-600"
                 >
                   <i className="fas fa-trash"></i>
                 </button>
                 {!address.isDefault && (
-                  <button 
+                  <button
                     onClick={() => handleSetDefault(address._id)}
                     className="text-gray-600 hover:text-black text-sm"
                   >
@@ -205,10 +252,11 @@ const SavedAddresses = () => {
               </div>
             </div>
             <p className="text-gray-600">
-              {address.phone}<br />
-              {address.address}<br />
-              {address.ward}, {address.district}<br />
-              {address.province}
+              {address.phone}
+              <br />
+              {address.address}
+              <br />
+              {getRegionName(address.province, address.district, address.ward)}
             </p>
           </div>
         ))}
@@ -217,4 +265,4 @@ const SavedAddresses = () => {
   );
 };
 
-export default SavedAddresses; 
+export default SavedAddresses;

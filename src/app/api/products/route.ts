@@ -57,10 +57,47 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(request.url);
     
+    // Nếu có categoryId, lấy sản phẩm mới nhất của category đó
+    const categoryId = searchParams.get("categoryId");
+    if (categoryId) {
+      const latestProduct = await Product.findOne({ category: categoryId })
+        .sort({ createdAt: -1 })
+        .select('images')
+        .lean();
+      
+      return NextResponse.json({ product: latestProduct });
+    }
+
     // Pagination
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
-    const skip = (page - 1) * limit;
+    const page = searchParams.get("page");
+    const limit = searchParams.get("limit");
+    
+    // Nếu không có page và limit, trả về tất cả sản phẩm
+    if (!page && !limit) {
+      const products = await Product.find()
+        .populate("category", "name")
+        .populate("features", "name icon")
+        .lean();
+
+      const formattedProducts = products.map((product: any) => ({
+        ...product,
+        _id: product._id.toString(),
+        category: product.category ? {
+          _id: product.category._id.toString(),
+          name: product.category.name
+        } : null,
+        features: Array.isArray(product.features) ? product.features.map((feature: any) => ({
+          _id: feature._id.toString(),
+          name: feature.name,
+          icon: feature.icon
+        })) : []
+      }));
+
+      return NextResponse.json({ products: formattedProducts });
+    }
+
+    // Pagination
+    const skip = (parseInt(page ?? "1") - 1) * parseInt(limit ?? "10");
 
     // Filters
     const category = searchParams.get("category");
@@ -142,7 +179,7 @@ export async function GET(request: NextRequest) {
       .populate("features", "name icon")
       .sort(sort)
       .skip(skip)
-      .limit(limit)
+      .limit(parseInt(limit ?? "10"))
       .lean();
 
     // Get total count for pagination
@@ -169,7 +206,7 @@ export async function GET(request: NextRequest) {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / parseInt(limit ?? "10")),
       },
     });
   } catch (error: any) {

@@ -1,22 +1,28 @@
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { formatPrice } from '@/utils/format';
-import { CartItem } from '@/types/cart';
-import { useCartContext } from '@/contexts/CartContext';
-import { toast } from 'react-hot-toast';
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { formatPrice } from "@/utils/format";
+import { CartItem } from "@/types/cart";
+import { useCartContext } from "@/contexts/CartContext";
+import { toast } from "react-hot-toast";
+
+interface ShippingAddress {
+  fullName: string;
+  phone: string;
+  address: string;
+  province: string; // Mã tỉnh (vd: "22")
+  district: string; // Mã huyện (vd: "205")
+  ward: string; // Mã phường (vd: "7075")
+}
 
 interface CheckoutSummaryProps {
   items: CartItem[];
   subtotal: number;
   shipping: number;
   total: number;
-  shippingAddress?: {
-    fullName: string;
-    phone: string;
-    address: string;
-    city: string;
-  };
+  estimatedTime: string;
   onPlaceOrder: () => void;
   isProcessing: boolean;
 }
@@ -26,33 +32,27 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   subtotal,
   shipping,
   total,
-  shippingAddress,
+  estimatedTime,
   onPlaceOrder,
-  isProcessing
+  isProcessing,
 }) => {
   const router = useRouter();
   const { clearCart } = useCartContext();
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'ONLINE'>('COD');
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("COD");
 
   const handlePlaceOrder = () => {
-    if (!shippingAddress) {
-      toast.error('Vui lòng nhập thông tin giao hàng');
+    if (paymentMethod === "ONLINE") {
+      router.push("/checkout/payment");
       return;
     }
 
-    if (paymentMethod === 'ONLINE') {
-      router.push('/checkout/payment');
-      return;
-    }
-
-    // Gọi hàm onPlaceOrder từ parent component
     onPlaceOrder();
   };
 
   return (
     <div className="bg-gray-50 p-6 rounded-xl">
       <h2 className="text-lg font-semibold mb-6">Thông tin đơn hàng</h2>
-      
+
       {/* Items */}
       <div className="space-y-4 mb-6">
         {items.map((item) => (
@@ -74,14 +74,16 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                 <p>Size: {item.size}</p>
                 <div className="flex justify-between items-center">
                   <p>SL: {item.quantity}</p>
-                  <p className="font-medium text-black">{formatPrice(item.price * item.quantity)}₫</p>
+                  <p className="font-medium text-black">
+                    {formatPrice(item.price * item.quantity)}₫
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      
+
       {/* Summary */}
       <div className="border-t pt-4 space-y-2">
         <div className="flex justify-between text-sm">
@@ -92,11 +94,19 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
           <span>Phí vận chuyển</span>
           <span>{formatPrice(shipping)}₫</span>
         </div>
+        <div className="flex justify-between text-sm">
+          <span>Thuế</span>
+          <span>{formatPrice(0)}₫</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span>Thời gian giao hàng</span>
+          <span>{estimatedTime}</span>
+        </div>
         <div className="flex justify-between font-semibold text-lg pt-2 border-t">
           <span>Tổng cộng</span>
-          <span>{formatPrice(total)}₫</span>
+          <span>{formatPrice(subtotal + shipping)}₫</span>
         </div>
-        
+
         {/* Payment Method Selection */}
         <div className="pt-4 border-t">
           <h3 className="font-medium mb-3">Phương thức thanh toán</h3>
@@ -106,13 +116,15 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                 type="radio"
                 name="paymentMethod"
                 value="COD"
-                checked={paymentMethod === 'COD'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'COD')}
+                checked={paymentMethod === "COD"}
+                onChange={(e) => setPaymentMethod(e.target.value as "COD")}
                 className="text-black"
               />
               <div>
                 <p className="font-medium">Thanh toán khi nhận hàng (COD)</p>
-                <p className="text-sm text-gray-500">Thanh toán bằng tiền mặt khi nhận hàng</p>
+                <p className="text-sm text-gray-500">
+                  Thanh toán bằng tiền mặt khi nhận hàng
+                </p>
               </div>
             </label>
 
@@ -121,13 +133,15 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
                 type="radio"
                 name="paymentMethod"
                 value="ONLINE"
-                checked={paymentMethod === 'ONLINE'}
-                onChange={(e) => setPaymentMethod(e.target.value as 'ONLINE')}
+                checked={paymentMethod === "ONLINE"}
+                onChange={(e) => setPaymentMethod(e.target.value as "ONLINE")}
                 className="text-black"
               />
               <div>
                 <p className="font-medium">Thanh toán trực tuyến</p>
-                <p className="text-sm text-gray-500">Thanh toán qua VNPay, Momo, thẻ ngân hàng</p>
+                <p className="text-sm text-gray-500">
+                  Thanh toán qua VNPay, Momo, thẻ ngân hàng
+                </p>
               </div>
             </label>
           </div>
@@ -135,12 +149,16 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
       </div>
 
       {/* Place Order Button */}
-      <button 
+      <button
         className="w-full bg-black text-white py-3 rounded-lg mt-6 hover:bg-gray-800 transition-colors disabled:bg-gray-400"
         onClick={handlePlaceOrder}
-        disabled={isProcessing || !shippingAddress}
+        disabled={isProcessing}
       >
-        {isProcessing ? 'Đang xử lý...' : paymentMethod === 'COD' ? 'Đặt hàng' : 'Tiến hành thanh toán'}
+        {isProcessing
+          ? "Đang xử lý..."
+          : paymentMethod === "COD"
+          ? "Đặt hàng"
+          : "Tiến hành thanh toán"}
       </button>
 
       {/* Payment Methods */}
@@ -165,4 +183,4 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   );
 };
 
-export default CheckoutSummary; 
+export default CheckoutSummary;

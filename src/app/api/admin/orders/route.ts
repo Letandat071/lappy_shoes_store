@@ -95,7 +95,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const data = await request.json();
-    const { orderId, status, paymentStatus } = data;
+    const { orderId, status, paymentStatus, type } = data;
 
     if (!orderId || (!status && !paymentStatus)) {
       return NextResponse.json(
@@ -114,26 +114,10 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Cập nhật trạng thái
-    if (status) {
-      const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-      if (!validStatuses.includes(status)) {
-        return NextResponse.json(
-          { error: "Invalid status" },
-          { status: 400 }
-        );
-      }
+    if (type === 'payment') {
+      order.paymentStatus = status;
+    } else {
       order.status = status;
-    }
-
-    if (paymentStatus) {
-      const validPaymentStatuses = ['pending', 'completed', 'failed'];
-      if (!validPaymentStatuses.includes(paymentStatus)) {
-        return NextResponse.json(
-          { error: "Invalid payment status" },
-          { status: 400 }
-        );
-      }
-      order.paymentStatus = paymentStatus;
     }
 
     order.updatedAt = new Date();

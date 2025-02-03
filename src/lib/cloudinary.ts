@@ -4,11 +4,15 @@ interface CloudinaryResponse {
 }
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET = 'shoe-store-unsigned';
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'shoe-store-unsigned';
 
 export const useImageUpload = () => {
   const uploadImage = async (file: File): Promise<string> => {
     try {
+      if (!CLOUD_NAME) {
+        throw new Error('Missing Cloudinary configuration');
+      }
+
       console.log('🚀 Bắt đầu quá trình upload ảnh');
       console.log('📁 Thông tin file:', {
         name: file.name,
@@ -56,7 +60,7 @@ export const useImageUpload = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', UPLOAD_PRESET);
-      formData.append('cloud_name', CLOUD_NAME || '');
+      formData.append('cloud_name', CLOUD_NAME);
 
       console.log('🌐 Bắt đầu gửi request đến Cloudinary API');
       console.log('🔗 URL:', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`);
@@ -65,7 +69,8 @@ export const useImageUpload = () => {
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
         {
           method: 'POST',
-          body: formData
+          body: formData,
+          signal: AbortSignal.timeout(30000) // 30 seconds
         }
       );
 

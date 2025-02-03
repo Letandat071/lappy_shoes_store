@@ -10,6 +10,9 @@ import ProductCard from '@/components/product/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ProductSkeleton from '@/components/shop/ProductSkeleton';
+import Image from 'next/image';
+import { toast } from 'react-hot-toast';
+import { useWishlist } from '@/hooks/useWishlist';
 
 type FilterValue = string | number | string[] | { min: number; max: number };
 
@@ -23,6 +26,7 @@ interface Filters {
   feature: string;
   audience: string;
   [key: string]: FilterValue | FilterValue[];
+ 
 }
 
 export default function ShopPage() {
@@ -176,6 +180,8 @@ export default function ShopPage() {
     setPage(1);
   };
 
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+
   return (
     <main>
       <Navbar />
@@ -270,20 +276,121 @@ export default function ShopPage() {
             ) : (
               <>
                 {/* Products Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {products.map((product) => (
-                    <ProductCard 
-                      key={product._id}
-                      id={product._id}
-                      name={product.name}
-                      price={product.price}
-                      originalPrice={product.originalPrice}
-                      rating={product.rating || 0}
-                      reviewCount={product.reviewCount || 0}
-                      image={product.images[0]?.url || ''}
-                      category={product.category.name}
-                      discount={product.discount}
-                    />
+                    <div key={product._id} className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                      {/* Image Container */}
+                      <div className="relative aspect-square">
+                        <Link href={`/product/${product._id}`}>
+                          <div className="relative h-full overflow-hidden">
+                            <Image
+                              src={product.images[0]?.url || '/placeholder-product.jpg'}
+                              alt={product.name}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                            {/* Overlay khi hover */}
+                            <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          </div>
+                        </Link>
+
+                        {/* Tags Container */}
+                        <div className="absolute top-2 right-2 flex flex-col gap-2">
+                          {product.discount && product.discount > 0 && (
+                            <div className="bg-red-500 text-white text-sm font-medium px-3 py-1 rounded-full shadow-md">
+                              -{product.discount}%
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Wishlist Button */}
+                        <button
+                          onClick={() => {
+                            if (isInWishlist(product._id)) {
+                              removeFromWishlist(product._id);
+                              toast.success('Đã xóa khỏi danh sách yêu thích');
+                            } else {
+                              addToWishlist({
+                                _id: product._id,
+                                name: product.name,
+                                price: product.price,
+                                originalPrice: product.originalPrice,
+                                image: product.images[0]?.url || '',
+                                sizes: product.sizes ? product.sizes.map((s: { size: string; quantity: number }) => s.size) : [],
+                                stock: {}
+                              });
+                              toast.success('Đã thêm vào danh sách yêu thích');
+                            }
+                          }}
+                          className={`absolute top-2 left-2 w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
+                            isInWishlist(product._id)
+                              ? 'bg-red-500 hover:bg-red-600'
+                              : 'bg-white hover:bg-gray-100'
+                          }`}
+                          title={isInWishlist(product._id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                        >
+                          <i className={`fas fa-heart ${
+                            isInWishlist(product._id) ? 'text-white' : 'text-red-500'
+                          }`}></i>
+                        </button>
+                      </div>
+
+                      {/* Product Info */}
+                      <Link href={`/product/${product._id}`}>
+                        <div className="p-4">
+                          {/* Category */}
+                          <div className="text-xs text-gray-500 mb-1">
+                            {product.category.name}
+                          </div>
+
+                          {/* Product Name */}
+                          <h3 className="font-medium text-gray-800 group-hover:text-black transition-colors mb-2 truncate">
+                            {product.name}
+                          </h3>
+                          
+                          {/* Rating */}
+                          <div className="flex items-center mb-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <svg
+                                  key={i}
+                                  className={`w-3.5 h-3.5 ${
+                                    i < (product.rating || 0)
+                                      ? 'text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500 ml-1">
+                              ({product.reviewCount || 0})
+                            </span>
+                          </div>
+
+                          {/* Price Section */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-gray-900">
+                              {new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND'
+                              }).format(product.price)}
+                            </span>
+                            {product.originalPrice && product.originalPrice > product.price && (
+                              <span className="text-sm text-gray-500 line-through">
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(product.originalPrice)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
                   ))}
                 </div>
 

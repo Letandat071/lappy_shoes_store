@@ -18,7 +18,7 @@ const navigation = [
   { name: "Tổng quan", href: "/admin", icon: HomeIcon },
   { name: "Sản phẩm", href: "/admin/products", icon: ShoppingBagIcon },
   { name: "Đơn hàng", href: "/admin/orders", icon: ClipboardDocumentListIcon },
-  { name: "Khách hàng", href: "/admin/customers", icon: UsersIcon },
+  { name: "Khách hàng", href: "/admin/users", icon: UsersIcon },
   { name: "Danh mục", href: "/admin/categories", icon: TagIcon },
   { name: "Banner", href: "/admin/banner", icon: PhotoIcon },
   { name: "Thông báo", href: "/admin/announcements", icon: MegaphoneIcon },

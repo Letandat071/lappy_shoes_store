@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
+import { useImageUpload } from "@/lib/cloudinary";
 
 interface Category {
   _id: string;
@@ -19,11 +20,40 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     image: "",
   });
+
+  const { uploadImage } = useImageUpload();
+
+  // Thêm state để kiểm soát việc render
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchCategories();
+  }, []);
+
+  // Xử lý upload ảnh
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const imageUrl = await uploadImage(file);
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      toast.success("Tải ảnh lên thành công");
+    } catch (error) {
+      toast.error("Lỗi khi tải ảnh lên");
+      console.error("Upload error:", error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -39,10 +69,6 @@ export default function CategoriesPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,8 +149,29 @@ export default function CategoriesPage() {
     setEditingCategory(null);
   };
 
-  if (loading) {
-    return <div className="p-4">Đang tải...</div>;
+  // Nếu chưa mount, return loading skeleton
+  if (!mounted) {
+    return (
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border rounded-lg p-4 shadow-sm">
+              <div className="h-40 bg-gray-200 rounded-lg mb-4 animate-pulse"></div>
+              <div className="h-6 w-3/4 bg-gray-200 rounded mb-2 animate-pulse"></div>
+              <div className="h-4 bg-gray-200 rounded mb-4 animate-pulse"></div>
+              <div className="flex justify-end space-x-2">
+                <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -149,16 +196,20 @@ export default function CategoriesPage() {
             key={category._id}
             className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
-            {category.image && (
-              <div className="relative h-40 mb-4">
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  fill
-                  className="object-cover rounded-lg"
-                />
-              </div>
-            )}
+            {/* Product Image */}
+            <div className="relative h-40 mb-4">
+              <Image
+                src={category.image || "/images/placeholder.jpg"}
+                alt={category.name}
+                fill
+                className="object-cover rounded-lg"
+                unoptimized={true}
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.src = "/images/placeholder.jpg";
+                }}
+              />
+            </div>
             <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
             <p className="text-gray-600 mb-4">{category.description}</p>
             <div className="flex justify-end space-x-2">
@@ -210,17 +261,61 @@ export default function CategoriesPage() {
                   rows={3}
                 />
               </div>
+
+              {/* Image Upload Section */}
               <div className="mb-4">
-                <label className="block mb-2">URL Hình ảnh</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  className="w-full border rounded-lg p-2"
-                />
+                <label className="block mb-2">Hình ảnh</label>
+                <div className="space-y-2">
+                  {formData.image && (
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={formData.image}
+                        alt="Category preview"
+                        fill
+                        className="object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, image: "" }))
+                        }
+                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`block w-full text-center py-2 px-4 border-2 border-dashed rounded-lg cursor-pointer
+                      ${
+                        uploading
+                          ? "bg-gray-100 cursor-not-allowed"
+                          : "hover:bg-gray-50"
+                      }`}
+                  >
+                    {uploading ? (
+                      <span className="flex items-center justify-center">
+                        <i className="fas fa-spinner fa-spin mr-2"></i>
+                        Đang tải lên...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center">
+                        <i className="fas fa-cloud-upload-alt mr-2"></i>
+                        {formData.image ? "Thay đổi ảnh" : "Tải ảnh lên"}
+                      </span>
+                    )}
+                  </label>
+                </div>
               </div>
+
               <div className="flex justify-end space-x-2">
                 <button
                   type="button"
@@ -234,7 +329,8 @@ export default function CategoriesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  disabled={uploading}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-400"
                 >
                   {editingCategory ? "Cập nhật" : "Thêm"}
                 </button>
@@ -245,4 +341,4 @@ export default function CategoriesPage() {
       )}
     </div>
   );
-} 
+}
