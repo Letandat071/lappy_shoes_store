@@ -3,14 +3,11 @@ import connectDB from "@/lib/mongoose";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 // Cập nhật địa chỉ
-export async function PUT(request: NextRequest, context: RouteContext) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
@@ -35,7 +32,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -72,7 +69,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 }
 
 // Xóa địa chỉ
-export async function DELETE(request: NextRequest, context: RouteContext) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const address = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     if (address.isDefault) {
       const anotherAddress = await Address.findOne({
         user: userId,
-        _id: { $ne: context.params.id }
+        _id: { $ne: params.id }
       });
       if (anotherAddress) {
         anotherAddress.isDefault = true;
