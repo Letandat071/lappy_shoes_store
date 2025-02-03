@@ -173,7 +173,6 @@ export default function CheckoutPage() {
                 items={cart.items}
                 subtotal={subtotal}
                 shipping={shipping}
-                total={subtotal + shipping}
                 estimatedTime={estimatedTime}
                 onPlaceOrder={handlePlaceOrder}
                 isProcessing={isProcessing}

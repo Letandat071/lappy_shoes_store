@@ -36,6 +36,8 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
     onPlaceOrder();
   };
 
+  const total = subtotal + shipping;
+
   return (
     <div className="bg-gray-50 p-6 rounded-xl">
       <h2 className="text-lg font-semibold mb-6">Thông tin đơn hàng</h2>
@@ -91,7 +93,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
         </div>
         <div className="flex justify-between font-semibold text-lg pt-2 border-t">
           <span>Tổng cộng</span>
-          <span>{formatPrice(subtotal + shipping)}₫</span>
+          <span>{formatPrice(total)}₫</span>
         </div>
 
         {/* Payment Method Selection */}
