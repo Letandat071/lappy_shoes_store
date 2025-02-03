@@ -6,7 +6,7 @@ import { getDataFromToken } from "@/helpers/getDataFromToken";
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string | string[] } }
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectDB();
