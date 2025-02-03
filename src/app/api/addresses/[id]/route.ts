@@ -6,7 +6,7 @@ import { getDataFromToken } from "@/helpers/getDataFromToken";
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -32,7 +32,7 @@ export async function PUT(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -60,9 +60,9 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error('Error updating address:', error);
+    console.error("Error updating address:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -71,7 +71,7 @@ export async function PUT(
 // Xóa địa chỉ
 export async function DELETE(
   request: NextRequest,
-  context: { params: Params }
+  { params }: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -85,7 +85,7 @@ export async function DELETE(
     }
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
-    const addressId = context.params.id;
+    const addressId = params.id;
     const address = await Address.findOne({
       _id: addressId,
       user: userId
@@ -117,10 +117,10 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error('Error deleting address:', error);
+    console.error("Error deleting address:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-} 
+}
