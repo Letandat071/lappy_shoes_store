@@ -1,43 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/lib/mongoose";
+import connectDB from "@/lib/db";
 import Order from "@/models/Order";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
 // Lấy chi tiết đơn hàng
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: unknown
 ) {
+  const { params } = context as { params: { id: string } };
+  
   try {
     await connectDB();
-
+    
     const userId = await getDataFromToken(request);
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const order = await Order.findOne({
       _id: params.id,
       user: userId
-    }).populate('items.product', 'name image price');
+    })
+    .populate('items.product')
+    .lean();
 
     if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ order });
-
-  } catch (error: unknown) {
+    return NextResponse.json(order);
+  } catch (error) {
     console.error('Error fetching order:', error);
-    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -46,8 +42,10 @@ export async function GET(
 // Cập nhật đơn hàng
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: unknown
 ) {
+  const { params } = context as { params: { id: string } };
+  
   try {
     await connectDB();
 
@@ -133,8 +131,10 @@ export async function PATCH(
 // Hủy đơn hàng
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: unknown
 ) {
+  const { params } = context as { params: { id: string } };
+  
   try {
     await connectDB();
 
