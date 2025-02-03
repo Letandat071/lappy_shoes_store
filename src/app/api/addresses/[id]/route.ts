@@ -3,13 +3,6 @@ import connectDB from "@/lib/mongoose";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
-// Định nghĩa interface cho params
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
