@@ -30,7 +30,15 @@ const nextConfig = {
     '@heroicons/react/24/outline': {
       transform: '@heroicons/react/24/outline/{{member}}',
     },
-  }
+  },
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+    };
+    return config;
+  },
 }
 
 module.exports = nextConfig 
