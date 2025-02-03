@@ -6,58 +6,64 @@ interface ProductsReviewProps {
   productId: string;
 }
 
-const product = {
-  id: "1",
-  name: "Nike Air Max 270",
-  price: 159.99,
-  originalPrice: 199.99,
-  discount: 20,
-  rating: 4.5,
-  reviewCount: 128,
-  description: `The Nike Air Max 270 delivers visible cushioning under every step. Updated for modern comfort, it features Nike's biggest heel Air unit yet for a super-soft ride that feels as impossible as it looks.`,
-  features: [
-    "Lightweight mesh upper for breathability",
-    "Foam midsole for responsive cushioning",
-    "Rubber outsole for durability",
-    "Heel Air unit for maximum comfort",
-  ],
-  images: [
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-    "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa",
-    "https://images.unsplash.com/photo-1605348532760-6753d2c43329",
-    "https://images.unsplash.com/photo-1605408499391-6368c628ef42",
-  ],
-  sizes: ["US 7", "US 8", "US 9", "US 10", "US 11"],
-  colors: ["Black", "White", "Red", "Blue"],
-  reviews: [
-    {
-      id: "1",
-      user: {
-        name: "John Doe",
-        avatar: "https://i.pravatar.cc/100?img=1",
-      },
-      rating: 5,
-      date: "2 days ago",
-      title: "Best running shoes ever!",
-      content: `These shoes are incredibly comfortable and stylish. The air cushioning makes them perfect for all-day wear. 
-          I've been using them for both running and casual wear, and they perform excellently in both situations.`,
-      images: [
-        "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-        "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa",
-      ],
-      helpful: 24,
-    },
-  ],
+interface Review {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  rating: number;
+  date: string;
+  title: string;
+  content: string;
+  images: string[];
+  helpful: number;
+}
+
+interface ReviewData {
+  reviews: Review[];
+  rating: number;
+  reviewCount: number;
   ratingDistribution: {
-    5: 70,
-    4: 20,
-    3: 5,
-    2: 3,
-    1: 2,
-  },
-};
+    [key: number]: number;
+  };
+}
 
 function ProductsReview({ productId }: ProductsReviewProps) {
+  const [reviewData, setReviewData] = React.useState<ReviewData>({
+    reviews: [],
+    rating: 0,
+    reviewCount: 0,
+    ratingDistribution: {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    },
+  });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`/api/products/${productId}/reviews`);
+        const data = await response.json();
+        setReviewData(data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [productId]);
+
+  if (loading) {
+    return <div>Loading reviews...</div>;
+  }
+
   return (
     <div>
       {" "}
@@ -72,13 +78,13 @@ function ProductsReview({ productId }: ProductsReviewProps) {
                   <i
                     key={i}
                     className={`fas fa-star${
-                      i + 1 > product.rating ? "-half-alt" : ""
+                      i + 1 > reviewData.rating ? "-half-alt" : ""
                     }`}
                   ></i>
                 ))}
               </div>
               <span className="text-gray-600">
-                Based on {product.reviewCount} reviews
+                Based on {reviewData.reviewCount} reviews
               </span>
             </div>
           </div>
@@ -88,7 +94,7 @@ function ProductsReview({ productId }: ProductsReviewProps) {
         {/* Rating Distribution */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <div className="space-y-4">
-            {Object.entries(product.ratingDistribution)
+            {Object.entries(reviewData.ratingDistribution)
               .reverse()
               .map(([rating, percentage]) => (
                 <div key={rating} className="flex items-center gap-4">
@@ -126,7 +132,7 @@ function ProductsReview({ productId }: ProductsReviewProps) {
 
         {/* Individual Reviews */}
         <div className="space-y-8">
-          {product.reviews.map((review) => (
+          {reviewData.reviews.map((review) => (
             <div key={review.id} className="border-t pt-8">
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
@@ -154,18 +160,20 @@ function ProductsReview({ productId }: ProductsReviewProps) {
               </div>
               <h5 className="font-semibold mb-2">{review.title}</h5>
               <p className="text-gray-600 mb-4">{review.content}</p>
-              <div className="flex gap-4 mb-4">
-                {review.images.map((image, index) => (
-                  <Image
-                    key={index}
-                    src={image}
-                    alt={`Review image ${index + 1}`}
-                    width={96}
-                    height={96}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                ))}
-              </div>
+              {review.images.length > 0 && (
+                <div className="flex gap-4 mb-4">
+                  {review.images.map((image, index) => (
+                    <Image
+                      key={index}
+                      src={image}
+                      alt={`Review image ${index + 1}`}
+                      width={96}
+                      height={96}
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                  ))}
+                </div>
+              )}
               <div className="flex items-center gap-4 text-sm">
                 <button className="flex items-center gap-2 text-gray-600 hover:text-black">
                   <i className="far fa-thumbs-up"></i>
