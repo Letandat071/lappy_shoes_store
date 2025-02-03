@@ -8,11 +8,11 @@ import { getDataFromToken } from "@/helpers/getDataFromToken";
 /**
  * Handler PUT: Cập nhật địa chỉ
  * @param request - Đối tượng NextRequest chứa thông tin request
- * @param context - Chứa params lấy từ URL, ở đây id luôn là string
+ * @param context - Chứa params lấy từ URL (để Next.js xử lý)
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }  // Chỉ định rõ id là string
+  { params }: any  // Dùng any để tránh xung đột kiểu
 ) {
   try {
     // Kết nối tới database
@@ -24,7 +24,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse dữ liệu JSON từ request body
+    // Parse JSON body
     const data = await request.json();
     const { fullName, phone, province, district, ward, address, isDefault } = data;
 
@@ -36,8 +36,8 @@ export async function PUT(
       );
     }
 
-    // Lấy id của địa chỉ từ params (đã được đảm bảo là string)
-    const addressId = params.id;
+    // Vì route [id] đảm bảo id là string, lấy id từ params
+    const addressId: string = params.id;
 
     // Tìm địa chỉ cần cập nhật và kiểm tra quyền sở hữu
     const existingAddress = await Address.findOne({
@@ -52,7 +52,7 @@ export async function PUT(
       );
     }
 
-    // Cập nhật các trường thông tin
+    // Cập nhật thông tin
     existingAddress.fullName = fullName;
     existingAddress.phone = phone;
     existingAddress.province = province;
@@ -80,11 +80,11 @@ export async function PUT(
 /**
  * Handler DELETE: Xóa địa chỉ
  * @param request - Đối tượng NextRequest chứa thông tin request
- * @param context - Chứa params lấy từ URL, ở đây id luôn là string
+ * @param context - Chứa params lấy từ URL (để Next.js xử lý)
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } } // Chỉ định rõ id là string
+  { params }: any  // Dùng any cho context
 ) {
   try {
     // Kết nối tới database
@@ -96,8 +96,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Lấy id của địa chỉ từ params (đã được đảm bảo là string)
-    const addressId = params.id;
+    // Lấy id của địa chỉ từ params (đã đảm bảo là string)
+    const addressId: string = params.id;
 
     // Tìm địa chỉ cần xóa và kiểm tra quyền sở hữu
     const address = await Address.findOne({
