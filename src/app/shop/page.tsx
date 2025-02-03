@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
@@ -51,7 +51,8 @@ interface Product {
   discount?: number;
 }
 
-export default function ShopPage() {
+// Component chính chứa logic sử dụng useSearchParams
+function ShopContent() {
   const searchParams = useSearchParams();
 
   const [selectedFilters, setSelectedFilters] = React.useState<Filters>({
@@ -573,5 +574,26 @@ export default function ShopPage() {
 
       <Footer />
     </main>
+  );
+}
+
+// Component wrapper với Suspense
+export default function ShopPage() {
+  return (
+    <>
+      <Navbar />
+      <main>
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+            </div>
+          }
+        >
+          <ShopContent />
+        </Suspense>
+      </main>
+      <Footer />
+    </>
   );
 }
