@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
-import { Params } from "next/server";
 
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -32,9 +31,8 @@ export async function PUT(
     }
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
-    const addressId = params.id;
     const existingAddress = await Address.findOne({
-      _id: addressId,
+      _id: context.params.id,
       user: userId
     });
 
