@@ -11,7 +11,10 @@ interface RouteParams {
 }
 
 // Cập nhật địa chỉ
-export async function PUT(request: NextRequest, context: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
@@ -36,7 +39,7 @@ export async function PUT(request: NextRequest, context: RouteParams) {
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -73,7 +76,10 @@ export async function PUT(request: NextRequest, context: RouteParams) {
 }
 
 // Xóa địa chỉ
-export async function DELETE(request: NextRequest, context: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
 
@@ -87,7 +93,7 @@ export async function DELETE(request: NextRequest, context: RouteParams) {
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const address = await Address.findOne({
-      _id: context.params.id,
+      _id: params.id,
       user: userId
     });
 
@@ -102,7 +108,7 @@ export async function DELETE(request: NextRequest, context: RouteParams) {
     if (address.isDefault) {
       const anotherAddress = await Address.findOne({
         user: userId,
-        _id: { $ne: context.params.id }
+        _id: { $ne: params.id }
       });
       if (anotherAddress) {
         anotherAddress.isDefault = true;
