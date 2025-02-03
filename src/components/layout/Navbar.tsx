@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-import UserAvatar from '@/components/common/UserAvatar';
-import { useProducts } from '@/hooks/useProducts';
-import { useFeatures } from '@/hooks/useFeatures';
-import { useCartContext } from '@/contexts/CartContext';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import UserAvatar from "@/components/common/UserAvatar";
+import { useProducts } from "@/hooks/useProducts";
+import { useFeatures } from "@/hooks/useFeatures";
+import { useCartContext } from "@/contexts/CartContext";
+import { useWishlistContext } from "@/contexts/WishlistContext";
 
 // Định nghĩa interface cho Announcement
 interface Announcement {
@@ -26,14 +26,13 @@ interface Announcement {
 }
 
 const Navbar = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
   const { user, logout } = useAuth();
   const { cart } = useCartContext();
   const { wishlist } = useWishlistContext();
@@ -44,7 +43,7 @@ const Navbar = () => {
   // Fetch search results
   const { products, loading } = useProducts({
     search: searchQuery,
-    limit: 5
+    limit: 5,
   });
 
   // State lưu thông báo
@@ -57,23 +56,25 @@ const Navbar = () => {
   useEffect(() => {
     async function fetchAnnouncement() {
       try {
-        const response = await fetch('/api/admin/announcements');
+        const response = await fetch("/api/admin/announcements");
         const data = await response.json();
         if (response.ok && data.announcements) {
           const now = new Date();
           // Lọc ra các thông báo đang active
-          const activeAnnouncements = data.announcements.filter((ann: Announcement) => {
-            if (!ann.isActive) return false;
-            if (ann.startDate) {
-              const start = new Date(ann.startDate);
-              if (now < start) return false;
+          const activeAnnouncements = data.announcements.filter(
+            (ann: Announcement) => {
+              if (!ann.isActive) return false;
+              if (ann.startDate) {
+                const start = new Date(ann.startDate);
+                if (now < start) return false;
+              }
+              if (ann.endDate) {
+                const end = new Date(ann.endDate);
+                if (now > end) return false;
+              }
+              return true;
             }
-            if (ann.endDate) {
-              const end = new Date(ann.endDate);
-              if (now > end) return false;
-            }
-            return true;
-          });
+          );
           if (activeAnnouncements.length > 0) {
             setAnnouncement(activeAnnouncements[0]);
           }
@@ -109,10 +110,6 @@ const Navbar = () => {
     router.push(`/shop?audience=${audience}`);
   };
 
-  const handleBrandClick = (brand: string) => {
-    router.push(`/shop?brand=${brand}`);
-  };
-
   const handleFeatureClick = (featureName: string) => {
     router.push(`/shop?feature=${encodeURIComponent(featureName)}`);
   };
@@ -121,9 +118,9 @@ const Navbar = () => {
     try {
       await logout();
       setIsProfileOpen(false);
-      router.push('/');
+      router.push("/");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -135,7 +132,10 @@ const Navbar = () => {
     <>
       {announcement && (
         <div
-          style={{ backgroundColor: announcement.backgroundColor, color: announcement.textColor }}
+          style={{
+            backgroundColor: announcement.backgroundColor,
+            color: announcement.textColor,
+          }}
           className="text-center py-2 text-sm"
         >
           {announcement.link ? (
@@ -156,7 +156,11 @@ const Navbar = () => {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2"
               >
-                <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`}></i>
+                <i
+                  className={`fas ${
+                    isMobileMenuOpen ? "fa-times" : "fa-bars"
+                  } text-xl`}
+                ></i>
               </button>
 
               {/* Logo */}
@@ -168,33 +172,37 @@ const Navbar = () => {
               <div className="hidden md:flex items-center space-x-8">
                 {/* Shop Dropdown */}
                 <div className="relative group">
-                  <Link href="/shop" className="hover:text-gray-600" onClick={(e) => {
-                    // Cho phép click trực tiếp vào Shop
-                    e.stopPropagation();
-                  }}>
+                  <Link
+                    href="/shop"
+                    className="hover:text-gray-600"
+                    onClick={(e) => {
+                      // Cho phép click trực tiếp vào Shop
+                      e.stopPropagation();
+                    }}
+                  >
                     Shop
                   </Link>
                   <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <button 
-                      onClick={() => handleCategoryClick('men')} 
+                    <button
+                      onClick={() => handleCategoryClick("men")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Nam
                     </button>
-                    <button 
-                      onClick={() => handleCategoryClick('women')} 
+                    <button
+                      onClick={() => handleCategoryClick("women")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Nữ
                     </button>
-                    <button 
-                      onClick={() => handleCategoryClick('kids')} 
+                    <button
+                      onClick={() => handleCategoryClick("kids")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Trẻ em
                     </button>
-                    <button 
-                      onClick={() => handleCategoryClick('unisex')} 
+                    <button
+                      onClick={() => handleCategoryClick("unisex")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Unisex
@@ -224,19 +232,25 @@ const Navbar = () => {
                         </button>
                       ))
                     ) : (
-                      <div className="px-4 py-2 text-gray-500">No features available</div>
+                      <div className="px-4 py-2 text-gray-500">
+                        No features available
+                      </div>
                     )}
                   </div>
                 </div>
 
-                <Link href="/about" className="hover:text-gray-600">About Us</Link>
-                <Link href="/help" className="hover:text-gray-600">Help</Link>
+                <Link href="/about" className="hover:text-gray-600">
+                  About Us
+                </Link>
+                <Link href="/help" className="hover:text-gray-600">
+                  Help
+                </Link>
               </div>
 
               {/* Icons Section */}
               <div className="flex items-center space-x-4 md:space-x-6">
                 {/* Search Icon for Mobile */}
-                <button 
+                <button
                   onClick={() => setIsSearchOpen(!isSearchOpen)}
                   className="md:hidden"
                 >
@@ -244,7 +258,10 @@ const Navbar = () => {
                 </button>
 
                 {/* Desktop Search */}
-                <form onSubmit={handleSearch} className="hidden md:flex items-center relative">
+                <form
+                  onSubmit={handleSearch}
+                  className="hidden md:flex items-center relative"
+                >
                   <input
                     type="text"
                     value={searchQuery}
@@ -265,7 +282,9 @@ const Navbar = () => {
                   {showSearchResults && searchQuery && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-lg overflow-hidden z-50">
                       {loading ? (
-                        <div className="p-4 text-center text-gray-500">Loading...</div>
+                        <div className="p-4 text-center text-gray-500">
+                          Loading...
+                        </div>
                       ) : products.length > 0 ? (
                         <>
                           {products.map((product) => (
@@ -276,7 +295,7 @@ const Navbar = () => {
                             >
                               <div className="relative w-12 h-12">
                                 <Image
-                                  src={product.images[0]?.url || ''}
+                                  src={product.images[0]?.url || ""}
                                   alt={product.name}
                                   fill
                                   className="object-cover rounded"
@@ -284,12 +303,16 @@ const Navbar = () => {
                               </div>
                               <div className="flex-1">
                                 <h4 className="font-medium">{product.name}</h4>
-                                <p className="text-sm text-gray-500">${product.price}</p>
+                                <p className="text-sm text-gray-500">
+                                  ${product.price}
+                                </p>
                               </div>
                             </Link>
                           ))}
                           <Link
-                            href={`/shop?search=${encodeURIComponent(searchQuery)}`}
+                            href={`/shop?search=${encodeURIComponent(
+                              searchQuery
+                            )}`}
                             className="block p-4 text-center text-blue-600 hover:bg-gray-50 border-t"
                           >
                             View all results
@@ -312,7 +335,11 @@ const Navbar = () => {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className="flex items-center space-x-2 hover:text-gray-600"
                       >
-                        <UserAvatar name={user.name} image={user.avatar} size={32} />
+                        <UserAvatar
+                          name={user.name}
+                          image={user.avatar}
+                          size={32}
+                        />
                         <span className="hidden lg:inline">{user.name}</span>
                       </button>
 
@@ -353,7 +380,10 @@ const Navbar = () => {
                 </div>
 
                 {/* Wishlist */}
-                <Link href="/wishlist" className="hover:text-gray-600 hidden sm:block">
+                <Link
+                  href="/wishlist"
+                  className="hover:text-gray-600 hidden sm:block"
+                >
                   <div className="relative">
                     <i className="far fa-heart text-xl"></i>
                     {wishlist.totalItems > 0 && (
@@ -407,10 +437,30 @@ const Navbar = () => {
                   <div className="px-4 py-2">
                     <div className="font-medium mb-2">Shop</div>
                     <div className="space-y-2 pl-4">
-                      <Link href="/shop?audience=men" className="block text-gray-600">Men</Link>
-                      <Link href="/shop?audience=women" className="block text-gray-600">Women</Link>
-                      <Link href="/shop?audience=kids" className="block text-gray-600">Kids</Link>
-                      <Link href="/shop?audience=unisex" className="block text-gray-600">Unisex</Link>
+                      <Link
+                        href="/shop?audience=men"
+                        className="block text-gray-600"
+                      >
+                        Men
+                      </Link>
+                      <Link
+                        href="/shop?audience=women"
+                        className="block text-gray-600"
+                      >
+                        Women
+                      </Link>
+                      <Link
+                        href="/shop?audience=kids"
+                        className="block text-gray-600"
+                      >
+                        Kids
+                      </Link>
+                      <Link
+                        href="/shop?audience=unisex"
+                        className="block text-gray-600"
+                      >
+                        Unisex
+                      </Link>
                     </div>
                   </div>
 
@@ -418,23 +468,55 @@ const Navbar = () => {
                   <div className="px-4 py-2">
                     <div className="font-medium mb-2">Featured</div>
                     <div className="space-y-2 pl-4">
-                      <Link href="/featured?category=new-releases" className="block text-gray-600">New Releases</Link>
-                      <Link href="/featured?category=best-sellers" className="block text-gray-600">Best Sellers</Link>
-                      <Link href="/featured?category=limited-edition" className="block text-gray-600">Limited Edition</Link>
-                      <Link href="/featured?category=collections" className="block text-gray-600">Collections</Link>
+                      <Link
+                        href="/featured?category=new-releases"
+                        className="block text-gray-600"
+                      >
+                        New Releases
+                      </Link>
+                      <Link
+                        href="/featured?category=best-sellers"
+                        className="block text-gray-600"
+                      >
+                        Best Sellers
+                      </Link>
+                      <Link
+                        href="/featured?category=limited-edition"
+                        className="block text-gray-600"
+                      >
+                        Limited Edition
+                      </Link>
+                      <Link
+                        href="/featured?category=collections"
+                        className="block text-gray-600"
+                      >
+                        Collections
+                      </Link>
                     </div>
                   </div>
 
                   {/* Other Links */}
                   <div className="px-4 py-2 space-y-2">
-                    <Link href="/about" className="block text-gray-600">About Us</Link>
-                    <Link href="/help" className="block text-gray-600">Help</Link>
+                    <Link href="/about" className="block text-gray-600">
+                      About Us
+                    </Link>
+                    <Link href="/help" className="block text-gray-600">
+                      Help
+                    </Link>
                     {!user && (
-                      <Link href="/auth" className="block text-gray-600 sm:hidden">
+                      <Link
+                        href="/auth"
+                        className="block text-gray-600 sm:hidden"
+                      >
                         Đăng nhập / Đăng ký
                       </Link>
                     )}
-                    <Link href="/wishlist" className="block text-gray-600 sm:hidden">Wishlist</Link>
+                    <Link
+                      href="/wishlist"
+                      className="block text-gray-600 sm:hidden"
+                    >
+                      Wishlist
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -446,4 +528,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

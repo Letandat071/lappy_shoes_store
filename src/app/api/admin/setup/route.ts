@@ -51,10 +51,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Lỗi:", error);
+    const message = error instanceof Error ? error.message : "Có lỗi xảy ra khi tạo tài khoản";
     return NextResponse.json(
-      { error: "Có lỗi xảy ra khi tạo tài khoản" },
+      { error: message },
       { status: 500 }
     );
   }

@@ -1,16 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { formatPrice } from '@/utils/format';
-import { toast } from 'react-hot-toast';
-import Image from 'next/image';
-
-interface Product {
-  _id: string;
-  name: string;
-  images: { url: string }[];
-  price: number;
-}
+import { useState, useEffect, useCallback } from "react";
+import { formatPrice } from "@/utils/format";
+import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 interface OrderItem {
   product: {
@@ -54,7 +47,11 @@ interface PaginationInfo {
 interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
-  onUpdateStatus: (orderId: string, status: string, type: 'order' | 'payment') => void;
+  onUpdateStatus: (
+    orderId: string,
+    status: string,
+    type: "order" | "payment"
+  ) => void;
 }
 
 export default function OrdersManagement() {
@@ -63,110 +60,129 @@ export default function OrdersManagement() {
     total: 0,
     page: 1,
     limit: 10,
-    totalPages: 0
+    totalPages: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const statusOptions = [
-    { value: '', label: 'Tất cả trạng thái' },
-    { value: 'pending', label: 'Chờ xử lý' },
-    { value: 'processing', label: 'Đang xử lý' },
-    { value: 'shipped', label: 'Đang giao' },
-    { value: 'delivered', label: 'Đã giao' },
-    { value: 'cancelled', label: 'Đã hủy' }
+    { value: "", label: "Tất cả trạng thái" },
+    { value: "pending", label: "Chờ xử lý" },
+    { value: "processing", label: "Đang xử lý" },
+    { value: "shipped", label: "Đang giao" },
+    { value: "delivered", label: "Đã giao" },
+    { value: "cancelled", label: "Đã hủy" },
   ];
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
-        limit: pagination.limit.toString()
+        limit: pagination.limit.toString(),
       });
 
-      if (selectedStatus) queryParams.append('status', selectedStatus);
-      if (searchTerm) queryParams.append('search', searchTerm);
+      if (selectedStatus) queryParams.append("status", selectedStatus);
+      if (searchTerm) queryParams.append("search", searchTerm);
 
       const response = await fetch(`/api/admin/orders?${queryParams}`);
       const data = await response.json();
 
       if (response.ok) {
         // Fetch product details for each order
-        const ordersWithProducts = await Promise.all(data.orders.map(async (order: Order) => {
-          const itemsWithProducts = await Promise.all(order.items.map(async (item) => {
-            try {
-              const productResponse = await fetch(`/api/products/${item.product._id}`);
-              if (!productResponse.ok) throw new Error('Failed to fetch product');
-              
-              const productData = await productResponse.json();
-              return {
-                ...item,
-                product: {
-                  ...item.product,
-                  image: productData.images?.[0]?.url || null,
-                  name: productData.name || 'Unknown Product',
-                  price: productData.price || 0
+        const ordersWithProducts = await Promise.all(
+          data.orders.map(async (order: Order) => {
+            const itemsWithProducts = await Promise.all(
+              order.items.map(async (item) => {
+                try {
+                  const productResponse = await fetch(
+                    `/api/products/${item.product._id}`
+                  );
+                  if (!productResponse.ok)
+                    throw new Error("Failed to fetch product");
+
+                  const productData = await productResponse.json();
+                  return {
+                    ...item,
+                    product: {
+                      ...item.product,
+                      image: productData.images?.[0]?.url || null,
+                      name: productData.name || "Unknown Product",
+                      price: productData.price || 0,
+                    },
+                  };
+                } catch (error) {
+                  console.error("Error fetching product:", error);
+                  return item;
                 }
-              };
-            } catch (error) {
-              console.error('Error fetching product:', error);
-              return item;
-            }
-          }));
-          return { 
-            ...order,
-            items: itemsWithProducts
-          };
-        }));
+              })
+            );
+            return {
+              ...order,
+              items: itemsWithProducts,
+            };
+          })
+        );
 
         setOrders(ordersWithProducts);
         setPagination(data.pagination);
       } else {
-        console.error('Error fetching orders:', data.error);
+        console.error("Error fetching orders:", data.error);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching orders:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, selectedStatus, searchTerm]);
 
-  const updateOrderStatus = async (orderId: string, newStatus: string, type: 'order' | 'payment' = 'order') => {
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const updateOrderStatus = async (
+    orderId: string,
+    newStatus: string,
+    type: "order" | "payment" = "order"
+  ) => {
     try {
-      const response = await fetch('/api/admin/orders', {
-        method: 'PATCH',
+      const response = await fetch("/api/admin/orders", {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           orderId,
           status: newStatus,
-          type
-        })
+          type,
+        }),
       });
 
       if (response.ok) {
-        toast.success(`Cập nhật ${type === 'order' ? 'trạng thái' : 'thanh toán'} thành công`);
+        toast.success(
+          `Cập nhật ${
+            type === "order" ? "trạng thái" : "thanh toán"
+          } thành công`
+        );
         fetchOrders();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Có lỗi xảy ra');
+        toast.error(data.error || "Có lỗi xảy ra");
       }
     } catch (error) {
-      console.error('Error updating order:', error);
-      toast.error('Có lỗi xảy ra khi cập nhật');
+      console.error("Error updating order:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật");
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [pagination.page, selectedStatus, searchTerm]);
-
   // Component Modal chi tiết đơn hàng
-  const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ order, onClose, onUpdateStatus }) => {
+  const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
+    order,
+    onClose,
+    onUpdateStatus,
+  }) => {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -178,10 +194,11 @@ export default function OrdersManagement() {
                   Đơn hàng #{order._id.slice(-6)}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Đặt ngày {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                  Đặt ngày{" "}
+                  {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -196,12 +213,16 @@ export default function OrdersManagement() {
               <div className="bg-white p-6 rounded-xl border">
                 <div className="flex items-center gap-2 mb-4">
                   <i className="fas fa-user-circle text-gray-400 text-xl"></i>
-                  <h3 className="text-lg font-semibold">Thông tin khách hàng</h3>
+                  <h3 className="text-lg font-semibold">
+                    Thông tin khách hàng
+                  </h3>
                 </div>
                 <div className="space-y-3">
                   <div>
                     <p className="text-sm text-gray-500">Họ tên</p>
-                    <p className="font-medium">{order.shippingAddress.fullName}</p>
+                    <p className="font-medium">
+                      {order.shippingAddress.fullName}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Số điện thoại</p>
@@ -210,7 +231,8 @@ export default function OrdersManagement() {
                   <div>
                     <p className="text-sm text-gray-500">Địa chỉ</p>
                     <p className="font-medium">
-                      {order.shippingAddress.address}, {order.shippingAddress.city}
+                      {order.shippingAddress.address},{" "}
+                      {order.shippingAddress.city}
                     </p>
                   </div>
                 </div>
@@ -224,24 +246,34 @@ export default function OrdersManagement() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Trạng thái đơn hàng</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Trạng thái đơn hàng
+                    </p>
                     <select
                       value={order.status}
-                      onChange={(e) => onUpdateStatus(order._id, e.target.value, 'order')}
+                      onChange={(e) =>
+                        onUpdateStatus(order._id, e.target.value, "order")
+                      }
                       className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
-                      {statusOptions.filter(opt => opt.value).map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
+                      {statusOptions
+                        .filter((opt) => opt.value)
+                        .map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                     </select>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500 mb-2">Trạng thái thanh toán</p>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Trạng thái thanh toán
+                    </p>
                     <select
                       value={order.paymentStatus}
-                      onChange={(e) => onUpdateStatus(order._id, e.target.value, 'payment')}
+                      onChange={(e) =>
+                        onUpdateStatus(order._id, e.target.value, "payment")
+                      }
                       className="w-full border rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                       <option value="pending">Chờ thanh toán</option>
@@ -250,8 +282,12 @@ export default function OrdersManagement() {
                     </select>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Phương thức thanh toán</p>
-                    <p className="font-medium capitalize">{order.paymentMethod}</p>
+                    <p className="text-sm text-gray-500">
+                      Phương thức thanh toán
+                    </p>
+                    <p className="font-medium capitalize">
+                      {order.paymentMethod}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -302,12 +338,16 @@ export default function OrdersManagement() {
                                 <i className="fas fa-image text-gray-400"></i>
                               </div>
                             )}
-                            <span className="ml-4 font-medium">{item.product.name}</span>
+                            <span className="ml-4 font-medium">
+                              {item.product.name}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm">{item.size}</td>
                         <td className="px-6 py-4 text-sm">{item.quantity}</td>
-                        <td className="px-6 py-4 text-sm">{formatPrice(item.product.price)}₫</td>
+                        <td className="px-6 py-4 text-sm">
+                          {formatPrice(item.product.price)}₫
+                        </td>
                         <td className="px-6 py-4 text-sm font-medium">
                           {formatPrice(item.product.price * item.quantity)}₫
                         </td>
@@ -340,7 +380,7 @@ export default function OrdersManagement() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
-        
+
         <div className="flex gap-4">
           {/* Search */}
           <input
@@ -350,14 +390,14 @@ export default function OrdersManagement() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 border rounded-lg"
           />
-          
+
           {/* Filter */}
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="px-4 py-2 border rounded-lg"
           >
-            {statusOptions.map(option => (
+            {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -415,7 +455,9 @@ export default function OrdersManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div>
-                      <p className="font-medium">{order.shippingAddress.fullName}</p>
+                      <p className="font-medium">
+                        {order.shippingAddress.fullName}
+                      </p>
                       <p>{order.shippingAddress.phone}</p>
                     </div>
                   </td>
@@ -425,32 +467,54 @@ export default function OrdersManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
                       value={order.status}
-                      onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                      onChange={(e) =>
+                        updateOrderStatus(order._id, e.target.value)
+                      }
                       className="text-sm border rounded p-1"
                     >
-                      {statusOptions.filter(opt => opt.value).map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
+                      {statusOptions
+                        .filter((opt) => opt.value)
+                        .map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                     </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
                       value={order.paymentStatus}
-                      onChange={(e) => updateOrderStatus(order._id, e.target.value, 'payment')}
+                      onChange={(e) =>
+                        updateOrderStatus(order._id, e.target.value, "payment")
+                      }
                       className={`text-sm border rounded-lg px-2 py-1 w-32
-                        ${order.paymentStatus === 'completed' ? 'bg-green-50 text-green-800 border-green-200' : 
-                          order.paymentStatus === 'failed' ? 'bg-red-50 text-red-800 border-red-200' : 
-                          'bg-yellow-50 text-yellow-800 border-yellow-200'}`}
+                        ${
+                          order.paymentStatus === "completed"
+                            ? "bg-green-50 text-green-800 border-green-200"
+                            : order.paymentStatus === "failed"
+                            ? "bg-red-50 text-red-800 border-red-200"
+                            : "bg-yellow-50 text-yellow-800 border-yellow-200"
+                        }`}
                     >
-                      <option value="pending" className="bg-white text-gray-800">Chờ thanh toán</option>
-                      <option value="completed" className="bg-white text-gray-800">Đã thanh toán</option>
-                      <option value="failed" className="bg-white text-gray-800">Thất bại</option>
+                      <option
+                        value="pending"
+                        className="bg-white text-gray-800"
+                      >
+                        Chờ thanh toán
+                      </option>
+                      <option
+                        value="completed"
+                        className="bg-white text-gray-800"
+                      >
+                        Đã thanh toán
+                      </option>
+                      <option value="failed" className="bg-white text-gray-800">
+                        Thất bại
+                      </option>
                     </select>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                    {new Date(order.createdAt).toLocaleDateString("vi-VN")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <button
@@ -474,14 +538,18 @@ export default function OrdersManagement() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+            onClick={() =>
+              setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+            }
             disabled={pagination.page === 1}
             className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
           >
             Trước
           </button>
           <button
-            onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+            onClick={() =>
+              setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+            }
             disabled={pagination.page === pagination.totalPages}
             className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
           >
@@ -500,4 +568,4 @@ export default function OrdersManagement() {
       )}
     </div>
   );
-} 
+}

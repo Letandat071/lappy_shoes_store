@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 interface Province {
   code: string;
@@ -36,34 +36,33 @@ interface AddressFormProps {
 const AddressForm: React.FC<AddressFormProps> = ({
   initialData,
   onSubmit,
-  onCancel
+  onCancel,
 }) => {
   const [formData, setFormData] = useState<AddressFormData>(
     initialData || {
-      fullName: '',
-      phone: '',
-      province: '',
-      district: '',
-      ward: '',
-      address: '',
-      isDefault: false
+      fullName: "",
+      phone: "",
+      province: "",
+      district: "",
+      ward: "",
+      address: "",
+      isDefault: false,
     }
   );
 
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [loading, setLoading] = useState(false);
 
   // Fetch provinces on mount
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
-        const response = await fetch('https://provinces.open-api.vn/api/p/');
+        const response = await fetch("https://provinces.open-api.vn/api/p/");
         const data = await response.json();
         setProvinces(data);
       } catch (error) {
-        console.error('Error fetching provinces:', error);
+        console.error("Error fetching provinces:", error);
       }
     };
     fetchProvinces();
@@ -77,11 +76,13 @@ const AddressForm: React.FC<AddressFormProps> = ({
         return;
       }
       try {
-        const response = await fetch(`https://provinces.open-api.vn/api/p/${formData.province}?depth=2`);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/p/${formData.province}?depth=2`
+        );
         const data = await response.json();
         setDistricts(data.districts);
       } catch (error) {
-        console.error('Error fetching districts:', error);
+        console.error("Error fetching districts:", error);
       }
     };
     fetchDistricts();
@@ -95,34 +96,39 @@ const AddressForm: React.FC<AddressFormProps> = ({
         return;
       }
       try {
-        const response = await fetch(`https://provinces.open-api.vn/api/d/${formData.district}?depth=2`);
+        const response = await fetch(
+          `https://provinces.open-api.vn/api/d/${formData.district}?depth=2`
+        );
         const data = await response.json();
         setWards(data.wards);
       } catch (error) {
-        console.error('Error fetching wards:', error);
+        console.error("Error fetching wards:", error);
       }
     };
     fetchWards();
   }, [formData.district]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
 
     // Reset dependent fields
-    if (name === 'province') {
-      setFormData(prev => ({
+    if (name === "province") {
+      setFormData((prev) => ({
         ...prev,
-        district: '',
-        ward: ''
+        district: "",
+        ward: "",
       }));
-    } else if (name === 'district') {
-      setFormData(prev => ({
+    } else if (name === "district") {
+      setFormData((prev) => ({
         ...prev,
-        ward: ''
+        ward: "",
       }));
     }
   };
@@ -175,7 +181,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             required
           >
             <option value="">Chọn Tỉnh/Thành phố</option>
-            {provinces.map(province => (
+            {provinces.map((province) => (
               <option key={province.code} value={province.code}>
                 {province.name}
               </option>
@@ -196,7 +202,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             disabled={!formData.province}
           >
             <option value="">Chọn Quận/Huyện</option>
-            {districts.map(district => (
+            {districts.map((district) => (
               <option key={district.code} value={district.code}>
                 {district.name}
               </option>
@@ -217,7 +223,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
             disabled={!formData.district}
           >
             <option value="">Chọn Phường/Xã</option>
-            {wards.map(ward => (
+            {wards.map((ward) => (
               <option key={ward.code} value={ward.code}>
                 {ward.name}
               </option>
@@ -249,7 +255,9 @@ const AddressForm: React.FC<AddressFormProps> = ({
               onChange={handleChange}
               className="rounded text-black focus:ring-black"
             />
-            <span className="text-sm text-gray-700">Đặt làm địa chỉ mặc định</span>
+            <span className="text-sm text-gray-700">
+              Đặt làm địa chỉ mặc định
+            </span>
           </label>
         </div>
       </div>
@@ -266,11 +274,11 @@ const AddressForm: React.FC<AddressFormProps> = ({
           type="submit"
           className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
         >
-          {initialData ? 'Cập nhật' : 'Thêm mới'}
+          {initialData ? "Cập nhật" : "Thêm mới"}
         </button>
       </div>
     </form>
   );
 };
 
-export default AddressForm; 
+export default AddressForm;

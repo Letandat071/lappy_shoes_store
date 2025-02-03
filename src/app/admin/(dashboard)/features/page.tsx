@@ -31,7 +31,7 @@ export default function FeaturesPage() {
       if (data.features) {
         setFeatures(data.features);
       }
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi tải tính năng");
     } finally {
       setLoading(false);
@@ -82,8 +82,12 @@ export default function FeaturesPage() {
       } else {
         throw new Error(data.error);
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã có lỗi xảy ra");
+      }
     }
   };
 
@@ -101,8 +105,12 @@ export default function FeaturesPage() {
         } else {
           throw new Error(data.error);
         }
-      } catch (error: any) {
-        toast.error(error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Đã có lỗi xảy ra");
+        }
       }
     }
   };
@@ -251,4 +259,4 @@ export default function FeaturesPage() {
       )}
     </div>
   );
-} 
+}

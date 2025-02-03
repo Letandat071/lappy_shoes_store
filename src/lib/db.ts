@@ -5,9 +5,11 @@ interface MongooseConnection {
   promise: Promise<typeof mongoose> | null;
 }
 
+/* eslint-disable no-var */
 declare global {
   var mongoose: MongooseConnection | undefined;
 }
+/* eslint-enable no-var */
 
 const MONGODB_URI = process.env.MONGODB_URI!;
 
@@ -17,7 +19,7 @@ if (!MONGODB_URI) {
   );
 }
 
-let cached = (global.mongoose as MongooseConnection) || { conn: null, promise: null };
+const cached = (global.mongoose as MongooseConnection) || { conn: null, promise: null };
 
 async function connectDB() {
   if (cached.conn) {

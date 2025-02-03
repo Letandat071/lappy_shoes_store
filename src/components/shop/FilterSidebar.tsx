@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 type FilterValue = string | number | string[] | { min: number; max: number };
 
@@ -23,7 +23,10 @@ interface FilterSidebarProps {
   onFilterChange: (filterType: string, value: FilterValue) => void;
 }
 
-const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilterChange }) => {
+const FilterSidebar: React.FC<FilterSidebarProps> = ({
+  selectedFilters,
+  onFilterChange,
+}) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,23 +35,25 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
     const fetchFilters = async () => {
       try {
         // Fetch categories
-        const categoriesRes = await fetch('/api/admin/categories');
+        const categoriesRes = await fetch("/api/admin/categories");
         const categoriesData = await categoriesRes.json();
         if (categoriesData.categories) {
           setCategories(categoriesData.categories);
         }
 
         // Fetch unique brands from products
-        const productsRes = await fetch('/api/products');
+        const productsRes = await fetch("/api/products");
         const productsData = await productsRes.json();
         if (productsData.products) {
-          const uniqueBrands = Array.from(
-            new Set(productsData.products.map((p: any) => p.brand))
+          const uniqueBrands: string[] = Array.from(
+            new Set<string>(
+              productsData.products.map((p: { brand: string }) => p.brand)
+            )
           ).filter(Boolean);
           setBrands(uniqueBrands);
         }
       } catch (error) {
-        console.error('Error fetching filters:', error);
+        console.error("Error fetching filters:", error);
       } finally {
         setLoading(false);
       }
@@ -58,23 +63,23 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
   }, []);
 
   const handlePriceChange = (value: number) => {
-    onFilterChange('priceRange', { min: 0, max: value });
+    onFilterChange("priceRange", { min: 0, max: value });
   };
 
   const handleColorSelect = (color: string) => {
-    onFilterChange('colors', color);
+    onFilterChange("colors", color);
   };
 
   const handleSizeSelect = (size: string) => {
-    onFilterChange('sizes', size);
+    onFilterChange("sizes", size);
   };
 
   const handleBrandSelect = (brand: string) => {
-    onFilterChange('brands', brand);
+    onFilterChange("brands", brand);
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    onFilterChange('categories', categoryId);
+    onFilterChange("categories", categoryId);
   };
 
   if (loading) {
@@ -100,7 +105,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Filters</h2>
           <button
-            onClick={() => onFilterChange('clear', '')}
+            onClick={() => onFilterChange("clear", "")}
             className="text-gray-500 hover:text-gray-700"
           >
             <i className="fas fa-times text-xl"></i>
@@ -129,21 +134,19 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Colors</h3>
           <div className="flex flex-wrap gap-2">
-            {['Trắng', 'Đen', 'Xanh', 'Đỏ', 'Vàng', 'Xám'].map(
-              (color) => (
-                <button
-                  key={color}
-                  onClick={() => handleColorSelect(color)}
-                  className={`px-3 py-1 rounded-full border ${
-                    selectedFilters.colors.includes(color)
-                      ? 'bg-black text-white'
-                      : 'hover:bg-gray-100'
-                  }`}
-                >
-                  {color}
-                </button>
-              )
-            )}
+            {["Trắng", "Đen", "Xanh", "Đỏ", "Vàng", "Xám"].map((color) => (
+              <button
+                key={color}
+                onClick={() => handleColorSelect(color)}
+                className={`px-3 py-1 rounded-full border ${
+                  selectedFilters.colors.includes(color)
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                {color}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -151,14 +154,14 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Sizes</h3>
           <div className="grid grid-cols-4 gap-2">
-            {['36', '37', '38', '39', '40', '41', '42', '43'].map((size) => (
+            {["36", "37", "38", "39", "40", "41", "42", "43"].map((size) => (
               <button
                 key={size}
                 onClick={() => handleSizeSelect(size)}
                 className={`px-3 py-2 border rounded ${
                   selectedFilters.sizes.includes(size)
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-100'
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
                 }`}
               >
                 {size}
@@ -177,8 +180,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
                 onClick={() => handleBrandSelect(brand)}
                 className={`block w-full text-left px-3 py-2 rounded ${
                   selectedFilters.brands.includes(brand)
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-100'
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
                 }`}
               >
                 {brand}
@@ -197,24 +200,24 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
                 onClick={() => handleCategorySelect(category._id)}
                 className={`block w-full text-left px-3 py-2 rounded transition-colors ${
                   selectedFilters.categories.includes(category._id)
-                    ? 'bg-black text-white'
-                    : 'hover:bg-gray-100'
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span>{category.name}</span>
                   {selectedFilters.categories.includes(category._id) && (
-                    <svg 
-                      className="w-4 h-4" 
-                      fill="none" 
-                      stroke="currentColor" 
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M5 13l4 4L19 7" 
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
                       />
                     </svg>
                   )}
@@ -228,9 +231,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Sort By</h3>
           <select
-            onChange={(e) => onFilterChange('sort', e.target.value)}
+            onChange={(e) => onFilterChange("sort", e.target.value)}
             className="w-full border rounded-lg p-2"
-            value={selectedFilters.sort}
+            value={(selectedFilters as any).sort}
           >
             <option value="-createdAt">Mới nhất</option>
             <option value="price">Giá: Thấp đến cao</option>
@@ -243,4 +246,4 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({ selectedFilters, onFilter
   );
 };
 
-export default FilterSidebar; 
+export default FilterSidebar;

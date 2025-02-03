@@ -86,10 +86,11 @@ export async function PUT(request: NextRequest) {
       user: updatedUser
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("14. Lỗi trong quá trình xử lý:", error);
+    const errorMessage = error instanceof Error ? error.message : "Có lỗi xảy ra khi cập nhật thông tin";
     return NextResponse.json(
-      { error: error.message || "Có lỗi xảy ra khi cập nhật thông tin" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

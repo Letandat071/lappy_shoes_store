@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Feature from "@/models/Feature";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
 
 // Get all features
 export async function GET() {
@@ -9,9 +8,11 @@ export async function GET() {
     await connectDB();
     const features = await Feature.find({}).sort({ createdAt: -1 });
     return NextResponse.json({ features }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET Features Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -51,12 +52,11 @@ export async function POST(request: NextRequest) {
 
     console.log("Created feature:", feature);
     return NextResponse.json({ feature }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST Feature Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message || "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -112,12 +112,11 @@ export async function PUT(request: NextRequest) {
 
     console.log("Updated feature:", feature);
     return NextResponse.json({ feature }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("PUT Feature Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message || "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -149,11 +148,10 @@ export async function DELETE(request: NextRequest) {
       { message: "Feature deleted successfully" },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DELETE Feature Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    let message = "Internal Server Error";
+    if (error instanceof Error) message = error.message || "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 } 

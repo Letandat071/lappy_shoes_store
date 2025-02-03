@@ -29,7 +29,7 @@ export default function CategoriesPage() {
 
   const { uploadImage } = useImageUpload();
 
-  // Thêm state để kiểm soát việc render
+  // State để kiểm soát việc render (để tránh lỗi Hydration)
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -47,8 +47,12 @@ export default function CategoriesPage() {
       const imageUrl = await uploadImage(file);
       setFormData((prev) => ({ ...prev, image: imageUrl }));
       toast.success("Tải ảnh lên thành công");
-    } catch (error) {
-      toast.error("Lỗi khi tải ảnh lên");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Lỗi khi tải ảnh lên");
+      }
       console.error("Upload error:", error);
     } finally {
       setUploading(false);
@@ -63,8 +67,13 @@ export default function CategoriesPage() {
       if (data.categories) {
         setCategories(data.categories);
       }
-    } catch (error) {
-      toast.error("Lỗi khi tải danh mục");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Lỗi khi tải danh mục");
+      }
+      console.error("Fetch categories error:", error);
     } finally {
       setLoading(false);
     }
@@ -78,6 +87,7 @@ export default function CategoriesPage() {
         ? "/api/admin/categories"
         : "/api/admin/categories";
       const method = editingCategory ? "PUT" : "POST";
+      // Nếu đang chỉnh sửa thì gửi kèm cả id
       const body = editingCategory
         ? { ...formData, id: editingCategory._id }
         : formData;
@@ -103,8 +113,12 @@ export default function CategoriesPage() {
       } else {
         throw new Error(data.error);
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã có lỗi xảy ra");
+      }
     }
   };
 
@@ -122,8 +136,12 @@ export default function CategoriesPage() {
         } else {
           throw new Error(data.error);
         }
-      } catch (error: any) {
-        toast.error(error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Đã có lỗi xảy ra");
+        }
       }
     }
   };
@@ -149,8 +167,8 @@ export default function CategoriesPage() {
     setEditingCategory(null);
   };
 
-  // Nếu chưa mount, return loading skeleton
-  if (!mounted) {
+  // Nếu chưa mount hoặc đang tải dữ liệu, hiển thị giao diện loading
+  if (!mounted || loading) {
     return (
       <div className="p-4">
         <div className="flex justify-between items-center mb-6">
@@ -189,14 +207,14 @@ export default function CategoriesPage() {
         </button>
       </div>
 
-      {/* Categories List */}
+      {/* Danh sách danh mục */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category) => (
           <div
             key={category._id}
             className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
-            {/* Product Image */}
+            {/* Ảnh của danh mục */}
             <div className="relative h-40 mb-4">
               <Image
                 src={category.image || "/images/placeholder.jpg"}
@@ -230,7 +248,7 @@ export default function CategoriesPage() {
         ))}
       </div>
 
-      {/* Modal */}
+      {/* Modal thêm/sửa danh mục */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
@@ -262,7 +280,7 @@ export default function CategoriesPage() {
                 />
               </div>
 
-              {/* Image Upload Section */}
+              {/* Phần tải ảnh */}
               <div className="mb-4">
                 <label className="block mb-2">Hình ảnh</label>
                 <div className="space-y-2">
@@ -294,12 +312,11 @@ export default function CategoriesPage() {
                   />
                   <label
                     htmlFor="image-upload"
-                    className={`block w-full text-center py-2 px-4 border-2 border-dashed rounded-lg cursor-pointer
-                      ${
-                        uploading
-                          ? "bg-gray-100 cursor-not-allowed"
-                          : "hover:bg-gray-50"
-                      }`}
+                    className={`block w-full text-center py-2 px-4 border-2 border-dashed rounded-lg cursor-pointer ${
+                      uploading
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : "hover:bg-gray-50"
+                    }`}
                   >
                     {uploading ? (
                       <span className="flex items-center justify-center">

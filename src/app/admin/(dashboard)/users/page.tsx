@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { toast } from 'react-hot-toast';
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import { toast } from "react-hot-toast";
 
 interface User {
   _id: string;
@@ -22,6 +22,42 @@ interface PaginationInfo {
   totalPages: number;
 }
 
+// Định nghĩa giao diện cho Address (địa chỉ)
+interface Address {
+  _id: string;
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  province: number | string;
+  district: number | string;
+  ward: number | string;
+}
+
+// Định nghĩa giao diện cho Order (đơn hàng)
+interface Order {
+  _id: string;
+  createdAt: string;
+  totalAmount: number;
+}
+
+// Định nghĩa giao diện cho dữ liệu vùng (region) từ API
+interface Ward {
+  code: number;
+  name: string;
+}
+
+interface District {
+  code: number;
+  name: string;
+  wards: Ward[];
+}
+
+interface Province {
+  code: number;
+  name: string;
+  districts: District[];
+}
+
 export default function UsersManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -31,42 +67,50 @@ export default function UsersManagement() {
     limit: 10,
     totalPages: 0,
   });
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Thêm state cho địa chỉ và đơn hàng
-  const [addresses, setAddresses] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  // State cho địa chỉ và đơn hàng
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loadingAddresses, setLoadingAddresses] = useState<boolean>(false);
   const [loadingOrders, setLoadingOrders] = useState<boolean>(false);
 
-  // State để lưu dữ liệu mapping của tỉnh, huyện, xã
-  const [regionData, setRegionData] = useState<any[]>([]);
+  // State lưu dữ liệu mapping của tỉnh, huyện, xã
+  const [regionData, setRegionData] = useState<Province[]>([]);
   useEffect(() => {
     async function fetchRegionMapping() {
       try {
         const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
         const data = await res.json();
         setRegionData(data);
-      } catch (error) {
-        console.error("Error fetching region mapping:", error);
+      } catch (_error) {
+        console.error("Error fetching region mapping:");
       }
     }
     fetchRegionMapping();
   }, []);
 
   // Hàm chuyển đổi mã tỉnh, huyện, xã thành tên
-  const getRegionName = (provinceCode: number | string, districtCode?: number | string, wardCode?: number | string): string => {
-    if (!regionData || regionData.length === 0) return `${wardCode || ''}, ${districtCode || ''}, ${provinceCode || ''}`;
+  const getRegionName = (
+    provinceCode: number | string,
+    districtCode?: number | string,
+    wardCode?: number | string
+  ): string => {
+    if (!regionData || regionData.length === 0)
+      return `${wardCode || ""}, ${districtCode || ""}, ${provinceCode || ""}`;
     const province = regionData.find((p) => p.code == provinceCode);
-    if (!province) return `${wardCode || ''}, ${districtCode || ''}, ${provinceCode || ''}`;
+    if (!province)
+      return `${wardCode || ""}, ${districtCode || ""}, ${provinceCode || ""}`;
     let result = province.name;
     if (districtCode && province.districts && province.districts.length > 0) {
-      const district = province.districts.find((d: any) => d.code == districtCode);
+      const district = province.districts.find(
+        (d: District) => d.code == districtCode
+      );
       if (district) {
         result = `${district.name}, ${result}`;
         if (wardCode && district.wards && district.wards.length > 0) {
-          const ward = district.wards.find((w: any) => w.code == wardCode);
+          const ward = district.wards.find((w: Ward) => w.code == wardCode);
           if (ward) {
             result = `${ward.name}, ${result}`;
           }
@@ -76,33 +120,34 @@ export default function UsersManagement() {
     return result;
   };
 
-  const fetchUsers = async () => {
+  // Bọc hàm fetchUsers bằng useCallback để có dependency ổn định
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
       });
-      if (searchTerm) queryParams.append('search', searchTerm);
+      if (searchTerm) queryParams.append("search", searchTerm);
       const response = await fetch(`/api/admin/users?${queryParams}`);
       const data = await response.json();
       if (response.ok) {
-         setUsers(data.users);
-         setPagination(data.pagination);
+        setUsers(data.users);
+        setPagination(data.pagination);
       } else {
-         toast.error(data.error || 'Error fetching users');
+        toast.error(data.error || "Error fetching users");
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Error fetching users');
+      console.error("Error fetching users:", error);
+      toast.error("Error fetching users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, searchTerm]);
 
   useEffect(() => {
     fetchUsers();
-  }, [pagination.page, searchTerm]);
+  }, [fetchUsers]);
 
   // Khi selectedUser thay đổi, fetch thông tin địa chỉ và đơn hàng của user đó
   useEffect(() => {
@@ -115,11 +160,11 @@ export default function UsersManagement() {
           if (res.ok) {
             setAddresses(data.addresses);
           } else {
-            toast.error(data.error || 'Error fetching addresses');
+            toast.error(data.error || "Error fetching addresses");
           }
         } catch (error) {
-          console.error(error);
-          toast.error('Error fetching addresses');
+          console.error("Error fetching addresses:", error);
+          toast.error("Error fetching addresses");
         } finally {
           setLoadingAddresses(false);
         }
@@ -128,16 +173,18 @@ export default function UsersManagement() {
       const fetchOrders = async () => {
         setLoadingOrders(true);
         try {
-          const res = await fetch(`/api/admin/orders?userId=${selectedUser._id}`);
+          const res = await fetch(
+            `/api/admin/orders?userId=${selectedUser._id}`
+          );
           const data = await res.json();
           if (res.ok) {
             setOrders(data.orders);
           } else {
-            toast.error(data.error || 'Error fetching orders');
+            toast.error(data.error || "Error fetching orders");
           }
         } catch (error) {
-          console.error(error);
-          toast.error('Error fetching orders');
+          console.error("Error fetching orders:", error);
+          toast.error("Error fetching orders");
         } finally {
           setLoadingOrders(false);
         }
@@ -154,7 +201,7 @@ export default function UsersManagement() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Khi tìm kiếm, reset trang về 1
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
     fetchUsers();
   };
 
@@ -171,7 +218,10 @@ export default function UsersManagement() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="px-4 py-2 border rounded-l-lg focus:outline-none"
           />
-          <button type="submit" className="px-4 py-2 border rounded-r-lg bg-blue-600 text-white hover:bg-blue-700">
+          <button
+            type="submit"
+            className="px-4 py-2 border rounded-r-lg bg-blue-600 text-white hover:bg-blue-700"
+          >
             Tìm kiếm
           </button>
         </form>
@@ -207,11 +257,15 @@ export default function UsersManagement() {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center">Đang tải...</td>
+                <td colSpan={7} className="px-6 py-4 text-center">
+                  Đang tải...
+                </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center">Không có khách hàng nào</td>
+                <td colSpan={7} className="px-6 py-4 text-center">
+                  Không có khách hàng nào
+                </td>
               </tr>
             ) : (
               users.map((user) => (
@@ -221,9 +275,11 @@ export default function UsersManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {user.avatar ? (
-                      <img
+                      <Image
                         src={user.avatar}
                         alt={user.name}
+                        width={40}
+                        height={40}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
@@ -236,13 +292,13 @@ export default function UsersManagement() {
                     {user.email}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.phone || '-'}
+                    {user.phone || "-"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
                     {user.role}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString('vi-VN')}
+                    {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center text-sm">
                     <button
@@ -267,7 +323,10 @@ export default function UsersManagement() {
         <div className="flex gap-2">
           <button
             onClick={() =>
-              setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))
+              setPagination((prev) => ({
+                ...prev,
+                page: Math.max(1, prev.page - 1),
+              }))
             }
             disabled={pagination.page === 1}
             className="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
@@ -276,9 +335,9 @@ export default function UsersManagement() {
           </button>
           <button
             onClick={() =>
-              setPagination(prev => ({
+              setPagination((prev) => ({
                 ...prev,
-                page: Math.min(pagination.totalPages, prev.page + 1)
+                page: Math.min(pagination.totalPages, prev.page + 1),
               }))
             }
             disabled={pagination.page === pagination.totalPages}
@@ -294,15 +353,20 @@ export default function UsersManagement() {
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Chi tiết khách hàng</h2>
-              <button onClick={() => setSelectedUser(null)} className="text-gray-600 hover:text-gray-900">
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="text-gray-600 hover:text-gray-900"
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
             <div className="flex flex-col items-center">
               {selectedUser.avatar ? (
-                <img
+                <Image
                   src={selectedUser.avatar}
                   alt={selectedUser.name}
+                  width={80}
+                  height={80}
                   className="w-20 h-20 rounded-full object-cover mb-4"
                 />
               ) : (
@@ -312,9 +376,12 @@ export default function UsersManagement() {
               )}
               <p className="font-semibold">{selectedUser.name}</p>
               <p>{selectedUser.email}</p>
-              <p>{selectedUser.phone || '-'}</p>
+              <p>{selectedUser.phone || "-"}</p>
               <p className="capitalize">{selectedUser.role}</p>
-              <p>Đăng ký: {new Date(selectedUser.createdAt).toLocaleDateString('vi-VN')}</p>
+              <p>
+                Đăng ký:{" "}
+                {new Date(selectedUser.createdAt).toLocaleDateString("vi-VN")}
+              </p>
 
               <div className="mt-6 w-full">
                 <h3 className="text-lg font-bold mb-2">Địa chỉ</h3>
@@ -324,12 +391,20 @@ export default function UsersManagement() {
                   <p>Không có địa chỉ</p>
                 ) : (
                   <ul className="space-y-2">
-                    {addresses.map((addr: any) => (
+                    {addresses.map((addr: Address) => (
                       <li key={addr._id} className="border p-2 rounded">
-                        <p><strong>{addr.fullName || 'Tên người nhận'}</strong></p>
+                        <p>
+                          <strong>{addr.fullName || "Tên người nhận"}</strong>
+                        </p>
                         <p>{addr.phone}</p>
                         <p>{addr.address}</p>
-                        <p>{getRegionName(addr.province, addr.district, addr.ward)}</p>
+                        <p>
+                          {getRegionName(
+                            addr.province,
+                            addr.district,
+                            addr.ward
+                          )}
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -344,11 +419,21 @@ export default function UsersManagement() {
                   <p>Không có đơn hàng</p>
                 ) : (
                   <ul className="space-y-2">
-                    {orders.map((order: any) => (
+                    {orders.map((order: Order) => (
                       <li key={order._id} className="border p-2 rounded">
-                        <p><strong>Mã đơn hàng:</strong> #{order._id.slice(-6)}</p>
-                        <p><strong>Ngày:</strong> {new Date(order.createdAt).toLocaleDateString('vi-VN')}</p>
-                        <p><strong>Tổng tiền:</strong> {order.totalAmount ? order.totalAmount : '0'}₫</p>
+                        <p>
+                          <strong>Mã đơn hàng:</strong> #{order._id.slice(-6)}
+                        </p>
+                        <p>
+                          <strong>Ngày:</strong>{" "}
+                          {new Date(order.createdAt).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </p>
+                        <p>
+                          <strong>Tổng tiền:</strong>{" "}
+                          {order.totalAmount ? order.totalAmount : "0"}₫
+                        </p>
                       </li>
                     ))}
                   </ul>
@@ -360,4 +445,4 @@ export default function UsersManagement() {
       )}
     </div>
   );
-} 
+}

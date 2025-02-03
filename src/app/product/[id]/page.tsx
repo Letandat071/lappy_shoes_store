@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useParams } from 'next/navigation';
-import { toast } from 'react-hot-toast';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import Button from '@/components/common/Button';
-import { useCartContext } from '@/contexts/CartContext';
-import { useWishlistContext } from '@/contexts/WishlistContext';
-import { Feature } from '../../../types/feature';
-import { Category } from '../../../types/category';
-import ProductsReview from '@/components/product/ProductsReview';
-import ProductSuggest from '@/components/product/ProductSuggest';
-import { formatPrice } from '@/utils/format';
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { toast } from "react-hot-toast";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import Button from "@/components/common/Button";
+import { useCartContext } from "@/contexts/CartContext";
+import { useWishlistContext } from "@/contexts/WishlistContext";
+import { Feature } from "../../../types/feature";
+import { Category } from "../../../types/category";
+import ProductsReview from "@/components/product/ProductsReview";
+import ProductSuggest from "@/components/product/ProductSuggest";
+import { formatPrice } from "@/utils/format";
 
 interface Image {
   url: string;
@@ -45,19 +45,20 @@ const ProductPage = () => {
   const [product, setProduct] = React.useState<Product | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [selectedImage, setSelectedImage] = React.useState<Image | null>(null);
-  const [selectedSize, setSelectedSize] = React.useState('');
-  const [selectedColor, setSelectedColor] = React.useState('');
+  const [selectedSize, setSelectedSize] = React.useState("");
+  const [selectedColor, setSelectedColor] = React.useState("");
   const [quantity, setQuantity] = React.useState(1);
 
   const { addToCart } = useCartContext();
-  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlistContext();
+  const { addToWishlist, isInWishlist, removeFromWishlist } =
+    useWishlistContext();
 
   React.useEffect(() => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(`/api/products/${id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch product');
+          throw new Error("Failed to fetch product");
         }
         const data = await response.json();
         setProduct(data);
@@ -65,7 +66,7 @@ const ProductPage = () => {
           setSelectedImage(data.images[0]);
         }
       } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error("Error fetching product:", error);
       } finally {
         setLoading(false);
       }
@@ -78,7 +79,9 @@ const ProductPage = () => {
 
   const updateQuantity = (change: number) => {
     if (product && selectedSize) {
-      const selectedSizeObj = product.sizes.find(s => s.size === selectedSize);
+      const selectedSizeObj = product.sizes.find(
+        (s) => s.size === selectedSize
+      );
       if (selectedSizeObj) {
         const newQuantity = quantity + change;
         if (newQuantity >= 1 && newQuantity <= selectedSizeObj.quantity) {
@@ -90,7 +93,9 @@ const ProductPage = () => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (product && selectedSize) {
-      const selectedSizeObj = product.sizes.find(s => s.size === selectedSize);
+      const selectedSizeObj = product.sizes.find(
+        (s) => s.size === selectedSize
+      );
       if (selectedSizeObj) {
         const newQuantity = parseInt(e.target.value) || 1;
         if (newQuantity >= 1 && newQuantity <= selectedSizeObj.quantity) {
@@ -104,24 +109,25 @@ const ProductPage = () => {
     if (!product) return;
 
     if (!selectedSize) {
-      toast.error('Vui lòng chọn size');
+      toast.error("Vui lòng chọn size");
       return;
     }
 
-    const selectedSizeObj = product.sizes.find(s => s.size === selectedSize);
+    const selectedSizeObj = product.sizes.find((s) => s.size === selectedSize);
     if (!selectedSizeObj) {
-      toast.error('Size không hợp lệ');
+      toast.error("Size không hợp lệ");
       return;
     }
 
     addToCart({
+      _id: product._id,
       productId: product._id,
       name: product.name,
       price: product.price,
       image: product.images[0].url,
       size: selectedSize,
       quantity: quantity,
-      stock: selectedSizeObj.quantity
+      stock: selectedSizeObj.quantity,
     });
   };
 
@@ -136,8 +142,10 @@ const ProductPage = () => {
         name: product.name,
         price: product.price,
         image: product.images[0].url,
-        sizes: product.sizes.map(s => s.size),
-        stock: Object.fromEntries(product.sizes.map(s => [s.size, s.quantity]))
+        sizes: product.sizes.map((s) => s.size),
+        stock: Object.fromEntries(
+          product.sizes.map((s) => [s.size, s.quantity])
+        ),
       });
     }
   };
@@ -197,9 +205,9 @@ const ProductPage = () => {
             {/* Main Image */}
             <div className="relative bg-white rounded-2xl p-8 shadow-lg">
               {selectedImage && selectedImage.url && (
-                <Image 
+                <Image
                   src={selectedImage.url}
-                  alt={product?.name || 'Product image'}
+                  alt={product?.name || "Product image"}
                   width={500}
                   height={500}
                   className="w-full h-[500px] object-contain"
@@ -209,25 +217,28 @@ const ProductPage = () => {
 
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-4">
-              {product?.images.map((image, index) => (
-                image.url && (
-                  <button 
-                    key={index}
-                    onClick={() => setSelectedImage(image)}
-                    className={`bg-white rounded-lg p-4 border-2 ${
-                      selectedImage === image ? 'border-black' : 'border-transparent hover:border-gray-200'
-                    }`}
-                  >
-                    <Image 
-                      src={image.url}
-                      alt={`${product.name} view ${index + 1}`}
-                      width={100}
-                      height={100}
-                      className="w-full h-20 object-contain"
-                    />
-                  </button>
-                )
-              ))}
+              {product?.images.map(
+                (image, index) =>
+                  image.url && (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(image)}
+                      className={`bg-white rounded-lg p-4 border-2 ${
+                        selectedImage === image
+                          ? "border-black"
+                          : "border-transparent hover:border-gray-200"
+                      }`}
+                    >
+                      <Image
+                        src={image.url}
+                        alt={`${product.name} view ${index + 1}`}
+                        width={100}
+                        height={100}
+                        className="w-full h-20 object-contain"
+                      />
+                    </button>
+                  )
+              )}
             </div>
           </div>
 
@@ -238,16 +249,22 @@ const ProductPage = () => {
               <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center">
-                  <span className="text-gray-600">Danh mục: {product.category.name}</span>
+                  <span className="text-gray-600">
+                    Danh mục: {product.category.name}
+                  </span>
                 </div>
                 <span className="text-gray-400">|</span>
                 <span className="text-green-500">Còn hàng</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-3xl font-bold">{formatPrice(product.price)}₫</span>
+                <span className="text-3xl font-bold">
+                  {formatPrice(product.price)}₫
+                </span>
                 {product.originalPrice && (
                   <>
-                    <span className="text-gray-400 line-through text-xl">{formatPrice(product.originalPrice)}₫</span>
+                    <span className="text-gray-400 line-through text-xl">
+                      {formatPrice(product.originalPrice)}₫
+                    </span>
                     <span className="bg-red-100 text-red-500 px-2 py-1 rounded text-sm">
                       Giảm {product.discount}%
                     </span>
@@ -260,7 +277,9 @@ const ProductPage = () => {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold">Chọn Size</h3>
-                <button className="text-gray-600 hover:text-black text-sm">Hướng dẫn chọn size</button>
+                <button className="text-gray-600 hover:text-black text-sm">
+                  Hướng dẫn chọn size
+                </button>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 {product.sizes.map((sizeObj) => (
@@ -269,15 +288,17 @@ const ProductPage = () => {
                     onClick={() => setSelectedSize(sizeObj.size)}
                     className={`py-2 border-2 rounded-lg transition-colors ${
                       selectedSize === sizeObj.size
-                        ? 'bg-black text-white border-black'
-                        : sizeObj.quantity > 0 
-                          ? 'border-gray-300 hover:border-black'
-                          : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
+                        ? "bg-black text-white border-black"
+                        : sizeObj.quantity > 0
+                        ? "border-gray-300 hover:border-black"
+                        : "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
                     }`}
                     disabled={sizeObj.quantity === 0}
                   >
                     {sizeObj.size}
-                    {sizeObj.quantity === 0 && <span className="block text-xs">Hết hàng</span>}
+                    {sizeObj.quantity === 0 && (
+                      <span className="block text-xs">Hết hàng</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -286,42 +307,56 @@ const ProductPage = () => {
             {/* Quantity and Add to Cart */}
             <div className="flex gap-4">
               <div className="flex items-center border-2 rounded-lg">
-                <button 
-                  className="px-4 py-2 hover:bg-gray-100" 
+                <button
+                  className="px-4 py-2 hover:bg-gray-100"
                   onClick={() => updateQuantity(-1)}
                   disabled={!selectedSize || quantity <= 1}
                 >
                   -
                 </button>
-                <input 
-                  type="number" 
-                  value={quantity} 
+                <input
+                  type="number"
+                  value={quantity}
                   onChange={handleQuantityChange}
                   min="1"
-                  max={selectedSize ? product.sizes.find(s => s.size === selectedSize)?.quantity || 1 : 1}
+                  max={
+                    selectedSize
+                      ? product.sizes.find((s) => s.size === selectedSize)
+                          ?.quantity || 1
+                      : 1
+                  }
                   className="w-16 text-center border-x-2"
                 />
-                <button 
-                  className="px-4 py-2 hover:bg-gray-100" 
+                <button
+                  className="px-4 py-2 hover:bg-gray-100"
                   onClick={() => updateQuantity(1)}
-                  disabled={!selectedSize || quantity >= (product.sizes.find(s => s.size === selectedSize)?.quantity || 1)}
+                  disabled={
+                    !selectedSize ||
+                    quantity >=
+                      (product.sizes.find((s) => s.size === selectedSize)
+                        ?.quantity || 1)
+                  }
                 >
                   +
                 </button>
               </div>
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 className="flex-1"
                 onClick={handleAddToCart}
               >
                 Thêm vào giỏ hàng
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-12 h-12 flex items-center justify-center p-0"
                 onClick={toggleWishlist}
               >
-                <i className={`fas fa-heart ${isInWishlist(product._id) ? 'text-red-500' : ''}`}></i>
+                <i
+                  className={`fas fa-heart ${
+                    isInWishlist(product._id) ? "text-red-500" : ""
+                  }`}
+                ></i>
               </Button>
             </div>
 
@@ -344,6 +379,26 @@ const ProductPage = () => {
                 </ul>
               </div>
             )}
+
+            {/* Color Options */}
+            <div>
+              <h3 className="font-semibold mb-4">Chọn Màu</h3>
+              <div className="flex gap-3">
+                {product.images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedColor(img.color || "")}
+                    className={`px-4 py-2 border ${
+                      selectedColor === (img.color || "")
+                        ? "bg-black text-white"
+                        : "bg-white text-black"
+                    }`}
+                  >
+                    {img.color || "Mặc định"}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -351,11 +406,14 @@ const ProductPage = () => {
         <ProductsReview productId={product._id} />
 
         {/* Related Products */}
-        <ProductSuggest categoryId={product.category._id} currentProductId={product._id} />
+        <ProductSuggest
+          categoryId={product.category._id}
+          currentProductId={product._id}
+        />
       </div>
       <Footer />
     </main>
   );
 };
 
-export default ProductPage; 
+export default ProductPage;

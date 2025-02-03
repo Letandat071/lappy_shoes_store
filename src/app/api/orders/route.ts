@@ -87,14 +87,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(order[0], { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('=== ORDER PROCESSING ERROR ===');
     console.error(error);
     if (session) {
       await session.abortTransaction();
       console.log('Transaction rolled back');
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   } finally {
     if (session) {
       await session.endSession();

@@ -15,12 +15,31 @@ interface Address {
   isDefault: boolean;
 }
 
+// Định nghĩa các interface cho region thay vì sử dụng any
+interface RegionWard {
+  code: number | string;
+  name: string;
+}
+
+interface RegionDistrict {
+  code: number | string;
+  name: string;
+  wards: RegionWard[];
+}
+
+interface RegionProvince {
+  code: number | string;
+  name: string;
+  districts: RegionDistrict[];
+}
+
 const SavedAddresses = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [regionData, setRegionData] = useState<any[]>([]);
+  // Sử dụng kiểu RegionProvince[] thay vì any[]
+  const [regionData, setRegionData] = useState<RegionProvince[]>([]);
 
   useEffect(() => {
     fetchAddresses();
@@ -29,8 +48,8 @@ const SavedAddresses = () => {
         const res = await fetch("https://provinces.open-api.vn/api/?depth=2");
         const data = await res.json();
         setRegionData(data);
-      } catch (error) {
-        console.error("Error fetching region mapping:", error);
+      } catch (_error: unknown) {
+        console.error("Error fetching region mapping:", _error);
       }
     }
     fetchRegionMapping();
@@ -45,7 +64,7 @@ const SavedAddresses = () => {
       } else {
         toast.error("Không thể tải danh sách địa chỉ");
       }
-    } catch (error) {
+    } catch (_error: unknown) {
       toast.error("Có lỗi xảy ra khi tải địa chỉ");
     } finally {
       setLoading(false);
@@ -74,7 +93,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể xóa địa chỉ");
       }
-    } catch (error) {
+    } catch (_error: unknown) {
       toast.error("Có lỗi xảy ra khi xóa địa chỉ");
     }
   };
@@ -102,7 +121,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể cập nhật địa chỉ");
       }
-    } catch (error) {
+    } catch (_error: unknown) {
       toast.error("Có lỗi xảy ra khi cập nhật địa chỉ");
     }
   };
@@ -136,7 +155,7 @@ const SavedAddresses = () => {
         const data = await response.json();
         toast.error(data.error || "Không thể lưu địa chỉ");
       }
-    } catch (error) {
+    } catch (_error: unknown) {
       toast.error("Có lỗi xảy ra khi lưu địa chỉ");
     }
   };
@@ -154,12 +173,14 @@ const SavedAddresses = () => {
     let result = province.name;
     if (districtCode && province.districts && province.districts.length > 0) {
       const district = province.districts.find(
-        (d: any) => d.code == districtCode
+        (d: RegionDistrict) => d.code == districtCode
       );
       if (district) {
         result = `${district.name}, ${result}`;
         if (wardCode && district.wards && district.wards.length > 0) {
-          const ward = district.wards.find((w: any) => w.code == wardCode);
+          const ward = district.wards.find(
+            (w: RegionWard) => w.code == wardCode
+          );
           if (ward) {
             result = `${ward.name}, ${result}`;
           }

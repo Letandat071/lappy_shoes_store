@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import  connectDB  from "@/lib/mongoose";
+import connectDB from "@/lib/mongoose";
 import Category from "@/models/Category";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
@@ -9,8 +9,10 @@ export async function GET() {
     await connectDB();
     const categories = await Category.find({}).sort({ createdAt: -1 });
     return NextResponse.json({ categories }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let message = "Unknown error!";
+    if (error instanceof Error) message = error.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -39,8 +41,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ category }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let message = "Unknown error!";
+    if (error instanceof Error) message = error.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -75,8 +79,10 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ category }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let message = "Unknown error!";
+    if (error instanceof Error) message = error.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -105,7 +111,9 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ message: "Category deleted successfully" }, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    let message = "Unknown error!";
+    if (error instanceof Error) message = error.message;
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 } 

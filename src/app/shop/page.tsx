@@ -1,18 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { useSearchParams, usePathname } from 'next/navigation';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import FilterSidebar from '@/components/shop/FilterSidebar';
-import ProductCard from '@/components/product/ProductCard';
-import { useProducts } from '@/hooks/useProducts';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
-import ProductSkeleton from '@/components/shop/ProductSkeleton';
-import Image from 'next/image';
-import { toast } from 'react-hot-toast';
-import { useWishlist } from '@/hooks/useWishlist';
+import React from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import FilterSidebar from "@/components/shop/FilterSidebar";
+import { useProducts } from "@/hooks/useProducts";
+import ProductSkeleton from "@/components/shop/ProductSkeleton";
+import Image from "next/image";
+import { toast } from "react-hot-toast";
+import { useWishlist } from "@/hooks/useWishlist";
 
 type FilterValue = string | number | string[] | { min: number; max: number };
 
@@ -26,12 +24,10 @@ interface Filters {
   feature: string;
   audience: string;
   [key: string]: FilterValue | FilterValue[];
- 
 }
 
 export default function ShopPage() {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
 
   const [selectedFilters, setSelectedFilters] = React.useState<Filters>({
     categories: [],
@@ -39,36 +35,36 @@ export default function ShopPage() {
     brands: [],
     sizes: [],
     colors: [],
-    sort: '-createdAt',
-    feature: '',
-    audience: ''
+    sort: "-createdAt",
+    feature: "",
+    audience: "",
   });
 
   const [page, setPage] = React.useState(1);
-  const [search, setSearch] = React.useState('');
+  const [search, setSearch] = React.useState("");
 
   // Update filters when URL changes
   React.useEffect(() => {
-    const category = searchParams.get('category');
-    const searchQuery = searchParams.get('search');
-    const brand = searchParams.get('brand');
-    const feature = searchParams.get('feature');
-    const audience = searchParams.get('audience');
+    const category = searchParams.get("category");
+    const searchQuery = searchParams.get("search");
+    const brand = searchParams.get("brand");
+    const feature = searchParams.get("feature");
+    const audience = searchParams.get("audience");
 
     // Reset filters first
-    setSelectedFilters(prev => ({
+    setSelectedFilters((prev) => ({
       ...prev,
       categories: [],
       brands: [],
-      feature: '',
-      audience: ''
+      feature: "",
+      audience: "",
     }));
 
     // Then apply new filters from URL
     if (category) {
-      setSelectedFilters(prev => ({
+      setSelectedFilters((prev) => ({
         ...prev,
-        categories: [category]
+        categories: [category],
       }));
     }
 
@@ -77,23 +73,23 @@ export default function ShopPage() {
     }
 
     if (brand) {
-      setSelectedFilters(prev => ({
+      setSelectedFilters((prev) => ({
         ...prev,
-        brands: [brand]
+        brands: [brand],
       }));
     }
 
     if (feature) {
-      setSelectedFilters(prev => ({
+      setSelectedFilters((prev) => ({
         ...prev,
-        feature
+        feature,
       }));
     }
 
     if (audience) {
-      setSelectedFilters(prev => ({
+      setSelectedFilters((prev) => ({
         ...prev,
-        audience
+        audience,
       }));
     }
 
@@ -105,15 +101,21 @@ export default function ShopPage() {
     page,
     limit: 12,
     category: selectedFilters.categories[0],
-    minPrice: selectedFilters.priceRange.min > 0 ? selectedFilters.priceRange.min : undefined,
-    maxPrice: selectedFilters.priceRange.max < 10000000 ? selectedFilters.priceRange.max : undefined,
+    minPrice:
+      selectedFilters.priceRange.min > 0
+        ? selectedFilters.priceRange.min
+        : undefined,
+    maxPrice:
+      selectedFilters.priceRange.max < 10000000
+        ? selectedFilters.priceRange.max
+        : undefined,
     search,
     sort: selectedFilters.sort,
     brands: selectedFilters.brands,
     sizes: selectedFilters.sizes,
     colors: selectedFilters.colors,
     feature: selectedFilters.feature,
-    audience: selectedFilters.audience
+    audience: selectedFilters.audience,
   });
 
   console.log("Shop page - Filters:", {
@@ -128,7 +130,7 @@ export default function ShopPage() {
     sizes: selectedFilters.sizes,
     colors: selectedFilters.colors,
     feature: selectedFilters.feature,
-    audience: selectedFilters.audience
+    audience: selectedFilters.audience,
   });
 
   console.log("Shop page - Products:", products);
@@ -137,27 +139,27 @@ export default function ShopPage() {
   console.log("Shop page - Error:", error);
 
   const handleFilterChange = (filterType: string, value: FilterValue) => {
-    if (filterType === 'clear') {
+    if (filterType === "clear") {
       setSelectedFilters({
         categories: [],
         priceRange: { min: 0, max: 10000000 },
         brands: [],
         sizes: [],
         colors: [],
-        sort: '-createdAt',
-        feature: '',
-        audience: ''
+        sort: "-createdAt",
+        feature: "",
+        audience: "",
       });
       setPage(1);
       return;
     }
 
-    if (filterType === 'sort') {
-      setSelectedFilters(prev => ({ ...prev, sort: value as string }));
+    if (filterType === "sort") {
+      setSelectedFilters((prev) => ({ ...prev, sort: value as string }));
       return;
     }
 
-    setSelectedFilters(prev => {
+    setSelectedFilters((prev) => {
       if (Array.isArray(prev[filterType])) {
         const array = prev[filterType] as string[];
         const valueStr = value as string;
@@ -165,7 +167,10 @@ export default function ShopPage() {
         if (index === -1) {
           return { ...prev, [filterType]: [...array, valueStr] };
         }
-        return { ...prev, [filterType]: array.filter(item => item !== valueStr) };
+        return {
+          ...prev,
+          [filterType]: array.filter((item) => item !== valueStr),
+        };
       }
       return { ...prev, [filterType]: value };
     });
@@ -175,7 +180,7 @@ export default function ShopPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const searchInput = form.querySelector('input') as HTMLInputElement;
+    const searchInput = form.querySelector("input") as HTMLInputElement;
     setSearch(searchInput.value);
     setPage(1);
   };
@@ -189,7 +194,9 @@ export default function ShopPage() {
       {/* Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
         <nav className="flex text-gray-500 text-sm">
-          <Link href="/" className="hover:text-black">Home</Link>
+          <Link href="/" className="hover:text-black">
+            Home
+          </Link>
           <span className="mx-2">/</span>
           <span className="text-black">Shop</span>
         </nav>
@@ -205,16 +212,19 @@ export default function ShopPage() {
               <p className="text-gray-600">{pagination.total} results found</p>
             )}
           </div>
-          
+
           {/* Search Bar */}
           <form onSubmit={handleSearch} className="relative max-w-2xl">
-            <input 
+            <input
               type="text"
               placeholder="Search products..."
               defaultValue={search}
               className="w-full px-6 py-3 border rounded-full focus:outline-none focus:ring-2 focus:ring-black pr-12"
             />
-            <button type="submit" className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black">
+            <button
+              type="submit"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black"
+            >
               <i className="fas fa-search text-lg"></i>
             </button>
           </form>
@@ -222,20 +232,20 @@ export default function ShopPage() {
           {/* Popular Searches */}
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="text-sm text-gray-600">Popular:</span>
-            <button 
-              onClick={() => setSearch('Running Shoes')}
+            <button
+              onClick={() => setSearch("Running Shoes")}
               className="text-sm text-gray-600 hover:text-black"
             >
               Running Shoes
             </button>
-            <button 
-              onClick={() => setSearch('Basketball')}
+            <button
+              onClick={() => setSearch("Basketball")}
               className="text-sm text-gray-600 hover:text-black"
             >
               Basketball
             </button>
-            <button 
-              onClick={() => setSearch('Lifestyle')}
+            <button
+              onClick={() => setSearch("Lifestyle")}
               className="text-sm text-gray-600 hover:text-black"
             >
               Lifestyle
@@ -245,7 +255,7 @@ export default function ShopPage() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <FilterSidebar 
+          <FilterSidebar
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
           />
@@ -263,10 +273,14 @@ export default function ShopPage() {
                 <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <i className="fas fa-exclamation-triangle text-4xl text-red-500"></i>
                 </div>
-                <h2 className="text-2xl font-bold mb-4">Lỗi Khi tải sản phẩm</h2>
-                <p className="text-gray-600 mb-8">Có thể sản phẩm của bạn không tồn tại hoặc đã bị xóa</p>
+                <h2 className="text-2xl font-bold mb-4">
+                  Lỗi Khi tải sản phẩm
+                </h2>
+                <p className="text-gray-600 mb-8">
+                  Có thể sản phẩm của bạn không tồn tại hoặc đã bị xóa
+                </p>
                 {/* <p className="text-gray-600 mb-8">{error}</p> */}
-                <button 
+                <button
                   onClick={() => window.location.reload()}
                   className="bg-black text-white px-8 py-3 rounded-full hover:bg-gray-800"
                 >
@@ -278,13 +292,19 @@ export default function ShopPage() {
                 {/* Products Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {products.map((product) => (
-                    <div key={product._id} className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div
+                      key={product._id}
+                      className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
                       {/* Image Container */}
                       <div className="relative aspect-square">
                         <Link href={`/product/${product._id}`}>
                           <div className="relative h-full overflow-hidden">
                             <Image
-                              src={product.images[0]?.url || '/placeholder-product.jpg'}
+                              src={
+                                product.images[0]?.url ||
+                                "/placeholder-product.jpg"
+                              }
                               alt={product.name}
                               fill
                               className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -308,30 +328,43 @@ export default function ShopPage() {
                           onClick={() => {
                             if (isInWishlist(product._id)) {
                               removeFromWishlist(product._id);
-                              toast.success('Đã xóa khỏi danh sách yêu thích');
+                              toast.success("Đã xóa khỏi danh sách yêu thích");
                             } else {
                               addToWishlist({
                                 _id: product._id,
                                 name: product.name,
                                 price: product.price,
                                 originalPrice: product.originalPrice,
-                                image: product.images[0]?.url || '',
-                                sizes: product.sizes ? product.sizes.map((s: { size: string; quantity: number }) => s.size) : [],
-                                stock: {}
+                                image: product.images[0]?.url || "",
+                                sizes: product.sizes
+                                  ? product.sizes.map(
+                                      (s: { size: string; quantity: number }) =>
+                                        s.size
+                                    )
+                                  : [],
+                                stock: {},
                               });
-                              toast.success('Đã thêm vào danh sách yêu thích');
+                              toast.success("Đã thêm vào danh sách yêu thích");
                             }
                           }}
                           className={`absolute top-2 left-2 w-9 h-9 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
                             isInWishlist(product._id)
-                              ? 'bg-red-500 hover:bg-red-600'
-                              : 'bg-white hover:bg-gray-100'
+                              ? "bg-red-500 hover:bg-red-600"
+                              : "bg-white hover:bg-gray-100"
                           }`}
-                          title={isInWishlist(product._id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}
+                          title={
+                            isInWishlist(product._id)
+                              ? "Xóa khỏi yêu thích"
+                              : "Thêm vào yêu thích"
+                          }
                         >
-                          <i className={`fas fa-heart ${
-                            isInWishlist(product._id) ? 'text-white' : 'text-red-500'
-                          }`}></i>
+                          <i
+                            className={`fas fa-heart ${
+                              isInWishlist(product._id)
+                                ? "text-white"
+                                : "text-red-500"
+                            }`}
+                          ></i>
                         </button>
                       </div>
 
@@ -347,7 +380,7 @@ export default function ShopPage() {
                           <h3 className="font-medium text-gray-800 group-hover:text-black transition-colors mb-2 truncate">
                             {product.name}
                           </h3>
-                          
+
                           {/* Rating */}
                           <div className="flex items-center mb-2">
                             <div className="flex items-center">
@@ -356,8 +389,8 @@ export default function ShopPage() {
                                   key={i}
                                   className={`w-3.5 h-3.5 ${
                                     i < (product.rating || 0)
-                                      ? 'text-yellow-400'
-                                      : 'text-gray-300'
+                                      ? "text-yellow-400"
+                                      : "text-gray-300"
                                   }`}
                                   fill="currentColor"
                                   viewBox="0 0 20 20"
@@ -374,19 +407,20 @@ export default function ShopPage() {
                           {/* Price Section */}
                           <div className="flex items-center gap-2">
                             <span className="text-lg font-bold text-gray-900">
-                              {new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
+                              {new Intl.NumberFormat("vi-VN", {
+                                style: "currency",
+                                currency: "VND",
                               }).format(product.price)}
                             </span>
-                            {product.originalPrice && product.originalPrice > product.price && (
-                              <span className="text-sm text-gray-500 line-through">
-                                {new Intl.NumberFormat('vi-VN', {
-                                  style: 'currency',
-                                  currency: 'VND'
-                                }).format(product.originalPrice)}
-                              </span>
-                            )}
+                            {product.originalPrice &&
+                              product.originalPrice > product.price && (
+                                <span className="text-sm text-gray-500 line-through">
+                                  {new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                  }).format(product.originalPrice)}
+                                </span>
+                              )}
                           </div>
                         </div>
                       </Link>
@@ -397,7 +431,7 @@ export default function ShopPage() {
                 {/* Pagination */}
                 {pagination && pagination.totalPages > 1 && (
                   <div className="flex justify-center mt-8 gap-2">
-                    <button 
+                    <button
                       onClick={() => setPage(Math.max(1, page - 1))}
                       disabled={page === 1}
                       className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
@@ -409,14 +443,18 @@ export default function ShopPage() {
                         key={i}
                         onClick={() => setPage(i + 1)}
                         className={`px-4 py-2 border rounded-lg ${
-                          page === i + 1 ? 'bg-black text-white' : 'hover:bg-gray-100'
+                          page === i + 1
+                            ? "bg-black text-white"
+                            : "hover:bg-gray-100"
                         }`}
                       >
                         {i + 1}
                       </button>
                     ))}
                     <button
-                      onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
+                      onClick={() =>
+                        setPage(Math.min(pagination.totalPages, page + 1))
+                      }
                       disabled={page === pagination.totalPages}
                       className="px-4 py-2 border rounded-lg hover:bg-gray-100 disabled:opacity-50"
                     >
@@ -433,4 +471,4 @@ export default function ShopPage() {
       <Footer />
     </main>
   );
-} 
+}

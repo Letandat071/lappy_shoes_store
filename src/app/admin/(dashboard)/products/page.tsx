@@ -139,7 +139,9 @@ export default function ProductsPage() {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductResponse | null>(
+    null
+  );
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
@@ -171,32 +173,35 @@ export default function ProductsPage() {
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-  // Fetch products
-  const fetchProducts = async (page = 1) => {
-    try {
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        limit: pagination.limit.toString(),
-        ...filters,
-      });
+  // Bọc fetchProducts bằng useCallback để tránh cảnh báo dependency của useEffect
+  const fetchProducts = useCallback(
+    async (page = 1) => {
+      try {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: pagination.limit.toString(),
+          ...filters,
+        });
 
-      const response = await fetch(
-        "/api/admin/products?" + queryParams.toString()
-      );
-      const data: ApiResponse = await response.json();
+        const response = await fetch(
+          "/api/admin/products?" + queryParams.toString()
+        );
+        const data: ApiResponse = await response.json();
 
-      if (data.products) {
-        setProducts(data.products);
-        setPagination(data.pagination);
+        if (data.products) {
+          setProducts(data.products);
+          setPagination(data.pagination);
+        }
+      } catch (_error) {
+        toast.error("Lỗi khi tải sản phẩm");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      toast.error("Lỗi khi tải sản phẩm");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [pagination.limit, filters]
+  );
 
-  // Fetch categories and features
+  // Fetch categories và features
   const fetchCategoriesAndFeatures = async () => {
     try {
       const [categoriesRes, featuresRes] = await Promise.all([
@@ -204,12 +209,12 @@ export default function ProductsPage() {
         fetch("/api/admin/features"),
       ]);
 
-      const categoriesData: CategoryResponse = await categoriesRes.json();
-      const featuresData: FeatureResponse = await featuresRes.json();
+      const categoriesData = await categoriesRes.json();
+      const featuresData = await featuresRes.json();
 
       if (categoriesData.categories) setCategories(categoriesData.categories);
       if (featuresData.features) setFeatures(featuresData.features);
-    } catch (error) {
+    } catch (_error) {
       toast.error("Lỗi khi tải danh mục và tính năng");
     }
   };
@@ -217,11 +222,11 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
     fetchCategoriesAndFeatures();
-  }, []);
+  }, [fetchProducts]);
 
   useEffect(() => {
     fetchProducts(1);
-  }, [filters]);
+  }, [filters, fetchProducts]);
 
   // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -256,8 +261,12 @@ export default function ProductsPage() {
       } else {
         throw new Error(data.error);
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã có lỗi xảy ra");
+      }
     }
   };
 
@@ -275,39 +284,19 @@ export default function ProductsPage() {
         } else {
           throw new Error(data.error);
         }
-      } catch (error: any) {
-        toast.error(error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toast.error("Đã có lỗi xảy ra");
+        }
       }
     }
   };
 
   // Handle edit
   const handleEdit = (product: ProductResponse) => {
-    setEditingProduct({
-      _id: product._id.toString(),
-      name: product.name,
-      description: product.description,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      images: product.images,
-      category: product.category
-        ? {
-            _id: product.category._id.toString(),
-            name: product.category.name,
-          }
-        : null,
-      features: product.features.map((f) => ({
-        _id: f._id.toString(),
-        name: f.name,
-        icon: f.icon,
-      })),
-      status: product.status as "in-stock" | "out-of-stock" | "coming-soon",
-      brand: product.brand,
-      colors: product.colors,
-      sizes: product.sizes,
-      totalQuantity: product.totalQuantity,
-    });
-
+    setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
@@ -320,7 +309,7 @@ export default function ProductsPage() {
         isUploading: false,
         uploadProgress: 0,
       })),
-      category: product.category?._id.toString() || "",
+      category: product.category ? product.category._id.toString() : "",
       features: product.features.map((f) => f._id.toString()),
       targetAudience: "",
       sizes: product.sizes,

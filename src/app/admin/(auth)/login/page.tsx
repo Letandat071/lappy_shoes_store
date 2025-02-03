@@ -18,14 +18,14 @@ export default function AdminLogin() {
     setMounted(true);
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/admin/auth/check');
+        const res = await fetch("/api/admin/auth/check");
         const data = await res.json();
-        
+
         if (data.authenticated) {
-          router.replace('/admin');
+          router.replace("/admin");
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error("Auth check failed:", error);
       }
     };
 
@@ -56,8 +56,12 @@ export default function AdminLogin() {
       }
 
       router.replace("/admin");
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Có lỗi xảy ra");
+      }
     } finally {
       setLoading(false);
     }
@@ -135,4 +139,4 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-} 
+}

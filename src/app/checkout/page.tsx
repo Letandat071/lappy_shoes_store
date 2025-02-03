@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation"; // Đã xóa vì không sử dụng
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ShippingForm from "@/components/checkout/ShippingForm";
@@ -20,7 +20,7 @@ interface ShippingAddress {
 }
 
 export default function CheckoutPage() {
-  const router = useRouter();
+  // const router = useRouter(); // Đã xóa biến không dùng
   const { cart, setCart } = useCartContext();
   const [shippingAddress, setShippingAddress] =
     useState<ShippingAddress | null>(null);
@@ -34,14 +34,7 @@ export default function CheckoutPage() {
     0
   );
 
-  const handleShippingSubmit = async (address: {
-    fullName: string;
-    phone: string;
-    address: string;
-    province: string;
-    district: string;
-    ward: string;
-  }) => {
+  const handleShippingSubmit = async (address: ShippingAddress) => {
     try {
       // Gọi API tính phí ship
       const params = new URLSearchParams({
@@ -102,6 +95,7 @@ export default function CheckoutPage() {
             province: shippingAddress.province,
             district: shippingAddress.district,
             ward: shippingAddress.ward,
+            city: shippingAddress.province,
           },
           paymentMethod: "COD",
         }),
@@ -124,7 +118,10 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleAddressSelect = (address: any) => {
+  /* Nếu bạn không dùng hàm handleAddressSelect, hãy xóa nó đi.
+     Nếu cần, bạn có thể khai báo kiểu rõ cho tham số như bên dưới:
+  
+  const handleAddressSelect = (address: ShippingAddress) => {
     setShippingAddress({
       fullName: address.fullName,
       phone: address.phone,
@@ -134,6 +131,7 @@ export default function CheckoutPage() {
       ward: address.ward,
     });
   };
+  */
 
   return (
     <>
@@ -161,7 +159,12 @@ export default function CheckoutPage() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Checkout Forms */}
             <div className="lg:w-2/3 space-y-6">
-              <ShippingForm onSubmit={handleShippingSubmit} />
+              <ShippingForm
+                onSubmit={(address: ShippingAddress) => {
+                  setShippingAddress(address);
+                  handleShippingSubmit(address);
+                }}
+              />
             </div>
 
             {/* Order Summary */}

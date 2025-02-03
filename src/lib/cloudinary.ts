@@ -47,10 +47,7 @@ export const useImageUpload = () => {
           reject(error);
         };
       });
-
-      // Extract base64 content
-      const base64Content = base64Data.split(',')[1];
-      console.log('✅ Đã tách nội dung base64');
+      console.log('✅ File đã chuyển đổi sang base64');
 
       console.log('📝 Chuẩn bị form data với config:', {
         cloudName: CLOUD_NAME,

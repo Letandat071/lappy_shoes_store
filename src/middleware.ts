@@ -14,9 +14,6 @@ const protectedRoutes = [
   '/cart',
 ];
 
-// Các routes admin cần xác thực
-const adminRoutes = ['/admin'];
-
 // Các routes chỉ cho phép truy cập khi chưa đăng nhập
 const authRoutes = ['/auth'];
 
@@ -32,10 +29,10 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/admin')) {
     try {
       if (adminToken) {
-        // Verify admin token
-        const { payload } = await jose.jwtVerify(adminToken, JWT_SECRET);
+        // Verify token mà không cần lấy payload
+        await jose.jwtVerify(adminToken, JWT_SECRET);
         
-        // Nếu đã đăng nhập và cố truy cập trang login
+        // Nếu đã đăng nhập và cố truy cập trang login admin
         if (adminAuthRoutes.some(route => pathname.startsWith(route))) {
           return NextResponse.redirect(new URL('/admin', request.url));
         }
@@ -49,7 +46,7 @@ export async function middleware(request: NextRequest) {
       }
 
       return NextResponse.next();
-    } catch (error) {
+    } catch (_error) {
       // Token không hợp lệ
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
@@ -58,8 +55,8 @@ export async function middleware(request: NextRequest) {
   // Xử lý user routes
   try {
     if (token) {
-      // Verify token
-      const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+      // Verify token mà không cần lấy payload
+      await jose.jwtVerify(token, JWT_SECRET);
       
       // Nếu đã đăng nhập và cố truy cập trang auth
       if (authRoutes.includes(pathname)) {
@@ -75,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
 
     return NextResponse.next();
-  } catch (error) {
+  } catch (_error) {
     // Token không hợp lệ
     if (protectedRoutes.some(route => pathname.startsWith(route))) {
       return NextResponse.redirect(new URL('/auth', request.url));

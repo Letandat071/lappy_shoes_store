@@ -33,10 +33,11 @@ export async function GET(
 
     return NextResponse.json({ order });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching order:', error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -119,10 +120,11 @@ export async function PATCH(
       order 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating order:', error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -169,10 +171,11 @@ export async function DELETE(
     await order.save();
 
     return NextResponse.json({ message: 'Hủy đơn hàng thành công' });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error cancelling order:', error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: message },
       { status: 500 }
     );
   }

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import * as jose from 'jose';
 import User from '../../../../models/User';
 import connectDB from '../../../../lib/mongoose';
-import { cookies } from 'next/headers';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key'

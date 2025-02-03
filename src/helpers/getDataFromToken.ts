@@ -11,8 +11,12 @@ export const getDataFromToken = async (request: NextRequest) => {
     // console.log("Decoded payload:", payload);
     
     return payload.userId;
-  } catch (error: any) {
-    console.error("Error decoding token:", error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error decoding token:", error.message);
+    } else {
+      console.error("Error decoding token:", error);
+    }
     return null;
   }
 }; 

@@ -6,7 +6,7 @@ if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env');
 }
 
-let globalWithMongoose = global as { mongoose: { conn: null | typeof mongoose; promise: null | Promise<typeof mongoose> } };
+const globalWithMongoose = global as { mongoose: { conn: null | typeof mongoose; promise: null | Promise<typeof mongoose> } };
 
 if (!globalWithMongoose.mongoose) {
   globalWithMongoose.mongoose = { conn: null, promise: null };

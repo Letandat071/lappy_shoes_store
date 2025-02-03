@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { getAdminFromToken } from "../../../../../lib/auth";
-import Admin from "@/models/Admin";
 import connectDB from "@/lib/db";
 
 export async function GET() {
   try {
+    await connectDB();
     const admin = await getAdminFromToken();
     
     if (!admin) {

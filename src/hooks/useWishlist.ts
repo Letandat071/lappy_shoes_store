@@ -61,10 +61,8 @@ export const useWishlist = () => {
   };
 
   const clearWishlist = () => {
-    setWishlist(prevWishlist => {
-      actionRef.current = 'Đã xóa danh sách yêu thích';
-      return initialWishlist;
-    });
+    actionRef.current = 'Đã xóa danh sách yêu thích';
+    setWishlist(initialWishlist);
   };
 
   const isInWishlist = (productId: string): boolean => {

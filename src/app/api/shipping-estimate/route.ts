@@ -7,7 +7,10 @@ interface Coordinates {
 }
 
 // Hàm lấy tọa độ từ mã quận/huyện
-async function getDistrictCoordinates(provinceCode: string, districtCode: string): Promise<Coordinates | null> {
+async function getDistrictCoordinates(
+  provinceCode: string,
+  districtCode: string
+): Promise<Coordinates | null> {
   // Tọa độ trung tâm các quận/huyện (có thể thêm vào khi cần)
   const DISTRICT_COORDS: Record<string, Coordinates> = {
     // Quảng Ninh
@@ -42,36 +45,6 @@ async function getDistrictCoordinates(provinceCode: string, districtCode: string
   return DISTRICT_COORDS[districtCode] || null;
 }
 
-// Hàm này sẽ gọi API lấy toàn bộ dữ liệu các địa danh ở Việt Nam (depth=3 bao gồm cả ward)
-async function getRegionMapping(): Promise<any[]> {
-  const res = await fetch("https://provinces.open-api.vn/api/?depth=3");
-  return res.json();
-}
-
-// Hàm chuyển đổi mã vùng thành tên địa danh
-function getLocationName(mappingData: any[], code: string, type: 'province' | 'district' | 'ward'): string {
-  const entry = mappingData.find((item: any) => String(item.code) === code);
-  if (!entry) {
-    console.error(`Không tìm thấy ${type} với mã: ${code}`);
-  }
-  return entry?.name || '';
-}
-
-// Hàm chuyển đổi mã vùng từ MongoDB thành địa chỉ đầy đủ
-function getFullAddress(mappingData: any[], data: { address: string; ward: string; district: string; province: string }): string {
-  const province = mappingData.find((p: any) => String(p.code) === data.province);
-  if (!province) return `${data.address}, Việt Nam`;
-
-  const district = province.districts.find((d: any) => String(d.code) === data.district);
-  if (!district) return `${data.address}, ${province.name}, Việt Nam`;
-
-  const ward = district.wards.find((w: any) => String(w.code) === data.ward);
-  if (!ward) return `${data.address}, ${district.name}, ${province.name}, Việt Nam`;
-
-  // Format địa chỉ theo cách Nominatim có thể hiểu tốt hơn
-  return `${data.address} ${ward.name}, ${district.name}, ${province.name}, Vietnam`;
-}
-
 // Hàm tính khoảng cách giữa 2 điểm theo công thức Haversine
 function calculateDistance(
   lat1: number,
@@ -83,11 +56,10 @@ function calculateDistance(
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) *
       Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+      Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const d = R * c; // Khoảng cách tính bằng km
   return d;
@@ -129,14 +101,17 @@ function estimateDeliveryTime(distanceKm: number): number {
   return totalHours * 3600; // Chuyển giờ sang giây
 }
 
-// Model cho cache tọa độ
-interface LocationCache {
-  address: string;
-  coordinates: {
-    lat: number;
-    lon: number;
-  };
-  createdAt: Date;
+// Hàm định dạng thời gian
+function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  // Chuyển sang ngày nếu > 24 giờ
+  if (hours > 24) {
+    const days = Math.floor(hours / 24);
+    const remainingHours = hours % 24;
+    return `${days} ngày ${remainingHours} giờ`;
+  }
+  
+  return `${hours} giờ`;
 }
 
 export async function GET(request: Request) {
@@ -195,17 +170,4 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-}
-
-// Hàm định dạng thời gian
-function formatDuration(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  // Chuyển sang ngày nếu > 24 giờ
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    return `${days} ngày ${remainingHours} giờ`;
-  }
-  
-  return `${hours} giờ`;
 }

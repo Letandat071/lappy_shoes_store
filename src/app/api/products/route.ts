@@ -1,123 +1,106 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
-import Product, { PRODUCT_STATUS } from "@/models/Product";
-import Category from "@/models/Category";
-import Feature from "@/models/Feature";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery } from "mongoose";
+import { getDataFromToken } from "@/helpers/getDataFromToken";
 
-// Đảm bảo các model được import
-const models = { Product, Category, Feature };
+// Import models sau khi đã connect mongoose
+import "@/models/Category";
+import "@/models/Feature";
+import Product from "@/models/Product";
 
-interface ProductDocument {
-  _id: any;
+interface ProductImage {
+  url: string;
+  color?: string;
+  version?: string;
+  isUploading?: boolean;
+  uploadProgress?: number;
+}
+
+interface ProductSize {
+  size: string;
+  quantity: number;
+  _id?: string;
+}
+
+interface UpdateProductData {
+  name?: string;
+  description?: string;
+  price?: number;
+  originalPrice?: number;
+  images?: ProductImage[];
+  category?: string;
+  features?: string[];
+  sizes?: ProductSize[];
+  colors?: string[];
+  status?: string;
+  brand?: string;
+  targetAudience?: string[];
+  totalQuantity?: number;
+  [key: string]: unknown;
+}
+
+// Sử dụng interface này trong generic của hàm lean()
+export interface ProductDocument extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   description: string;
   price: number;
   originalPrice?: number;
   discount?: number;
-  images: Array<{
-    url: string;
-    color?: string;
-    version?: string;
-  }>;
-  category: {
-    _id: any;
+  images: ProductImage[];
+  category: mongoose.Types.ObjectId | {
+    _id: mongoose.Types.ObjectId;
     name: string;
   };
-  features: Array<{
-    _id: any;
+  features: mongoose.Types.ObjectId[] | Array<{
+    _id: mongoose.Types.ObjectId;
     name: string;
     icon: string;
   }>;
   status: string;
   rating?: number;
   reviewCount?: number;
+  sizes: Array<{
+    size: string;
+    quantity: number;
+  }>;
+  totalQuantity: number;
 }
 
-interface ProductResponse {
+// Interface định nghĩa kiểu của category sau khi populate
+interface CategoryDoc {
   _id: mongoose.Types.ObjectId;
   name: string;
-  description: string;
-  price: number;
-  category: {
-    _id: mongoose.Types.ObjectId;
-    name: string;
-  } | null;
-  features: Array<{
-    _id: mongoose.Types.ObjectId;
-    name: string;
-    icon: string;
-  }>;
-  // ... thêm các trường khác
 }
 
 // Get all products with pagination and filters
 export async function GET(request: NextRequest) {
   try {
+    const userId = await getDataFromToken(request);
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
-    
-    // Nếu có categoryId, lấy sản phẩm mới nhất của category đó
-    const categoryId = searchParams.get("categoryId");
-    if (categoryId) {
-      const latestProduct = await Product.findOne({ category: categoryId })
-        .sort({ createdAt: -1 })
-        .select('images')
-        .lean();
-      
-      return NextResponse.json({ product: latestProduct });
-    }
 
     // Pagination
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
-    
-    // Nếu không có page và limit, trả về tất cả sản phẩm
-    if (!page && !limit) {
-      const products = await Product.find()
-        .populate("category", "name")
-        .populate("features", "name icon")
-        .lean();
-
-      const formattedProducts = products.map((product: any) => ({
-        ...product,
-        _id: product._id.toString(),
-        category: product.category ? {
-          _id: product.category._id.toString(),
-          name: product.category.name
-        } : null,
-        features: Array.isArray(product.features) ? product.features.map((feature: any) => ({
-          _id: feature._id.toString(),
-          name: feature.name,
-          icon: feature.icon
-        })) : []
-      }));
-
-      return NextResponse.json({ products: formattedProducts });
-    }
-
-    // Pagination
-    const skip = (parseInt(page ?? "1") - 1) * parseInt(limit ?? "10");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
 
     // Filters
     const category = searchParams.get("category");
-    const status = searchParams.get("status");
+    const statusFilter = searchParams.get("status");
     const search = searchParams.get("search");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const feature = searchParams.get("feature");
-    const brand = searchParams.get("brand");
-    const brands = searchParams.get("brands")?.split(",");
-    const sizes = searchParams.get("sizes")?.split(",");
-    const colors = searchParams.get("colors")?.split(",");
-    const sort = searchParams.get("sort") || "-createdAt";
-    const audience = searchParams.get("audience");
 
-    // Build query
-    let query: any = {};
-    
+    // Build query với kiểu FilterQuery<ProductDocument>
+    const query: FilterQuery<ProductDocument> = {};
     if (category) query.category = category;
-    if (status) query.status = status;
+    if (statusFilter) query.status = statusFilter;
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -125,95 +108,51 @@ export async function GET(request: NextRequest) {
       ];
     }
     if (minPrice || maxPrice) {
-      query.price = {};
-      if (minPrice) query.price.$gte = parseFloat(minPrice);
-      if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+      const priceFilter: { $gte?: number; $lte?: number } = {};
+      if (minPrice) priceFilter.$gte = parseFloat(minPrice);
+      if (maxPrice) priceFilter.$lte = parseFloat(maxPrice);
+      query.price = priceFilter;
     }
-
-    // Xử lý filter theo brands
-    if (brands?.length) {
-      query.brand = { $in: brands.map(b => new RegExp(b, 'i')) };
-    } else if (brand) {
-      query.brand = { $regex: brand, $options: "i" };
-    }
-
-    // Xử lý filter theo targetAudience
-    if (audience) {
-      query.targetAudience = audience;
-    }
-
-    if (sizes?.length) {
-      query["sizes.size"] = { $in: sizes };
-    }
-    if (colors?.length) {
-      query.colors = { $in: colors };
-    }
-
-    // Xử lý filter theo feature name
     if (feature) {
-      // Tìm feature theo tên chính xác
-      const featureDoc = await Feature.findOne({ 
-        name: { $regex: `^${feature}$`, $options: "i" }
-      });
+      const featureDoc = await mongoose.models.Feature.findOne({ name: feature });
       if (featureDoc) {
         query.features = featureDoc._id;
-      } else {
-        // Nếu không tìm thấy feature, trả về mảng rỗng
-        return NextResponse.json({
-          products: [],
-          pagination: {
-            total: 0,
-            page,
-            limit,
-            totalPages: 0,
-          },
-        });
       }
     }
 
-    console.log("Client Query:", JSON.stringify(query, null, 2));
-
-    // Execute query with pagination
+    // Sử dụng generic cho lean() để kết quả có kiểu chính xác
     const products = await Product.find(query)
       .populate("category", "name")
       .populate("features", "name icon")
-      .sort(sort)
+      .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit ?? "10"))
-      .lean();
+      .limit(limit)
+      .lean<ProductDocument[]>();
 
-    // Get total count for pagination
-    const total = await Product.countDocuments(query);
-
-    // Format response
-    const formattedProducts = products.map((product: any) => ({
+    // Format lại dữ liệu trả về nếu cần thiết (ép kiểu cho category và features)
+    const formattedProducts = products.map((product) => ({
       ...product,
       _id: product._id.toString(),
-      category: product.category ? {
-        _id: product.category._id.toString(),
-        name: product.category.name
-      } : null,
-      features: Array.isArray(product.features) ? product.features.map((feature: any) => ({
-        _id: feature._id.toString(),
-        name: feature.name,
-        icon: feature.icon
-      })) : []
+      category:
+        typeof product.category === "object" && product.category !== null
+          ? {
+              _id: (product.category as CategoryDoc)._id.toString(),
+              name: (product.category as CategoryDoc).name,
+            }
+          : null,
+      features: Array.isArray(product.features)
+        ? (product.features as Array<{ _id: mongoose.Types.ObjectId; name: string; icon: string }>).map((featureItem) => ({
+            _id: featureItem._id.toString(),
+            name: featureItem.name,
+            icon: featureItem.icon,
+          }))
+        : [],
     }));
 
-    return NextResponse.json({
-      products: formattedProducts,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / parseInt(limit ?? "10")),
-      },
-    });
-  } catch (error: any) {
+    return NextResponse.json({ products: formattedProducts });
+  } catch (error: unknown) {
     console.error("GET Products Error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 } 

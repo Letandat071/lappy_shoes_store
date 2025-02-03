@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import ProductCard from "@/components/product/ProductCard";
 import { toast } from "react-hot-toast";
 import { useCartContext } from "@/contexts/CartContext";
 import { useWishlistContext } from "@/contexts/WishlistContext";
@@ -39,11 +38,9 @@ interface Product {
 const FeaturedContent = () => {
   const [features, setFeatures] = useState<Feature[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
   const searchParams = useSearchParams();
   const selectedFeature = searchParams.get("feature");
-  const { addToCart } = useCartContext();
   const { addToWishlist, isInWishlist, removeFromWishlist } =
     useWishlistContext();
 
@@ -60,8 +57,6 @@ const FeaturedContent = () => {
       } catch (error) {
         console.error("Error fetching features:", error);
         toast.error("Không thể tải dữ liệu tính năng");
-      } finally {
-        setLoading(false);
       }
     }
     fetchFeatures();

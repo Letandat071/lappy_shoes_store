@@ -42,7 +42,7 @@ export function useCart() {
         console.error('Error saving cart:', error);
       }
     }
-  }, [cart?.totalItems, user]); // Chỉ theo dõi totalItems thay vì toàn bộ cart
+  }, [cart, user]);
 
   const setCart = (newCart: Cart) => {
     setCartState(newCart);

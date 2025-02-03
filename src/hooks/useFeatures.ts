@@ -26,7 +26,7 @@ export const useFeatures = () => {
         } else {
           setError(data.error || 'Failed to fetch features');
         }
-      } catch (err) {
+      } catch (_err) {
         setError('Failed to fetch features');
       } finally {
         setLoading(false);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
-import mongoose from "mongoose";
+import mongoose, { FilterQuery } from "mongoose";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
 
 // Import models after mongoose
@@ -8,7 +8,7 @@ import "@/models/Category";
 import "@/models/Feature";
 import Product, { PRODUCT_STATUS } from "@/models/Product";
 
-const Category = mongoose.models.Category;
+// Xóa biến Category vì không được sử dụng
 const Feature = mongoose.models.Feature;
 
 interface ProductImage {
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const feature = searchParams.get("feature");
 
     // Build query
-    let query: any = {};
+    const query: FilterQuery<ProductDocument> = {};
     
     if (category) query.category = category;
     if (status) query.status = status;
@@ -131,31 +131,37 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
+      .lean<ProductDocument[]>();
 
     // Get total count for pagination
     const total = await Product.countDocuments(query);
 
     // Format response
-    const formattedProducts = products.map((product: any) => ({
+    const formattedProducts = products.map((product: ProductDocument) => ({
       ...product,
       _id: product._id.toString(),
-      images: Array.isArray(product.images) ? product.images.map((img: ProductImage) => ({
-        url: img.url || '',
-        color: img.color || '',
-        version: img.version || ''
-      })).filter((img: ProductImage) => img.url) : [],
+      images: Array.isArray(product.images)
+        ? product.images
+            .map((img: ProductImage) => ({
+              url: img.url || '',
+              color: img.color || '',
+              version: img.version || ''
+            }))
+            .filter((img: ProductImage) => img.url)
+        : [],
       category: product.category && typeof product.category === 'object' ? {
-        _id: product.category._id.toString(),
-        name: product.category.name
-      } : null,
-      features: Array.isArray(product.features) ? product.features.map((feature: any) => 
-        typeof feature === 'object' ? {
-          _id: feature._id.toString(),
-          name: feature.name,
-          icon: feature.icon
-        } : null
-      ).filter(Boolean) : []
+          _id: (product.category as { _id: mongoose.Types.ObjectId })._id.toString(),
+          name: (product.category as { name: string }).name
+        } : null,
+      features: Array.isArray(product.features)
+        ? (product.features as Array<{ _id: mongoose.Types.ObjectId; name: string; icon: string }>).map(
+            (feature) => ({
+              _id: feature._id.toString(),
+              name: feature.name,
+              icon: feature.icon,
+            })
+          )
+        : []
     }));
 
     return NextResponse.json({
@@ -167,10 +173,10 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("GET Products Error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal Server Error" }, 
+      { error: error instanceof Error ? error.message : "Internal Server Error" }, 
       { status: 500 }
     );
   }
@@ -191,20 +197,20 @@ export async function POST(request: NextRequest) {
     const productData = await request.json();
     
     // Extract image URLs from ProductImage objects if they exist
-    const images = productData.images?.map((img: ProductImage) => ({
+    const images: ProductImage[] = productData.images?.map((img: ProductImage) => ({
       url: img.url,
       color: img.color || '',
       version: img.version || ''
     })) || [];
     
     // Calculate total quantity from sizes
-    const totalQuantity = productData.sizes?.reduce(
+    const totalQuantity: number = productData.sizes?.reduce(
       (acc: number, size: ProductSize) => acc + size.quantity,
       0
     ) || 0;
 
     // Set status based on totalQuantity
-    const status = totalQuantity === 0 ? 
+    const productStatus = totalQuantity === 0 ? 
       PRODUCT_STATUS.OUT_OF_STOCK : 
       productData.status || PRODUCT_STATUS.IN_STOCK;
 
@@ -213,7 +219,7 @@ export async function POST(request: NextRequest) {
       ...productData,
       images,
       totalQuantity,
-      status
+      status: productStatus
     });
 
     // Populate references for response
@@ -223,9 +229,12 @@ export async function POST(request: NextRequest) {
     ]);
 
     return NextResponse.json({ product: populatedProduct }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Create Product Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -254,14 +263,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Clean up images data
-    const images = updateData.images?.map(img => ({
+    const images = updateData.images?.map((img: ProductImage) => ({
       url: img.url,
       color: img.color || '',
       version: img.version || ''
     }));
 
     // Clean up sizes data
-    const sizes = updateData.sizes?.map(({ size, quantity }) => ({
+    const sizes = updateData.sizes?.map(({ size, quantity }: ProductSize) => ({
       size,
       quantity
     }));
@@ -273,7 +282,7 @@ export async function PUT(request: NextRequest) {
     ) || 0;
 
     // Set status based on totalQuantity unless explicitly set
-    const status = totalQuantity === 0 ? 
+    const productStatus = totalQuantity === 0 ? 
       PRODUCT_STATUS.OUT_OF_STOCK : 
       updateData.status || PRODUCT_STATUS.IN_STOCK;
 
@@ -283,7 +292,7 @@ export async function PUT(request: NextRequest) {
       images,
       sizes,
       totalQuantity,
-      status
+      status: productStatus
     };
 
     // Remove undefined fields
@@ -314,12 +323,12 @@ export async function PUT(request: NextRequest) {
     }
 
     return NextResponse.json({ product }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Update Product Error:", error);
     return NextResponse.json(
       { 
-        error: error.message || "Internal Server Error",
-        details: error.stack
+        error: error instanceof Error ? error.message : "Internal Server Error",
+        details: error instanceof Error ? error.stack : undefined
       }, 
       { status: 500 }
     );
@@ -358,8 +367,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ message: "Product deleted successfully" }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Delete Product Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal Server Error" },
+      { status: 500 }
+    );
   }
 } 

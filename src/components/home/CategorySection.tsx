@@ -99,7 +99,8 @@ const CategorySection = () => {
         const counts: { [key: string]: number } = {};
         categoriesData.categories.forEach((cat: Category) => {
           const categoryProducts = productsData.products.filter(
-            (product: any) => product.category?._id === cat._id
+            (product: { category?: { _id?: string } }) =>
+              product.category?._id === cat._id
           );
           counts[cat._id] = categoryProducts.length;
         });
