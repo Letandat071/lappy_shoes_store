@@ -154,7 +154,7 @@ export default function ProductsPage() {
           setProducts(data.products);
           setPagination(data.pagination);
         }
-      } catch (_) {
+      } catch {
         toast.error("Lỗi khi tải sản phẩm");
       } finally {
         setLoading(false);
@@ -176,7 +176,7 @@ export default function ProductsPage() {
 
       if (categoriesData.categories) setCategories(categoriesData.categories);
       if (featuresData.features) setFeatures(featuresData.features);
-    } catch (_) {
+    } catch {
       toast.error("Lỗi khi tải danh mục và tính năng");
     }
   };
@@ -317,7 +317,7 @@ export default function ProductsPage() {
             };
             return { ...prev, images: updatedImages };
           });
-        } catch (_) {
+        } catch {
           toast.error(`Lỗi khi tải ảnh ${file.name}`);
           setFormData((prev) => {
             const updatedImages = prev.images.filter(
