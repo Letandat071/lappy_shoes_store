@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
+import { Params } from "next/server";
 
 // Cập nhật địa chỉ
 export async function PUT(
@@ -31,8 +32,9 @@ export async function PUT(
     }
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
+    const addressId = params.id;
     const existingAddress = await Address.findOne({
-      _id: params.id,
+      _id: addressId,
       user: userId
     });
 
@@ -71,7 +73,7 @@ export async function PUT(
 // Xóa địa chỉ
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Params }
 ) {
   try {
     await connectDB();
@@ -85,8 +87,9 @@ export async function DELETE(
     }
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
+    const addressId = context.params.id;
     const address = await Address.findOne({
-      _id: params.id,
+      _id: addressId,
       user: userId
     });
 
@@ -101,7 +104,7 @@ export async function DELETE(
     if (address.isDefault) {
       const anotherAddress = await Address.findOne({
         user: userId,
-        _id: { $ne: params.id }
+        _id: { $ne: addressId }
       });
       if (anotherAddress) {
         anotherAddress.isDefault = true;
