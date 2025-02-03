@@ -9,9 +9,23 @@ interface Category {
   slug: string;
 }
 
+interface ProductData {
+  _id: string;
+  category: {
+    _id: string;
+  };
+  images: Array<{
+    url: string;
+  }>;
+}
+
 interface CategoryWithImage extends Category {
   latestProductImage?: string;
   productCount?: number;
+}
+
+interface ProductsByCategoryMap {
+  [key: string]: ProductData[];
 }
 
 const CategorySection = () => {
@@ -21,25 +35,20 @@ const CategorySection = () => {
   );
   const [loading, setLoading] = useState(true);
 
-  // Thêm ref để track mounted state và prevent memory leak
   const isMounted = useRef(true);
-  // Thêm ref để track nếu data đã được fetch
   const dataFetched = useRef(false);
 
   useEffect(() => {
-    // Cleanup function
     return () => {
       isMounted.current = false;
     };
   }, []);
 
   useEffect(() => {
-    // Nếu data đã được fetch thì không fetch lại
     if (dataFetched.current) return;
 
     const fetchData = async () => {
       try {
-        // Check if we have cached data
         const cachedData = sessionStorage.getItem("categoryData");
         if (cachedData) {
           const { categories: cachedCategories, counts: cachedCounts } =
@@ -65,7 +74,7 @@ const CategorySection = () => {
         ]);
 
         const productsByCategory = productsData.products.reduce(
-          (acc: any, product: any) => {
+          (acc: ProductsByCategoryMap, product: ProductData) => {
             const categoryId = product.category._id;
             if (!acc[categoryId]) {
               acc[categoryId] = [];
@@ -73,11 +82,11 @@ const CategorySection = () => {
             acc[categoryId].push(product);
             return acc;
           },
-          {}
+          {} as ProductsByCategoryMap
         );
 
         const categoriesWithData = categoriesData.categories.map(
-          (category: Category) => {
+          (category: Category): CategoryWithImage => {
             const categoryProducts = productsByCategory[category._id] || [];
             return {
               ...category,
@@ -88,30 +97,27 @@ const CategorySection = () => {
           }
         );
 
-        const newCounts = categoriesWithData.reduce(
-          (acc: any, cat: any) => ({
+        const counts = categoriesWithData.reduce(
+          (acc: { [key: string]: number }, cat: CategoryWithImage) => ({
             ...acc,
-            [cat._id]: cat.productCount,
+            [cat._id]: cat.productCount || 0,
           }),
           {}
         );
 
-        // Only update state if component is still mounted
         if (isMounted.current) {
           setCategories(categoriesWithData);
-          setProductCounts(newCounts);
+          setProductCounts(counts);
 
-          // Cache the data
           sessionStorage.setItem(
             "categoryData",
             JSON.stringify({
               categories: categoriesWithData,
-              counts: newCounts,
+              counts: counts,
               timestamp: Date.now(),
             })
           );
 
-          // Mark as fetched
           dataFetched.current = true;
         }
       } catch (error) {
@@ -124,7 +130,7 @@ const CategorySection = () => {
     };
 
     fetchData();
-  }, []); // Empty dependency array
+  }, []);
 
   if (loading) {
     return (

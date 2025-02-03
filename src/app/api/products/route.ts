@@ -16,12 +16,6 @@ interface ProductImage {
   uploadProgress?: number;
 }
 
-interface ProductSize {
-  size: string;
-  quantity: number;
-  _id?: string;
-}
-
 // Sử dụng interface này trong generic của hàm lean()
 export interface ProductDocument extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
@@ -58,7 +52,23 @@ interface CategoryDoc {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UpdateProductData {
-  // ... interface content
+  name?: string;
+  description?: string;
+  price?: number;
+  originalPrice?: number;
+  discount?: number;
+  images?: ProductImage[];
+  category?: mongoose.Types.ObjectId;
+  features?: mongoose.Types.ObjectId[];
+  status?: string;
+  brand?: string;
+  colors?: string[];
+  sizes?: Array<{
+    size: string;
+    quantity: number;
+  }>;
+  totalQuantity?: number;
+  isActive?: boolean;
 }
 
 // Get all products with pagination and filters

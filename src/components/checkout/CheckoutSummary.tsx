@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/utils/format";
 import { CartItem } from "@/types/cart";
-import { useCartContext } from "@/contexts/CartContext";
 
 interface CheckoutSummaryProps {
   items: CartItem[];
@@ -25,7 +24,7 @@ const CheckoutSummary: React.FC<CheckoutSummaryProps> = ({
   isProcessing,
 }) => {
   const router = useRouter();
-  const { clearCart } = useCartContext();
+
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("COD");
 
   const handlePlaceOrder = () => {

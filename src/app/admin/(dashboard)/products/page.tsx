@@ -94,12 +94,6 @@ interface ApiResponse {
   pagination: Pagination;
 }
 
-interface ProductCardProps {
-  product: ProductResponse;
-  onEdit: (product: ProductResponse) => void;
-  onDelete: (id: string | mongoose.Types.ObjectId) => void;
-}
-
 export default function ProductsPage() {
   const { uploadImage } = useImageUpload();
   const [products, setProducts] = useState<ProductResponse[]>([]);
@@ -436,7 +430,7 @@ export default function ProductsPage() {
       {/* Products Grid */}
       {loading ? (
         <div className="grid grid-cols-1 gap-4">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(5)].map((__, i) => (
             <div
               key={i}
               className="bg-white rounded-lg shadow-sm p-4 animate-pulse"
@@ -475,7 +469,7 @@ export default function ProductsPage() {
               >
                 <i className="fas fa-chevron-left"></i>
               </button>
-              {[...Array(pagination.totalPages)].map((_, i) => (
+              {[...Array(pagination.totalPages)].map((__, i) => (
                 <button
                   key={i}
                   onClick={() => fetchProducts(i + 1)}

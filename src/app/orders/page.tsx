@@ -122,7 +122,7 @@ export default function OrdersPage() {
       } else {
         toast.error("Không thể tải danh sách đơn hàng");
       }
-    } catch (_) {
+    } catch {
       toast.error("Có lỗi xảy ra khi tải đơn hàng");
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ export default function OrdersPage() {
         const data = await response.json();
         toast.error(data.error || "Không thể hủy đơn hàng");
       }
-    } catch (_) {
+    } catch {
       toast.error("Có lỗi xảy ra khi hủy đơn hàng");
     }
   };

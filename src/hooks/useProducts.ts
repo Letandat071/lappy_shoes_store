@@ -75,14 +75,48 @@ export function useProducts({
 
   // Combine all filters into one object
   const filterParams = useMemo(() => {
-    // Log all filter values
     console.log('Filter values:', Object.values(filters));
+    const {
+      categories,
+      minPrice,
+      maxPrice,
+      search,
+      sort,
+      brands,
+      sizes,
+      colors,
+      feature,
+      audience
+    } = filters;
+    
     return {
       page,
       limit,
-      ...filters
+      categories,
+      minPrice,
+      maxPrice,
+      search,
+      sort,
+      brands,
+      sizes,
+      colors,
+      feature,
+      audience
     };
-  }, [page, limit, ...Object.values(filters)]);
+  }, [
+    page,
+    limit,
+    filters.categories,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.search,
+    filters.sort,
+    filters.brands,
+    filters.sizes,
+    filters.colors,
+    filters.feature,
+    filters.audience
+  ]);
 
   useEffect(() => {
     console.log('useEffect triggered with filterParams:', filterParams);
