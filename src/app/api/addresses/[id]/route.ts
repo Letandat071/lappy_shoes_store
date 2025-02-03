@@ -6,7 +6,7 @@ import { getDataFromToken } from "@/helpers/getDataFromToken";
 // Cập nhật địa chỉ
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -32,7 +32,7 @@ export async function PUT(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const existingAddress = await Address.findOne({
-      _id: params.id,
+      _id: context.params.id,
       user: userId
     });
 
@@ -71,7 +71,7 @@ export async function PUT(
 // Xóa địa chỉ
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     await connectDB();
@@ -86,7 +86,7 @@ export async function DELETE(
 
     // Kiểm tra địa chỉ tồn tại và thuộc về user
     const address = await Address.findOne({
-      _id: params.id,
+      _id: context.params.id,
       user: userId
     });
 
@@ -101,7 +101,7 @@ export async function DELETE(
     if (address.isDefault) {
       const anotherAddress = await Address.findOne({
         user: userId,
-        _id: { $ne: params.id }
+        _id: { $ne: context.params.id }
       });
       if (anotherAddress) {
         anotherAddress.isDefault = true;
