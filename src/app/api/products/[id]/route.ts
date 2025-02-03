@@ -5,15 +5,16 @@ import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: unknown
 ) {
+  const { params } = context as { params: { id: string } };
+  
   try {
     // Kết nối database
     await connectDB();
-    
-    // Sửa tại đây - await params trước khi destructure
-    const id = (await params).id;
 
+    const id = params.id;
+    
     if (!mongoose.isValidObjectId(id)) {
       return NextResponse.json(
         { error: 'Invalid product ID' },
