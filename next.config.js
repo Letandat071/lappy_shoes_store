@@ -12,10 +12,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
-    domains: [
-      'res.cloudinary.com',
-      
-    ],
+    domains: ['res.cloudinary.com'],
   },
   env: {
     MONGODB_URI: process.env.MONGODB_URI,
@@ -23,12 +20,17 @@ const nextConfig = {
     // ... other env variables
   },
   experimental: {
-    serverComponentsExternalPackages: ['mongoose']
+    serverComponentsExternalPackages: ['mongoose'],
   },
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: 'standalone'
+  swcMinify: true,
+  modularizeImports: {
+    '@heroicons/react/24/outline': {
+      transform: '@heroicons/react/24/outline/{{member}}',
+    },
+  }
 }
 
 module.exports = nextConfig 
