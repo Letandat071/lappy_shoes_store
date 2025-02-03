@@ -1,35 +1,30 @@
 // src/app/api/addresses/[id]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/lib/mongoose";
+import connectDB from "@/lib/db";
 import Address from "@/models/Address";
 import { getDataFromToken } from "@/helpers/getDataFromToken";
-
-// Định nghĩa kiểu cho params, cho phép id là string hoặc string[] để tương thích với Next.js
-type Params = {
-  id: string | string[];
-};
 
 /**
  * Handler PUT: Cập nhật địa chỉ
  * @param request - Đối tượng NextRequest chứa thông tin request
- * @param context - Chứa params lấy từ URL, trong đó id có thể là string hoặc string[]
+ * @param context - Chứa params lấy từ URL, ở đây id luôn là string
  */
 export async function PUT(
   request: NextRequest,
-  context: { params: Params }
+  { params }: { params: { id: string } }  // Chỉ định rõ id là string
 ) {
   try {
     // Kết nối tới database
     await connectDB();
 
-    // Xác thực user bằng token
+    // Xác thực người dùng qua token
     const userId = await getDataFromToken(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse JSON body
+    // Parse dữ liệu JSON từ request body
     const data = await request.json();
     const { fullName, phone, province, district, ward, address, isDefault } = data;
 
@@ -41,12 +36,10 @@ export async function PUT(
       );
     }
 
-    // Vì params.id có thể là string hoặc string[], chuyển về string nếu cần
-    const addressId = Array.isArray(context.params.id)
-      ? context.params.id[0]
-      : context.params.id;
+    // Lấy id của địa chỉ từ params (đã được đảm bảo là string)
+    const addressId = params.id;
 
-    // Tìm địa chỉ cần cập nhật và đảm bảo nó thuộc về user đang đăng nhập
+    // Tìm địa chỉ cần cập nhật và kiểm tra quyền sở hữu
     const existingAddress = await Address.findOne({
       _id: addressId,
       user: userId,
@@ -59,7 +52,7 @@ export async function PUT(
       );
     }
 
-    // Cập nhật thông tin
+    // Cập nhật các trường thông tin
     existingAddress.fullName = fullName;
     existingAddress.phone = phone;
     existingAddress.province = province;
@@ -87,28 +80,26 @@ export async function PUT(
 /**
  * Handler DELETE: Xóa địa chỉ
  * @param request - Đối tượng NextRequest chứa thông tin request
- * @param context - Chứa params lấy từ URL, trong đó id có thể là string hoặc string[]
+ * @param context - Chứa params lấy từ URL, ở đây id luôn là string
  */
 export async function DELETE(
   request: NextRequest,
-  context: { params: Params }
+  { params }: { params: { id: string } } // Chỉ định rõ id là string
 ) {
   try {
     // Kết nối tới database
     await connectDB();
 
-    // Xác thực user bằng token
+    // Xác thực người dùng qua token
     const userId = await getDataFromToken(request);
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Chuyển đổi params.id về string nếu cần
-    const addressId = Array.isArray(context.params.id)
-      ? context.params.id[0]
-      : context.params.id;
+    // Lấy id của địa chỉ từ params (đã được đảm bảo là string)
+    const addressId = params.id;
 
-    // Tìm địa chỉ cần xóa và đảm bảo nó thuộc về user đang đăng nhập
+    // Tìm địa chỉ cần xóa và kiểm tra quyền sở hữu
     const address = await Address.findOne({
       _id: addressId,
       user: userId,
