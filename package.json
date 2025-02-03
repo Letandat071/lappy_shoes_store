@@ -8,7 +8,8 @@
     "start": "next start",
     "type-check": "tsc --noEmit",
     "lint": "next lint",
-    "lint-type": "npm run lint && npm run type-check"
+    "lint-type": "npm run lint && npm run type-check",
+    "postinstall": "next build"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
