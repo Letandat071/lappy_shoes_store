@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    console.log("Request body:", body);
+    // console.log("Request body:", body);
 
     // Validate required fields
     const { name } = body;
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       icon: body.icon || ""
     });
 
-    console.log("Created feature:", feature);
+    // console.log("Created feature:", feature);
     return NextResponse.json({ feature }, { status: 201 });
   } catch (error: unknown) {
     console.error("POST Feature Error:", error);
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    console.log("Request body:", body);
+    // console.log("Request body:", body);
 
     // Validate required fields
     const { id, name } = body;
@@ -110,7 +110,7 @@ export async function PUT(request: NextRequest) {
       { new: true }
     );
 
-    console.log("Updated feature:", feature);
+    // console.log("Updated feature:", feature);
     return NextResponse.json({ feature }, { status: 200 });
   } catch (error: unknown) {
     console.error("PUT Feature Error:", error);
@@ -143,7 +143,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log("Deleted feature:", feature);
+    // console.log("Deleted feature:", feature);
     return NextResponse.json(
       { message: "Feature deleted successfully" },
       { status: 200 }

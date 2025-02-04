@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import mongoose, { FilterQuery } from "mongoose";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
 
 // Import models sau khi đã connect mongoose
 import "@/models/Category";
@@ -74,12 +73,8 @@ interface UpdateProductData {
 // Get all products with pagination and filters
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     await connectDB();
+
     const { searchParams } = new URL(request.url);
 
     // Pagination
@@ -93,6 +88,7 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const feature = searchParams.get("feature");
+    const sort = searchParams.get("sort") || "-createdAt";
 
     // Build query với kiểu FilterQuery<ProductDocument>
     const query: FilterQuery<ProductDocument> = {};
@@ -123,36 +119,61 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Xử lý sort
+    let sortOption: any = { createdAt: -1 }; // Default sort
+    if (sort) {
+      if (sort === "price") {
+        sortOption = { price: 1 };
+      } else if (sort === "-price") {
+        sortOption = { price: -1 };
+      } else if (sort === "-rating") {
+        sortOption = { rating: -1 };
+      } else if (sort === "-createdAt") {
+        sortOption = { createdAt: -1 };
+      }
+    }
+
     // Sử dụng generic cho lean() để kết quả có kiểu chính xác
     const products = await Product.find(query)
       .populate("category", "name")
       .populate("features", "name icon")
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(skip)
       .limit(limit)
       .lean<ProductDocument[]>();
 
-    // Format lại dữ liệu trả về nếu cần thiết (ép kiểu cho category và features)
+    // Đếm tổng số sản phẩm để phân trang
+    const total = await Product.countDocuments(query);
+
+    // Format lại dữ liệu trả về
     const formattedProducts = products.map((product) => ({
       ...product,
       _id: product._id.toString(),
-      category:
-        typeof product.category === "object" && product.category !== null
-          ? {
-              _id: (product.category as CategoryDoc)._id.toString(),
-              name: (product.category as CategoryDoc).name,
-            }
-          : null,
+      category: typeof product.category === "object" && product.category !== null
+        ? {
+            _id: (product.category as CategoryDoc)._id.toString(),
+            name: (product.category as CategoryDoc).name,
+          }
+        : null,
       features: Array.isArray(product.features)
-        ? (product.features as Array<{ _id: mongoose.Types.ObjectId; name: string; icon: string }>).map((featureItem) => ({
-            _id: featureItem._id.toString(),
-            name: featureItem.name,
-            icon: featureItem.icon,
+        ? product.features.map((feature) => ({
+            _id: feature._id.toString(),
+            name: feature.name,
+            icon: feature.icon,
           }))
         : [],
     }));
 
-    return NextResponse.json({ products: formattedProducts });
+    return NextResponse.json({
+      products: formattedProducts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+
   } catch (error: unknown) {
     console.error("GET Products Error:", error);
     const message = error instanceof Error ? error.message : "Internal Server Error";

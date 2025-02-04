@@ -16,14 +16,26 @@ import {
 
 const navigation = [
   { name: "Tổng quan", href: "/admin", icon: HomeIcon },
-  { name: "Sản phẩm", href: "/admin/products", icon: ShoppingBagIcon },
-  { name: "Đơn hàng", href: "/admin/orders", icon: ClipboardDocumentListIcon },
-  { name: "Khách hàng", href: "/admin/users", icon: UsersIcon },
-  { name: "Danh mục", href: "/admin/categories", icon: TagIcon },
-  { name: "Banner", href: "/admin/banner", icon: PhotoIcon },
-  { name: "Thông báo", href: "/admin/announcements", icon: MegaphoneIcon },
-  { name: "Features", href: "/admin/features", icon: ChartBarIcon },
-  { name: "Cài đặt", href: "/admin/settings", icon: Cog6ToothIcon },
+  {
+    name: "Sản phẩm",
+    href: "/admin/dashboard/products",
+    icon: ShoppingBagIcon,
+  },
+  {
+    name: "Đơn hàng",
+    href: "/admin/dashboard/orders",
+    icon: ClipboardDocumentListIcon,
+  },
+  { name: "Khách hàng", href: "/admin/dashboard/users", icon: UsersIcon },
+  { name: "Danh mục", href: "/admin/dashboard/categories", icon: TagIcon },
+  { name: "Banner", href: "/admin/dashboard/banner", icon: PhotoIcon },
+  {
+    name: "Thông báo",
+    href: "/admin/dashboard/announcements",
+    icon: MegaphoneIcon,
+  },
+  { name: "Features", href: "/admin/dashboard/features", icon: ChartBarIcon },
+  { name: "Cài đặt", href: "/admin/dashboard/settings", icon: Cog6ToothIcon },
 ];
 
 export default function AdminSidebar() {
@@ -53,7 +65,9 @@ export default function AdminSidebar() {
                 >
                   <item.icon
                     className={`${
-                      isActive ? "text-gray-500" : "text-gray-400 group-hover:text-gray-500"
+                      isActive
+                        ? "text-gray-500"
+                        : "text-gray-400 group-hover:text-gray-500"
                     } mr-3 h-6 w-6 flex-shrink-0`}
                     aria-hidden="true"
                   />
@@ -66,4 +80,4 @@ export default function AdminSidebar() {
       </div>
     </div>
   );
-} 
+}

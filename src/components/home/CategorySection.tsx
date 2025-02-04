@@ -64,6 +64,9 @@ const CategorySection = () => {
           fetch("/api/products?limit=1000"),
         ]);
 
+        console.log("Categories status:", categoriesRes.status);
+        console.log("Products status:", productsRes.status);
+
         if (!categoriesRes.ok || !productsRes.ok) {
           throw new Error("Failed to fetch data");
         }
@@ -153,7 +156,7 @@ const CategorySection = () => {
           {categories.map((category) => (
             <Link
               key={category._id}
-              href={`/category/${category.slug}`}
+              href={`/shop?category=${category._id}`}
               className="group"
             >
               <div className="relative w-full h-[300px] rounded-xl overflow-hidden">

@@ -14,18 +14,18 @@ if (!globalWithMongoose.mongoose) {
 
 async function connectDB() {
   if (globalWithMongoose.mongoose.conn) {
-    console.log("Reusing existing MongoDB connection");
+    // console.log("Reusing existing MongoDB connection");
     return globalWithMongoose.mongoose.conn;
   }
 
   if (!globalWithMongoose.mongoose.promise) {
-    console.log("Creating new MongoDB connection...");
+    // console.log("Creating new MongoDB connection...");
     const opts = {
       bufferCommands: true,
     };
 
     globalWithMongoose.mongoose.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log("MongoDB connected successfully");
+      // console.log("MongoDB connected successfully");
       return mongoose;
     });
   }

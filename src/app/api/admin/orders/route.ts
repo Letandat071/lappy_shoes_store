@@ -143,9 +143,9 @@ export async function POST(request: NextRequest) {
     await connectDB();
     const orderData = await request.json();
 
-    console.log('Starting order process with data:', {
-      items: orderData.items
-    });
+    // console.log('Starting order process with data:', {
+    //   items: orderData.items
+    // });
 
     session = await mongoose.startSession();
     session.startTransaction();
@@ -159,11 +159,11 @@ export async function POST(request: NextRequest) {
         throw new Error(`Product ${item.product} not found`);
       }
 
-      console.log('Found product:', {
-        id: product._id,
-        currentSizes: product.sizes,
-        currentTotal: product.totalQuantity
-      });
+      // console.log('Found product:', {
+      //   id: product._id,
+      //   currentSizes: product.sizes,
+      //   currentTotal: product.totalQuantity
+      // });
 
       const sizeIndex = product.sizes.findIndex((s: { size: string }) => s.size === item.size);
       if (sizeIndex === -1) {
@@ -182,13 +182,13 @@ export async function POST(request: NextRequest) {
       // Tính lại tổng số lượng
       product.totalQuantity = product.sizes.reduce((sum: number, size: { quantity: number }) => sum + size.quantity, 0);
       
-      console.log('After update:', {
-        id: product._id,
-        size: item.size,
-        oldQuantity: currentQuantity,
-        newQuantity: product.sizes[sizeIndex].quantity,
-        newTotal: product.totalQuantity
-      });
+      // console.log('After update:', {
+      //   id: product._id,
+      //   size: item.size,
+      //   oldQuantity: currentQuantity,
+      //   newQuantity: product.sizes[sizeIndex].quantity,
+      //   newTotal: product.totalQuantity
+      // });
 
       // Cập nhật trạng thái
       if (product.totalQuantity === 0) {
@@ -199,30 +199,30 @@ export async function POST(request: NextRequest) {
 
       // Verify the save
       const verifyProduct = await Product.findById(product._id).session(session);
-      console.log('Verify after save:', {
-        id: verifyProduct._id,
-        sizes: verifyProduct.sizes,
-        totalQuantity: verifyProduct.totalQuantity
-      });
+      // console.log('Verify after save:', {
+      //   id: verifyProduct._id,
+      //   sizes: verifyProduct.sizes,
+      //   totalQuantity: verifyProduct.totalQuantity
+      // });
     }
 
     // Tạo đơn hàng
     const order = await Order.create([orderData], { session });
 
-    console.log('Before commit - Order created:', order[0]._id);
+    // console.log('Before commit - Order created:', order[0]._id);
 
     // Commit transaction
     await session.commitTransaction();
-    console.log('Transaction committed successfully');
+    // console.log('Transaction committed successfully');
 
     // Verify final state
     for (const item of orderData.items) {
       const finalProduct = await Product.findById(item.product);
-      console.log('Final product state:', {
-        id: finalProduct._id,
-        sizes: finalProduct.sizes,
-        totalQuantity: finalProduct.totalQuantity
-      });
+      // console.log('Final product state:', {
+      //   id: finalProduct._id,
+      //   sizes: finalProduct.sizes,
+      //   totalQuantity: finalProduct.totalQuantity
+      // });
     }
 
     return NextResponse.json(order[0], { status: 201 });
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error('Create Order Error:', error);
     if (session) {
-      console.log('Rolling back transaction');
+      // console.log('Rolling back transaction');
       await session.abortTransaction();
     }
     const message = error instanceof Error ? error.message : "Internal server error";
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
   } finally {
     if (session) {
       await session.endSession();
-      console.log('Session ended');
+      // console.log('Session ended');
     }
   }
 } 

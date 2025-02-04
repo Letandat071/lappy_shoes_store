@@ -40,11 +40,8 @@ const Navbar = () => {
   // Fetch features
   const { features, loading: featuresLoading } = useFeatures();
 
-  // Fetch search results
-  const { products, loading } = useProducts({
-    search: searchQuery,
-    limit: 5,
-  });
+  // Thêm state để kiểm soát việc fetch dữ liệu
+  const [hasFetchedAnnouncement, setHasFetchedAnnouncement] = useState(false);
 
   // State lưu thông báo
   const [announcement, setAnnouncement] = useState<Announcement | null>(null);
@@ -53,38 +50,50 @@ const Navbar = () => {
     setMounted(true);
   }, []);
 
+  // Chỉ gọi API thông báo một lần
   useEffect(() => {
-    async function fetchAnnouncement() {
-      try {
-        const response = await fetch("/api/admin/announcements");
-        const data = await response.json();
-        if (response.ok && data.announcements) {
-          const now = new Date();
-          // Lọc ra các thông báo đang active
-          const activeAnnouncements = data.announcements.filter(
-            (ann: Announcement) => {
-              if (!ann.isActive) return false;
-              if (ann.startDate) {
-                const start = new Date(ann.startDate);
-                if (now < start) return false;
+    if (!hasFetchedAnnouncement) {
+      const fetchAnnouncement = async () => {
+        try {
+          const response = await fetch("/api/announcements");
+          const data = await response.json();
+          if (response.ok && data.announcements) {
+            console.log("Announcements fetched:", data.announcements);
+            const now = new Date();
+            const activeAnnouncements = data.announcements.filter(
+              (ann: Announcement) => {
+                if (!ann.isActive) {
+                  console.log("Announcement is not active:", ann);
+                  return false;
+                }
+                if (ann.startDate && now < new Date(ann.startDate)) {
+                  console.log(
+                    "Announcement filtered out due to startDate:",
+                    ann
+                  );
+                  return false;
+                }
+                if (ann.endDate && now > new Date(ann.endDate)) {
+                  console.log("Announcement filtered out due to endDate:", ann);
+                  return false;
+                }
+                return true;
               }
-              if (ann.endDate) {
-                const end = new Date(ann.endDate);
-                if (now > end) return false;
-              }
-              return true;
+            );
+            console.log("Active announcements:", activeAnnouncements);
+            if (activeAnnouncements.length > 0) {
+              setAnnouncement(activeAnnouncements[0]);
             }
-          );
-          if (activeAnnouncements.length > 0) {
-            setAnnouncement(activeAnnouncements[0]);
           }
+        } catch (error) {
+          console.error("Error fetching announcements", error);
         }
-      } catch (error) {
-        console.error("Error fetching announcements:", error);
-      }
+        setHasFetchedAnnouncement(true);
+      };
+
+      fetchAnnouncement();
     }
-    fetchAnnouncement();
-  }, []);
+  }, [hasFetchedAnnouncement]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,12 +133,20 @@ const Navbar = () => {
     }
   };
 
+  // Tối ưu useProducts hook
+  const { products, loading } = useProducts({
+    search: searchQuery.trim(),
+    limit: 5,
+    enabled: showSearchResults && searchQuery.trim().length > 0,
+    sort: "-createdAt",
+  });
+
   if (!mounted) {
     return null;
   }
 
   return (
-    <>
+    <div className="fixed top-0 w-full z-50">
       {announcement && (
         <div
           style={{
@@ -147,7 +164,7 @@ const Navbar = () => {
           )}
         </div>
       )}
-      <header className="fixed w-full bg-white z-50">
+      <header className="bg-white">
         <nav className="border-b">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -524,7 +541,7 @@ const Navbar = () => {
           </div>
         </nav>
       </header>
-    </>
+    </div>
   );
 };
 

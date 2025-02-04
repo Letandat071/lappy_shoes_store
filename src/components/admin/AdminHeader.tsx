@@ -24,14 +24,14 @@ export default function AdminHeader() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/admin/auth/check');
+        const res = await fetch("/api/admin/auth/check");
         const data = await res.json();
-        
+
         if (data.authenticated && data.admin) {
           setAdmin(data.admin);
         }
       } catch (error) {
-        console.error('Failed to get admin info:', error);
+        console.error("Failed to get admin info:", error);
       }
     };
 
@@ -40,30 +40,28 @@ export default function AdminHeader() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('/api/admin/auth/logout', {
-        method: 'POST',
+      const res = await fetch("/api/admin/auth/logout", {
+        method: "POST",
       });
 
       if (res.ok) {
-        router.replace('/admin/login');
+        router.replace("/admin/login");
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   return (
     <header className="w-full">
-      <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white shadow-sm">
+      <div className="relative z-0 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white shadow-sm">
         <div className="flex flex-1 justify-between px-4 sm:px-6">
           <div className="flex flex-1">
             {/* Tên admin và role */}
             <div className="flex items-center">
-              <span className="text-gray-700 font-medium">
-                {admin?.name} 
-              </span>
+              <span className="text-gray-700 font-medium">{admin?.name}</span>
               <span className="ml-2 text-sm text-gray-500">
-                ({admin?.role === 'super_admin' ? 'Super Admin' : 'Admin'})
+                ({admin?.role === "super_admin" ? "Super Admin" : "Admin"})
               </span>
             </div>
           </div>
@@ -97,9 +95,7 @@ export default function AdminHeader() {
             {/* Profile dropdown */}
             <Menu as="div" className="relative flex-shrink-0">
               <Menu.Button className="flex rounded-full bg-white focus:outline-none">
-                {admin && (
-                  <UserAvatar name={admin.name} size={32} />
-                )}
+                {admin && <UserAvatar name={admin.name} size={32} />}
               </Menu.Button>
               <Transition
                 as={Fragment}
@@ -145,4 +141,4 @@ export default function AdminHeader() {
       </div>
     </header>
   );
-} 
+}

@@ -58,87 +58,68 @@ interface UseProductsParams {
   colors?: string[];
   feature?: string;
   audience?: string;
+  enabled?: boolean;
+  priceRange?: { min: number; max: number };
 }
 
-export function useProducts({
-  page = 1,
-  limit = 10,
-  ...filters
-}: UseProductsParams) {
-  // Add console.log to track when hook is called
-  console.log('useProducts called with:', { page, limit, ...filters });
-
+export function useProducts(params: UseProductsParams) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
 
-  // Combine all filters into one object
-  const filterParams = useMemo(() => {
-    console.log('Filter values:', Object.values(filters));
-    return {
-      page,
-      limit,
-      ...filters
-    };
-  }, [page, limit, filters]);
+  // Tạo queryString ổn định
+  const queryString = useMemo(() => {
+    const queryParams = new URLSearchParams();
+    
+    // Chỉ thêm các params thực sự cần thiết và có giá trị
+    queryParams.set("page", params.page?.toString() || "1");
+    queryParams.set("limit", params.limit?.toString() || "10");
+    queryParams.set("sort", params.sort || "-createdAt");
+
+    if (params.search?.trim()) queryParams.set("search", params.search.trim());
+    if (params.categories?.length) queryParams.set("category", params.categories[0]);
+    if (params.brands?.length) queryParams.set("brand", params.brands[0]);
+    if (params.feature) queryParams.set("feature", params.feature);
+    if (params.audience) queryParams.set("audience", params.audience);
+    if (params.priceRange?.min > 0) queryParams.set("minPrice", params.priceRange.min.toString());
+    if (params.priceRange?.max < 10000000) queryParams.set("maxPrice", params.priceRange.max.toString());
+
+    return queryParams.toString();
+  }, [params]);
 
   useEffect(() => {
-    console.log('useEffect triggered with filterParams:', filterParams);
+    if (!params.enabled) return;
+
     let isMounted = true;
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const queryParams = new URLSearchParams({
-          page: filterParams.page.toString(),
-          limit: filterParams.limit.toString(),
-          sort: filterParams.sort || "-createdAt",
-          ...(filterParams.minPrice && { minPrice: filterParams.minPrice.toString() }),
-          ...(filterParams.maxPrice && { maxPrice: filterParams.maxPrice.toString() }),
-          ...(filterParams.search && { search: filterParams.search }),
-          ...(filterParams.brands && { brands: filterParams.brands.join(',') }),
-          ...(filterParams.sizes && { sizes: filterParams.sizes.join(',') }),
-          ...(filterParams.colors && { colors: filterParams.colors.join(',') }),
-          ...(filterParams.feature && { feature: filterParams.feature }),
-          ...(filterParams.audience && { audience: filterParams.audience })
-        });
-
-        if (filterParams.categories && filterParams.categories.length > 0) {
-          filterParams.categories.forEach(cat => queryParams.append("categories[]", cat));
-        }
-
-        const res = await fetch(`/api/products?${queryParams}`);
+        const res = await fetch(`/api/products?${queryString}`);
         const data = await res.json();
-        
-        console.log("API Response:", {
-          status: res.status,
-          ok: res.ok,
-          data
-        });
         
         if (!res.ok) throw new Error(data.error || 'Failed to fetch products');
         
         if (isMounted) {
           setProducts(data.products);
           setPagination(data.pagination);
-          setLoading(false);
         }
       } catch (err) {
         if (isMounted) {
           setError(err instanceof Error ? err.message : 'Failed to fetch products');
+        }
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
       }
     };
 
     fetchProducts();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [filterParams]); // Chỉ một dependency
+    return () => { isMounted = false; };
+  }, [queryString, params.enabled]); // Chỉ phụ thuộc vào queryString và enabled
 
   return { products, loading, error, pagination };
 } 

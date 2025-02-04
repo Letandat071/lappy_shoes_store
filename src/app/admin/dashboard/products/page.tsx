@@ -273,7 +273,7 @@ export default function ProductsPage() {
       })),
       category: product.category ? product.category._id.toString() : "",
       features: product.features.map((f) => f._id.toString()),
-      targetAudience: "",
+      targetAudience: (product as any).targetAudience || "",
       sizes: product.sizes,
       brand: product.brand,
       colors: product.colors,
@@ -743,6 +743,17 @@ export default function ProductsPage() {
                             type="text"
                             value={size.size}
                             onChange={(e) => {
+                              const newSizeValue = e.target.value.trim();
+                              const isDuplicate = formData.sizes.some(
+                                (s, idx) =>
+                                  idx !== index &&
+                                  s.size.trim().toLowerCase() ===
+                                    newSizeValue.toLowerCase()
+                              );
+                              if (newSizeValue !== "" && isDuplicate) {
+                                toast.error("Kích thước đã được thêm rồi");
+                                return;
+                              }
                               const newSizes = [...formData.sizes];
                               newSizes[index].size = e.target.value;
                               setFormData({ ...formData, sizes: newSizes });

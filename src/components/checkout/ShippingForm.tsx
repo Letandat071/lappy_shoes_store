@@ -72,6 +72,7 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
   const [wards, setWards] = useState<Ward[]>([]);
   const [loading, setLoading] = useState(true);
   const [regionMapping, setRegionMapping] = useState<RegionData[]>([]);
+  const [hasFetchedAddresses, setHasFetchedAddresses] = useState(false);
 
   // Bọc handleAddressSelect trong useCallback
   const handleAddressSelect = useCallback(
@@ -99,33 +100,36 @@ const ShippingForm: React.FC<ShippingFormProps> = ({ onSubmit }) => {
     [formData, onSubmit]
   );
 
-  // Fetch saved addresses
+  // Fetch saved addresses - chỉ fetch một lần
   useEffect(() => {
-    const fetchAddresses = async () => {
-      try {
-        const response = await fetch("/api/addresses");
-        const data = await response.json();
-        if (response.ok) {
-          setSavedAddresses(data.addresses);
-          const defaultAddress = data.addresses.find(
-            (addr: Address) => addr.isDefault
-          );
-          if (defaultAddress) {
-            setSelectedAddressId(defaultAddress._id);
-            handleAddressSelect(defaultAddress);
-          } else {
-            setUseNewAddress(true);
+    if (!hasFetchedAddresses) {
+      const fetchAddresses = async () => {
+        try {
+          const response = await fetch("/api/addresses");
+          const data = await response.json();
+          if (response.ok) {
+            setSavedAddresses(data.addresses);
+            const defaultAddress = data.addresses.find(
+              (addr: Address) => addr.isDefault
+            );
+            if (defaultAddress) {
+              setSelectedAddressId(defaultAddress._id);
+              handleAddressSelect(defaultAddress);
+            } else {
+              setUseNewAddress(true);
+            }
           }
+        } catch (error) {
+          console.error("Error fetching addresses:", error);
+          setUseNewAddress(true);
+        } finally {
+          setLoading(false);
+          setHasFetchedAddresses(true);
         }
-      } catch (error) {
-        console.error("Error fetching addresses:", error);
-        setUseNewAddress(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAddresses();
-  }, [handleAddressSelect]);
+      };
+      fetchAddresses();
+    }
+  }, [hasFetchedAddresses, handleAddressSelect]);
 
   // Fetch provinces on mount
   useEffect(() => {

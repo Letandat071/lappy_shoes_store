@@ -76,10 +76,14 @@ export default function AdminDashboard() {
               </p>
             </dt>
             <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
-              <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {item.value}
+              </p>
               <p
                 className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === "positive" ? "text-green-600" : "text-red-600"
+                  item.changeType === "positive"
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {item.change}
@@ -141,4 +145,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-} 
+}

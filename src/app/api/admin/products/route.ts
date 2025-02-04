@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log("Admin Query:", JSON.stringify(query, null, 2));
+    // console.log("Admin Query:", JSON.stringify(query, null, 2));
 
     // Execute query with pagination
     const products = await Product.find(query)
@@ -252,7 +252,7 @@ export async function PUT(request: NextRequest) {
     await connectDB();
     const { id, ...updateData } = await request.json() as { id: string } & UpdateProductData;
 
-    console.log("Update Data:", JSON.stringify(updateData, null, 2));
+    // console.log("Update Data:", JSON.stringify(updateData, null, 2));
     
     // Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -300,7 +300,7 @@ export async function PUT(request: NextRequest) {
       updateFields[key] === undefined && delete updateFields[key]
     );
 
-    console.log("Final Update Fields:", JSON.stringify(updateFields, null, 2));
+    // console.log("Final Update Fields:", JSON.stringify(updateFields, null, 2));
 
     // Update product
     const product = await Product.findByIdAndUpdate(

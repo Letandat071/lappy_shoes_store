@@ -35,11 +35,11 @@ export async function GET(
       );
     }
 
-    console.log('Product details:', {
-      id: product._id,
-      sizes: product.sizes,
-      totalQuantity: product.totalQuantity
-    });
+    // console.log('Product details:', {
+    //   id: product._id,
+    //   sizes: product.sizes,
+    //   totalQuantity: product.totalQuantity
+    // });
 
     return NextResponse.json(product);
   } catch (error) {

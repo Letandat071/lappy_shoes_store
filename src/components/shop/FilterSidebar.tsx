@@ -31,44 +31,56 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        // Fetch categories
-        const categoriesRes = await fetch("/api/admin/categories");
-        const categoriesData = await categoriesRes.json();
-        if (categoriesData.categories) {
-          setCategories(categoriesData.categories);
-        }
+    if (!hasFetched) {
+      const fetchFilters = async () => {
+        try {
+          // Fetch categories
+          const [categoriesRes, productsRes] = await Promise.all([
+            fetch("/api/admin/categories"),
+            fetch("/api/products?limit=1000"), // Lấy tất cả sản phẩm một lần
+          ]);
 
-        // Fetch unique brands from products
-        const productsRes = await fetch("/api/products");
-        const productsData = await productsRes.json();
-        if (productsData.products) {
-          const uniqueBrands: string[] = Array.from(
-            new Set<string>(
-              productsData.products.map((p: { brand: string }) => p.brand)
-            )
-          ).filter(Boolean);
-          setBrands(uniqueBrands);
-        }
-      } catch (error) {
-        console.error("Error fetching filters:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+          const [categoriesData, productsData] = await Promise.all([
+            categoriesRes.json(),
+            productsRes.json(),
+          ]);
 
-    fetchFilters();
-  }, []);
+          if (categoriesData.categories) {
+            setCategories(categoriesData.categories);
+          }
+
+          if (productsData.products) {
+            const uniqueBrands = Array.from(
+              new Set(
+                productsData.products.map((p: { brand: string }) => p.brand)
+              )
+            ).filter(Boolean) as string[];
+            setBrands(uniqueBrands);
+          }
+        } catch (error) {
+          console.error("Error fetching filters:", error);
+        } finally {
+          setLoading(false);
+          setHasFetched(true);
+        }
+      };
+
+      fetchFilters();
+    }
+  }, [hasFetched]);
 
   const handlePriceChange = (value: number) => {
-    onFilterChange("priceRange", { min: 0, max: value });
+    onFilterChange("priceRange", {
+      min: 0,
+      max: value,
+    });
   };
 
   const handleColorSelect = (color: string) => {
-    const currentColors = selectedFilters.colors;
+    const currentColors = selectedFilters.colors || [];
     const newColors = currentColors.includes(color)
       ? currentColors.filter((c) => c !== color)
       : [...currentColors, color];
@@ -76,7 +88,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const handleSizeSelect = (size: string) => {
-    const currentSizes = selectedFilters.sizes;
+    const currentSizes = selectedFilters.sizes || [];
     const newSizes = currentSizes.includes(size)
       ? currentSizes.filter((s) => s !== size)
       : [...currentSizes, size];
@@ -84,7 +96,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const handleBrandSelect = (brand: string) => {
-    const currentBrands = selectedFilters.brands;
+    const currentBrands = selectedFilters.brands || [];
     const newBrands = currentBrands.includes(brand)
       ? currentBrands.filter((b) => b !== brand)
       : [...currentBrands, brand];
@@ -92,7 +104,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    const currentCategories = selectedFilters.categories;
+    const currentCategories = selectedFilters.categories || [];
     const newCategories = currentCategories.includes(categoryId)
       ? currentCategories.filter((c) => c !== categoryId)
       : [...currentCategories, categoryId];
@@ -201,7 +213,24 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     : "hover:bg-gray-100"
                 }`}
               >
-                {brand}
+                <div className="flex items-center justify-between">
+                  <span>{brand}</span>
+                  {selectedFilters.brands.includes(brand) && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                </div>
               </button>
             ))}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 // import { useRouter } from "next/navigation"; // Đã xóa vì không sử dụng
 import Navbar from "@/components/layout/Navbar";
@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [shipping, setShipping] = useState(30000);
   const [estimatedTime, setEstimatedTime] = useState("Đang tính...");
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
 
   // Calculate totals
   const subtotal = cart.items.reduce(
@@ -34,31 +35,40 @@ export default function CheckoutPage() {
     0
   );
 
-  const handleShippingSubmit = async (address: ShippingAddress) => {
-    try {
-      // Gọi API tính phí ship
-      const params = new URLSearchParams({
-        userAddress: address.address,
-        province: address.province,
-        district: address.district,
-        ward: address.ward,
-      });
+  const handleShippingSubmit = useCallback(
+    async (address: ShippingAddress) => {
+      // Tránh gọi API liên tục
+      if (isCalculatingShipping) return;
 
-      const res = await fetch(`/api/shipping-estimate?${params}`);
-      if (res.ok) {
-        const data = await res.json();
-        setShipping(data.shippingCost);
-        setEstimatedTime(data.estimatedTime);
-      } else {
+      try {
+        setIsCalculatingShipping(true);
+        // Gọi API tính phí ship
+        const params = new URLSearchParams({
+          userAddress: address.address,
+          province: address.province,
+          district: address.district,
+          ward: address.ward,
+        });
+
+        const res = await fetch(`/api/shipping-estimate?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setShipping(data.shippingCost);
+          setEstimatedTime(data.estimatedTime);
+        } else {
+          setShipping(subtotal >= 1000000 ? 0 : 30000);
+          setEstimatedTime("Không xác định");
+        }
+      } catch (error) {
+        console.error("Error calculating shipping:", error);
         setShipping(subtotal >= 1000000 ? 0 : 30000);
         setEstimatedTime("Không xác định");
+      } finally {
+        setIsCalculatingShipping(false);
       }
-    } catch (error) {
-      console.error("Error calculating shipping:", error);
-      setShipping(subtotal >= 1000000 ? 0 : 30000);
-      setEstimatedTime("Không xác định");
-    }
-  };
+    },
+    [subtotal, isCalculatingShipping]
+  );
 
   const handlePlaceOrder = async () => {
     if (!shippingAddress) {

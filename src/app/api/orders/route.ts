@@ -74,12 +74,12 @@ export async function POST(request: NextRequest) {
       // });
 
       await product.save({ session });
-      console.log('Product saved successfully');
+      // console.log('Product saved successfully');
     }
 
     // Tạo đơn hàng với userId
     const order = await Order.create([orderWithUser], { session });
-    console.log('Order created:', order[0]._id.toString());
+    // console.log('Order created:', order[0]._id.toString());
 
     // Commit transaction
     await session.commitTransaction();
@@ -92,14 +92,14 @@ export async function POST(request: NextRequest) {
     console.error(error);
     if (session) {
       await session.abortTransaction();
-      console.log('Transaction rolled back');
+      // console.log('Transaction rolled back');
     }
     const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
   } finally {
     if (session) {
       await session.endSession();
-      console.log('=== SESSION ENDED ===');
+      // console.log('=== SESSION ENDED ===');
     }
   }
 }
