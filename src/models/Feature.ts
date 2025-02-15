@@ -15,6 +15,10 @@ const featureSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  isHighlight: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

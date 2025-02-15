@@ -8,6 +8,7 @@ interface Feature {
   name: string;
   description: string;
   icon: string;
+  isHighlight: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ export default function FeaturesPage() {
     name: "",
     description: "",
     icon: "",
+    isHighlight: false,
   });
 
   // Fetch features
@@ -122,6 +124,7 @@ export default function FeaturesPage() {
       name: feature.name,
       description: feature.description,
       icon: feature.icon,
+      isHighlight: feature.isHighlight,
     });
     setModalOpen(true);
   };
@@ -132,8 +135,48 @@ export default function FeaturesPage() {
       name: "",
       description: "",
       icon: "",
+      isHighlight: false,
     });
     setEditingFeature(null);
+  };
+
+  // Thêm hàm xử lý toggle highlight
+  const handleToggleHighlight = async (feature: Feature) => {
+    try {
+      const response = await fetch("/api/admin/features", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: feature._id,
+          name: feature.name,
+          description: feature.description,
+          icon: feature.icon,
+          isHighlight: !feature.isHighlight,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Cập nhật state features ngay lập tức
+        setFeatures((prevFeatures) =>
+          prevFeatures.map((f) =>
+            f._id === feature._id ? { ...f, isHighlight: !f.isHighlight } : f
+          )
+        );
+
+        toast.success(
+          feature.isHighlight ? "Đã bỏ đánh dấu nổi bật" : "Đã đánh dấu nổi bật"
+        );
+      } else {
+        throw new Error(data.error || "Failed to update feature");
+      }
+    } catch (error) {
+      console.error("Toggle error:", error);
+      toast.error("Không thể cập nhật trạng thái nổi bật");
+    }
   };
 
   if (loading) {
@@ -162,11 +205,31 @@ export default function FeaturesPage() {
             key={feature._id}
             className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => handleToggleHighlight(feature)}
+                className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+                  feature.isHighlight ? "bg-yellow-50" : ""
+                }`}
+                title={feature.isHighlight ? "Bỏ nổi bật" : "Đánh dấu nổi bật"}
+              >
+                <i
+                  className={`fas fa-star ${
+                    feature.isHighlight ? "text-yellow-500" : "text-gray-400"
+                  }`}
+                ></i>
+              </button>
+            </div>
             <div className="flex items-center mb-4">
               {feature.icon && (
                 <span className="text-2xl mr-2">{feature.icon}</span>
               )}
               <h3 className="font-semibold text-lg">{feature.name}</h3>
+              {feature.isHighlight && (
+                <span className="ml-2 text-sm bg-blue-500 text-white px-2 py-1 rounded">
+                  Nổi bật
+                </span>
+              )}
             </div>
             <p className="text-gray-600 mb-4">{feature.description}</p>
             <div className="flex justify-end space-x-2">

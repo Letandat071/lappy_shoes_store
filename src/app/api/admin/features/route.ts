@@ -3,16 +3,39 @@ import connectDB from "@/lib/mongoose";
 import Feature from "@/models/Feature";
 
 // Get all features
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    const features = await Feature.find({}).sort({ createdAt: -1 });
-    return NextResponse.json({ features }, { status: 200 });
+    // Lấy query param để kiểm tra xem có cần filter isHighlight không
+    const { searchParams } = new URL(request.url);
+    const filterHighlight = searchParams.get('highlight') === 'true';
+
+    const features = await Feature.find({
+      // Chỉ filter isActive=true cho Navbar và các nơi khác
+      isActive: true,
+      // Thêm điều kiện isHighlight nếu cần
+      ...(filterHighlight ? { isHighlight: true } : {})
+    })
+      .select('_id name description icon isHighlight isActive')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ features }, { 
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error: unknown) {
     console.error("GET Features Error:", error);
     let message = "Internal Server Error";
     if (error instanceof Error) message = error.message;
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { 
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
 
@@ -102,21 +125,48 @@ export async function PUT(request: NextRequest) {
     const feature = await Feature.findByIdAndUpdate(
       id,
       {
-        name,
-        description: body.description || "",
-        icon: body.icon || "",
-        updatedAt: Date.now()
+        $set: {
+          name,
+          description: body.description || "",
+          icon: body.icon || "",
+          isHighlight: body.isHighlight,
+          updatedAt: Date.now()
+        }
       },
       { new: true }
     );
 
-    // console.log("Updated feature:", feature);
-    return NextResponse.json({ feature }, { status: 200 });
-  } catch (error: unknown) {
+    // Verify update was successful
+    if (!feature) {
+      throw new Error("Failed to update feature");
+    }
+
+    // Log để debug
+    console.log("Updated feature:", {
+      id,
+      name,
+      isHighlight: body.isHighlight,
+      result: feature
+    });
+
+    return NextResponse.json({ feature }, { 
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
     console.error("PUT Feature Error:", error);
-    let message = "Internal Server Error";
-    if (error instanceof Error) message = error.message || "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    return NextResponse.json(
+      { error: message },
+      { 
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 }
 

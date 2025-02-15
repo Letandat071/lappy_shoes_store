@@ -72,7 +72,7 @@ async function getAddressFromProvinceAPI(
 // Hàm lấy tọa độ từ API Nominatim dựa vào truy vấn địa chỉ
 // -----------------------
 async function getUserCoordinatesByAddress(query: string): Promise<Coordinates | null> {
-  console.log("Geocoding address:", query);
+  // console.log("Geocoding address:", query);
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q=${encodeURIComponent(query)}`;
   try {
     const response = await fetch(url, {
@@ -86,7 +86,7 @@ async function getUserCoordinatesByAddress(query: string): Promise<Coordinates |
       return null;
     }
     const data = await response.json();
-    console.log("Nominatim response:", data);
+    // console.log("Nominatim response:", data);
     if (Array.isArray(data) && data.length > 0) {
       return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
     } else {
@@ -115,7 +115,7 @@ async function getUserCoordinatesFromCodes(
   if (!address) {
     address = await getAddressFromProvinceAPI(ward, district);
     if (address) {
-      console.log("Province API chuyển đổi thành công, address:", address);
+      // console.log("Province API chuyển đổi thành công, address:", address);
     }
   }
 
@@ -123,7 +123,7 @@ async function getUserCoordinatesFromCodes(
   let query = "";
   if (address) {
     query = `${address}, Vietnam`;
-    console.log("Geocoding converted address:", query);
+    // console.log("Geocoding converted address:", query);
   } else {
     query = `${ward}, ${district}, ${province}, Vietnam`;
     console.warn("Không chuyển đổi được các mã sang địa chỉ hợp lệ. Sử dụng fallback query:", query);
@@ -231,12 +231,12 @@ export async function GET(request: Request) {
     const distanceKm = calculateDistance(shopCoords.lat, shopCoords.lon, userCoords.lat, userCoords.lon);
     const durationSeconds = estimateDeliveryTime(distanceKm);
 
-    console.log("Calculation results:", {
-      distance: distanceKm,
-      duration: durationSeconds,
-      from: shopCoords,
-      to: userCoords,
-    });
+    // console.log("Calculation results:", {
+    //   distance: distanceKm,
+    //   duration: durationSeconds,
+    //   from: shopCoords,
+    //   to: userCoords,
+    // });
 
     return NextResponse.json({
       shippingCost: calculateShippingCost(distanceKm),

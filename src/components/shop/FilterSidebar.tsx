@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 type FilterValue = string | number | string[] | { min: number; max: number };
 
@@ -16,6 +17,8 @@ interface Filters {
   sizes: string[];
   colors: string[];
   sort?: string;
+  audience?: string;
+  feature?: string;
   [key: string]: FilterValue | FilterValue[] | undefined;
 }
 
@@ -30,23 +33,30 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
+  const [showAllBrands, setShowAllBrands] = useState(false);
+  const [features, setFeatures] = useState<
+    Array<{ _id: string; name: string }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     if (!hasFetched) {
       const fetchFilters = async () => {
         try {
-          // Fetch categories
-          const [categoriesRes, productsRes] = await Promise.all([
+          const [categoriesRes, productsRes, featuresRes] = await Promise.all([
             fetch("/api/admin/categories"),
-            fetch("/api/products?limit=1000"), // Lấy tất cả sản phẩm một lần
+            fetch("/api/products?limit=1000"),
+            fetch("/api/admin/features"),
           ]);
 
-          const [categoriesData, productsData] = await Promise.all([
-            categoriesRes.json(),
-            productsRes.json(),
-          ]);
+          const [categoriesData, productsData, featuresData] =
+            await Promise.all([
+              categoriesRes.json(),
+              productsRes.json(),
+              featuresRes.json(),
+            ]);
 
           if (categoriesData.categories) {
             setCategories(categoriesData.categories);
@@ -59,6 +69,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
               )
             ).filter(Boolean) as string[];
             setBrands(uniqueBrands);
+          }
+
+          if (featuresData.features) {
+            setFeatures(featuresData.features);
           }
         } catch (error) {
           console.error("Error fetching filters:", error);
@@ -111,6 +125,22 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
     onFilterChange("categories", newCategories);
   };
 
+  const handleAudienceSelect = (audience: string) => {
+    onFilterChange("audience", audience);
+  };
+
+  const handleFeatureSelect = (featureId: string) => {
+    onFilterChange("feature", featureId);
+  };
+
+  const handleClearAllFilters = () => {
+    router.push("/shop", { scroll: true });
+    onFilterChange("clear", "");
+  };
+
+  // Tạo danh sách brands được hiển thị
+  const visibleBrands = showAllBrands ? brands : brands.slice(0, 5);
+
   if (loading) {
     return (
       <div className="lg:w-1/4">
@@ -134,10 +164,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Filters</h2>
           <button
-            onClick={() => onFilterChange("clear", "")}
-            className="text-gray-500 hover:text-gray-700"
+            onClick={handleClearAllFilters}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
-            <i className="fas fa-times text-xl"></i>
+            Xóa tất cả bộ lọc
           </button>
         </div>
 
@@ -203,7 +233,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4">Brands</h3>
           <div className="space-y-2">
-            {brands.map((brand) => (
+            {visibleBrands.map((brand) => (
               <button
                 key={brand}
                 onClick={() => handleBrandSelect(brand)}
@@ -233,6 +263,26 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 </div>
               </button>
             ))}
+
+            {/* Show More/Less Button */}
+            {brands.length > 5 && (
+              <button
+                onClick={() => setShowAllBrands(!showAllBrands)}
+                className="w-full mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center justify-center gap-1"
+              >
+                {showAllBrands ? (
+                  <>
+                    Thu gọn
+                    <i className="fas fa-chevron-up text-xs"></i>
+                  </>
+                ) : (
+                  <>
+                    Xem thêm ({brands.length - 5})
+                    <i className="fas fa-chevron-down text-xs"></i>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
 
@@ -253,6 +303,82 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <div className="flex items-center justify-between">
                   <span>{category.name}</span>
                   {selectedFilters.categories.includes(category._id) && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Shop/Audience Filter */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Shop</h3>
+          <div className="space-y-2">
+            {["Men", "Women", "Kids", "Unisex"].map((audience) => (
+              <button
+                key={audience}
+                onClick={() => handleAudienceSelect(audience)}
+                className={`block w-full text-left px-3 py-2 rounded ${
+                  selectedFilters.audience?.toLowerCase() ===
+                  audience.toLowerCase()
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{audience}</span>
+                  {selectedFilters.audience?.toLowerCase() ===
+                    audience.toLowerCase() && (
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Features Filter */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4">Features</h3>
+          <div className="space-y-2">
+            {features.map((feature) => (
+              <button
+                key={feature._id}
+                onClick={() => handleFeatureSelect(feature._id)}
+                className={`block w-full text-left px-3 py-2 rounded ${
+                  selectedFilters.feature === feature._id
+                    ? "bg-black text-white"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{feature.name}</span>
+                  {selectedFilters.feature === feature._id && (
                     <svg
                       className="w-4 h-4"
                       fill="none"

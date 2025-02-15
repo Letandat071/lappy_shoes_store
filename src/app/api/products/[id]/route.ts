@@ -5,48 +5,44 @@ import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
-  context: unknown
+  { params }: { params: { id: string } }
 ) {
-  const { params } = context as { params: { id: string } };
-  
   try {
-    // Kết nối database
     await connectDB();
-
-    const id = params.id;
-    
-    if (!mongoose.isValidObjectId(id)) {
-      return NextResponse.json(
-        { error: 'Invalid product ID' },
-        { status: 400 }
-      );
-    }
-    
-    // Tìm sản phẩm theo id
-    const product = await Product.findById(id)
-      .populate('category')
-      .populate('features')
-      .select('-__v');
+    const product = await Product.findById(params.id)
+      .populate("category")
+      .populate("features")
+      .lean();
 
     if (!product) {
       return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
+        { error: "Product not found" },
+        { 
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
     }
 
-    // console.log('Product details:', {
-    //   id: product._id,
-    //   sizes: product.sizes,
-    //   totalQuantity: product.totalQuantity
-    // });
-
-    return NextResponse.json(product);
+    return NextResponse.json(product, { 
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
-    console.error('Error:', error);
+    console.error("GET Product Error:", error);
+    const message = error instanceof Error ? error.message : "Internal Server Error";
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: message },
+      { 
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 } 

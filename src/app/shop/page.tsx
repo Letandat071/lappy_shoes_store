@@ -9,7 +9,7 @@ import React, {
   useRef,
 } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import FilterSidebar from "@/components/shop/FilterSidebar";
@@ -61,6 +61,7 @@ interface Product {
 export default function ShopPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const timeoutRef = useRef<NodeJS.Timeout>();
@@ -81,6 +82,24 @@ export default function ShopPage() {
     colors: [] as string[],
   });
 
+  // Reset page when search params change
+  useEffect(() => {
+    setPage(1);
+    setLocalFilters({
+      categories: searchParams.get("category")
+        ? [searchParams.get("category")!]
+        : [],
+      brands: searchParams.get("brand") ? [searchParams.get("brand")!] : [],
+      feature: searchParams.get("feature") || "",
+      audience: searchParams.get("audience") || "",
+      search: searchParams.get("search") || "",
+      priceRange: { min: 0, max: 10000000 },
+      sort: "-createdAt",
+      sizes: [],
+      colors: [],
+    });
+  }, [searchParams]);
+
   // Sử dụng localFilters thay vì tạo filters từ URL
   const filters = useMemo(
     () => ({
@@ -89,7 +108,7 @@ export default function ShopPage() {
       ...localFilters,
       enabled: true,
     }),
-    [page, localFilters]
+    [page, localFilters, pathname, searchParams]
   );
 
   // Xử lý filter change không dùng URL

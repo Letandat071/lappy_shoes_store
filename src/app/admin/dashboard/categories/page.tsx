@@ -13,6 +13,7 @@ interface Category {
   image: string;
   createdAt: string;
   updatedAt: string;
+  isHighlight: boolean;
 }
 
 export default function CategoriesPage() {
@@ -25,6 +26,7 @@ export default function CategoriesPage() {
     name: "",
     description: "",
     image: "",
+    isHighlight: false,
   });
 
   const { uploadImage } = useImageUpload();
@@ -87,7 +89,6 @@ export default function CategoriesPage() {
         ? "/api/admin/categories"
         : "/api/admin/categories";
       const method = editingCategory ? "PUT" : "POST";
-      // Nếu đang chỉnh sửa thì gửi kèm cả id
       const body = editingCategory
         ? { ...formData, id: editingCategory._id }
         : formData;
@@ -114,6 +115,45 @@ export default function CategoriesPage() {
         throw new Error(data.error);
       }
     } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Đã có lỗi xảy ra");
+      }
+    }
+  };
+
+  // Thêm hàm xử lý toggle highlight
+  const handleToggleHighlight = async (category: Category) => {
+    try {
+      const response = await fetch("/api/admin/categories", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: category._id,
+          name: category.name,
+          description: category.description,
+          image: category.image,
+          isHighlight: !category.isHighlight,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(
+          category.isHighlight
+            ? "Đã bỏ đánh dấu nổi bật"
+            : "Đã đánh dấu nổi bật"
+        );
+        await fetchCategories(); // Đảm bảo dữ liệu được cập nhật
+      } else {
+        throw new Error(data.error || "Không thể cập nhật trạng thái nổi bật");
+      }
+    } catch (error: unknown) {
+      console.error("Toggle error:", error);
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
@@ -153,6 +193,7 @@ export default function CategoriesPage() {
       name: category.name,
       description: category.description,
       image: category.image,
+      isHighlight: category.isHighlight || false,
     });
     setModalOpen(true);
   };
@@ -163,6 +204,7 @@ export default function CategoriesPage() {
       name: "",
       description: "",
       image: "",
+      isHighlight: false,
     });
     setEditingCategory(null);
   };
@@ -214,6 +256,22 @@ export default function CategoriesPage() {
             key={category._id}
             className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
+            {/* Nút toggle highlight */}
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => handleToggleHighlight(category)}
+                className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${
+                  category.isHighlight ? "bg-yellow-50" : ""
+                }`}
+                title={category.isHighlight ? "Bỏ nổi bật" : "Đánh dấu nổi bật"}
+              >
+                <i
+                  className={`fas fa-star ${
+                    category.isHighlight ? "text-yellow-500" : "text-gray-400"
+                  }`}
+                ></i>
+              </button>
+            </div>
             {/* Ảnh của danh mục */}
             <div className="relative h-40 mb-4">
               <Image
@@ -227,6 +285,11 @@ export default function CategoriesPage() {
                   img.src = "/images/placeholder.jpg";
                 }}
               />
+              {category.isHighlight && (
+                <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-sm">
+                  Nổi bật
+                </div>
+              )}
             </div>
             <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
             <p className="text-gray-600 mb-4">{category.description}</p>
@@ -331,6 +394,23 @@ export default function CategoriesPage() {
                     )}
                   </label>
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.isHighlight}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isHighlight: e.target.checked,
+                      })
+                    }
+                    className="mr-2"
+                  />
+                  <span>Hiển thị nổi bật trong trang chủ</span>
+                </label>
               </div>
 
               <div className="flex justify-end space-x-2">

@@ -116,11 +116,13 @@ const Navbar = () => {
   };
 
   const handleCategoryClick = (audience: string) => {
-    router.push(`/shop?audience=${audience}`);
+    router.push(`/shop?audience=${audience.toLowerCase()}`, { scroll: true });
   };
 
   const handleFeatureClick = (featureName: string) => {
-    router.push(`/shop?feature=${encodeURIComponent(featureName)}`);
+    router.push(`/shop?feature=${encodeURIComponent(featureName)}`, {
+      scroll: true,
+    });
   };
 
   const handleLogout = async () => {
@@ -140,6 +142,25 @@ const Navbar = () => {
     enabled: showSearchResults && searchQuery.trim().length > 0,
     sort: "-createdAt",
   });
+
+  const fetchFeatures = async () => {
+    try {
+      const response = await fetch("/api/admin/features", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch features");
+      }
+
+      const data = await response.json();
+      setFeatures(data.features);
+    } catch (error) {
+      console.error("Error fetching features:", error);
+    }
+  };
 
   if (!mounted) {
     return null;
@@ -201,25 +222,25 @@ const Navbar = () => {
                   </Link>
                   <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                     <button
-                      onClick={() => handleCategoryClick("men")}
+                      onClick={() => handleCategoryClick("Men")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Nam
                     </button>
                     <button
-                      onClick={() => handleCategoryClick("women")}
+                      onClick={() => handleCategoryClick("Women")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Nữ
                     </button>
                     <button
-                      onClick={() => handleCategoryClick("kids")}
+                      onClick={() => handleCategoryClick("Kids")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Trẻ em
                     </button>
                     <button
-                      onClick={() => handleCategoryClick("unisex")}
+                      onClick={() => handleCategoryClick("Unisex")}
                       className="block w-full text-left px-4 py-2 hover:bg-gray-100"
                     >
                       Unisex

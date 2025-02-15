@@ -56,17 +56,30 @@ const ProductPage = () => {
   React.useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${id}`);
+        const response = await fetch(`/api/products/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error("API Error:", errorText);
           throw new Error("Failed to fetch product");
         }
+
         const data = await response.json();
+        if (!data) {
+          throw new Error("No data returned from API");
+        }
+
         setProduct(data);
         if (data.images && data.images.length > 0) {
           setSelectedImage(data.images[0]);
         }
       } catch (error) {
-        console.error("Error fetching product:", error);
+        console.error("Error fetching product details:", error);
+        toast.error("Không thể tải thông tin sản phẩm");
       } finally {
         setLoading(false);
       }

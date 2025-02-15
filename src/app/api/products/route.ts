@@ -99,6 +99,35 @@ export async function GET(request: NextRequest) {
       query.category = { $in: categories };
     }
 
+    // Xử lý filter theo audience
+    const audience = searchParams.get("audience");
+    if (audience) {
+      query.targetAudience = {
+        $in: [audience.toLowerCase()]
+      };
+    }
+
+    // Xử lý filter theo feature
+    if (feature) {
+      try {
+        // Thử parse feature như một ObjectId
+        new mongoose.Types.ObjectId(feature);
+        query.features = {
+          $in: [new mongoose.Types.ObjectId(feature)]
+        };
+      } catch {
+        // Nếu không phải ObjectId, tìm feature theo tên
+        const featureDoc = await mongoose.model('Feature').findOne({ 
+          name: { $regex: new RegExp(feature, 'i') }
+        });
+        if (featureDoc) {
+          query.features = {
+            $in: [featureDoc._id]
+          };
+        }
+      }
+    }
+
     if (statusFilter) query.status = statusFilter;
     if (search) {
       query.$or = [
@@ -111,12 +140,6 @@ export async function GET(request: NextRequest) {
       if (minPrice) priceFilter.$gte = parseFloat(minPrice);
       if (maxPrice) priceFilter.$lte = parseFloat(maxPrice);
       query.price = priceFilter;
-    }
-    if (feature) {
-      const featureDoc = await mongoose.models.Feature.findOne({ name: feature });
-      if (featureDoc) {
-        query.features = featureDoc._id;
-      }
     }
 
     // Xử lý sort
@@ -136,7 +159,10 @@ export async function GET(request: NextRequest) {
     // Sử dụng generic cho lean() để kết quả có kiểu chính xác
     const products = await Product.find(query)
       .populate("category", "name")
-      .populate("features", "name icon")
+      .populate({
+        path: "features",
+        select: "_id name description icon"
+      })
       .sort(sortOption)
       .skip(skip)
       .limit(limit)
@@ -149,6 +175,7 @@ export async function GET(request: NextRequest) {
     const formattedProducts = products.map((product) => ({
       ...product,
       _id: product._id.toString(),
+      slug: product.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
       category: typeof product.category === "object" && product.category !== null
         ? {
             _id: (product.category as CategoryDoc)._id.toString(),
@@ -156,13 +183,10 @@ export async function GET(request: NextRequest) {
           }
         : null,
       features: Array.isArray(product.features)
-        ? product.features.map((feature) => ({
-            _id: feature._id.toString(),
-            name: feature.name,
-            icon: feature.icon,
-          }))
-        : [],
+        ? product.features.map((feature: any) => feature._id.toString())
+        : []
     }));
+
 
     return NextResponse.json({
       products: formattedProducts,

@@ -78,7 +78,9 @@ export function useProducts(params: UseProductsParams) {
     queryParams.set("sort", params.sort || "-createdAt");
 
     if (params.search?.trim()) queryParams.set("search", params.search.trim());
-    if (params.categories?.length) queryParams.set("category", params.categories[0]);
+    if (params.categories?.length) {
+      params.categories.forEach(cat => queryParams.append("categories[]", cat));
+    }
     if (params.brands?.length) queryParams.set("brand", params.brands[0]);
     if (params.feature) queryParams.set("feature", params.feature);
     if (params.audience) queryParams.set("audience", params.audience);
