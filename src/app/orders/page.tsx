@@ -13,11 +13,12 @@ interface OrderItem {
   product: {
     _id: string;
     name: string;
-    image: string;
+    image: string | null;
     price: number;
   };
   quantity: number;
   size: string;
+  color: string;
   price: number;
 }
 
@@ -86,7 +87,6 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Lấy đơn hàng từ API khi component được mount
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -94,38 +94,40 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       const response = await fetch("/api/orders");
-      const data = await response.json();
-      if (response.ok) {
-        const ordersWithProducts = await Promise.all(
-          data.orders.map(async (order: Order) => {
-            const itemsWithProducts = await Promise.all(
-              order.items.map(async (item) => {
-                const productResponse = await fetch(
-                  `/api/products/${item.product._id}`
-                );
-                const productData = await productResponse.json();
-                return {
-                  ...item,
-                  product: {
-                    ...item.product,
-                    image: productData.images[0]?.url || "/default-image.png",
-                    name: productData.name,
-                    price: productData.price,
-                  },
-                };
-              })
-            );
-            return { ...order, items: itemsWithProducts };
-          })
-        );
-        setOrders(ordersWithProducts);
-      } else {
-        toast.error("Không thể tải danh sách đơn hàng");
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders");
       }
-    } catch {
-      toast.error("Có lỗi xảy ra khi tải đơn hàng");
+
+      const data = await response.json();
+      setOrders(data.orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      toast.error("Không thể tải danh sách đơn hàng");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/orders?id=${orderId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Không thể hủy đơn hàng");
+      }
+
+      toast.success("Hủy đơn hàng thành công");
+      fetchOrders();
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra khi hủy đơn hàng");
     }
   };
 
@@ -135,33 +137,10 @@ export default function OrdersPage() {
     return tab?.statuses?.includes(order.status);
   });
 
-  const handleCancelOrder = async (orderId: string) => {
-    if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        toast.success("Hủy đơn hàng thành công");
-        fetchOrders();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || "Không thể hủy đơn hàng");
-      }
-    } catch {
-      toast.error("Có lỗi xảy ra khi hủy đơn hàng");
-    }
-  };
-
   const getOrderCount = (tabId: string) => {
     if (tabId === "all") return orders.length;
     const tab = orderTabs.find((tab) => tab.id === tabId);
-    return orders.filter((order) => tab?.statuses?.includes(order.status))
-      .length;
+    return orders.filter((order) => tab?.statuses?.includes(order.status)).length;
   };
 
   return (
@@ -251,7 +230,7 @@ export default function OrdersPage() {
                         <div className="flex flex-wrap gap-4 justify-between items-start">
                           <div>
                             <p className="text-sm text-gray-500 mb-1">
-                              Mã đơn hàng: #{order._id.slice(-6)}
+                              Mã đơn hàng: #{order._id?.slice(-6)}
                             </p>
                             <p className="text-sm text-gray-500">
                               Ngày đặt:{" "}
@@ -297,7 +276,7 @@ export default function OrdersPage() {
                           >
                             <div className="relative w-20 h-20">
                               <Image
-                                src={item.product.image}
+                                src={item.product.image || "/images/no-image.png"}
                                 alt={item.product.name}
                                 fill
                                 className="object-cover rounded"

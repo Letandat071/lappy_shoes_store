@@ -1,44 +1,46 @@
-import { NextResponse } from 'next/server';
-import * as jose from 'jose';
-import User from '../../../../models/User';
-import connectDB from '../../../../lib/mongoose';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../[...nextauth]/route";
+import connectDB from "@/lib/mongoose";
+import User from "@/models/User";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key'
-);
-
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const token = request.headers.get('Cookie')?.split('; ')
-      .find(row => row.startsWith('token='))
-      ?.split('=')[1];
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Không tìm thấy token' },
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized" }),
         { status: 401 }
       );
     }
 
-    // Verify token
-    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    const userId = payload.userId as string;
-    
     await connectDB();
-    const user = await User.findById(userId).select('-password');
-    
+
+    const user = await User.findOne({ email: session.user.email })
+      .select("-password")
+      .lean();
+
     if (!user) {
-      return NextResponse.json(
-        { error: 'Không tìm thấy người dùng' },
+      return new NextResponse(
+        JSON.stringify({ error: "User not found" }),
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ user });
+    return new NextResponse(
+      JSON.stringify({ 
+        user: {
+          ...user,
+          _id: user._id.toString(),
+        }
+      }),
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Get user error:', error);
-    return NextResponse.json(
-      { error: 'Đã có lỗi xảy ra khi lấy thông tin người dùng' },
+    console.error("Error in /api/auth/me:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }),
       { status: 500 }
     );
   }

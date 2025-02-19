@@ -1,0 +1,99 @@
+# Lappy Shoes Project Rules
+
+## Lessons
+- Sử dụng Next.js 13+ với App Router
+- Tích hợp TypeScript để type-safe
+- Sử dụng Tailwind CSS cho styling
+- Mongoose cho MongoDB
+- Font Awesome cho icons
+- Vercel cho deployment
+
+## Scratchpad
+
+### Cấu trúc dự án hiện tại:
+[X] App Router structure
+[X] MongoDB Models
+[X] API Routes
+[X] Components
+[X] Styles
+[X] Types
+
+### Các tính năng cần nâng cấp:
+
+1. Authentication & Authorization
+[X] JWT token validation cơ bản
+[X] Cookie-based authentication
+[X] Protected routes
+[X] Basic role-based access control
+[X] Tích hợp NextAuth.js
+  [X] Multiple providers (Google, Credentials)
+  [X] Session management
+  [X] OAuth integration
+[ ] Advanced RBAC 
+  - [ ] Detailed permission system
+  - [ ] Role hierarchy
+  - [ ] Dynamic permissions
+[ ] Token Security
+  - [ ] Refresh token mechanism
+  - [ ] Token rotation
+  - [ ] Token blacklisting
+[ ] Session Enhancement
+  - [ ] Session tracking
+  - [ ] Rate limiting
+  - [ ] Device management
+
+2. Performance Optimization
+[ ] Image optimization
+[ ] Code splitting
+[ ] Lazy loading
+[ ] Caching strategies
+[ ] API route optimization
+
+3. User Experience
+[ ] Loading states
+[ ] Error boundaries
+[ ] Toast notifications
+[ ] Form validation
+[ ] Responsive design improvements
+
+4. Security
+[ ] Input sanitization
+[ ] CSRF protection
+[ ] Rate limiting
+[ ] Security headers
+[ ] Data encryption
+
+5. Testing
+[ ] Unit tests
+[ ] Integration tests
+[ ] E2E tests
+[ ] Performance tests
+
+6. Monitoring & Analytics
+[ ] Error tracking
+[ ] Performance monitoring
+[ ] User analytics
+[ ] SEO optimization
+
+7. Features Enhancement
+[ ] Multi-language support
+[ ] Dark mode
+[ ] Advanced search
+[ ] Wishlist
+[ ] Reviews & ratings
+[ ] Order tracking
+[ ] Payment integration
+[ ] Email notifications
+
+### Priority Tasks:
+1. Security enhancements
+2. Performance optimization
+3. Testing implementation
+4. Feature additions
+
+### Notes:
+- Cần review và update dependencies
+- Implement best practices cho Next.js 13
+- Tối ưu database queries
+- Cải thiện error handling
+- Thêm documentation 

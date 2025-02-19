@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-// import { toast } from 'react-hot-toast'; // Đã xóa vì không sử dụng
 import Swal from "sweetalert2";
 import { useImageUpload } from "@/lib/cloudinary";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "react-hot-toast";
 
 const ProfileInformation = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,96 +17,58 @@ const ProfileInformation = () => {
     email: "",
     phone: "",
     address: "",
-    avatar: "",
   });
 
-  // Fetch user data khi component mount
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        console.log("1. Bắt đầu fetch user data");
-        const response = await fetch("/api/auth/me");
-        const data = await response.json();
-        console.log("2. Data nhận được từ API /me:", data);
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: "",
+        address: "",
+      });
 
-        if (data.user) {
-          setFormData({
-            name: data.user.name || "",
-            email: data.user.email || "",
-            phone: data.user.phone || "",
-            address: data.user.address || "",
-            avatar: data.user.avatar || "https://i.pravatar.cc/100?img=2",
-          });
-          console.log("3. Form data được set:", data.user);
+      // Fetch additional user data
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch("/api/auth/me");
+          const data = await response.json();
+
+          if (data.user) {
+            setFormData(prev => ({
+              ...prev,
+              phone: data.user.phone || "",
+              address: data.user.address || "",
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          toast.error("Không thể tải thông tin người dùng");
         }
-      } catch (error) {
-        console.error("4. Lỗi khi fetch user data:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Không thể tải thông tin người dùng",
-          confirmButtonColor: "#000",
-        });
-      }
-    };
-    fetchUserData();
-  }, []);
+      };
+
+      fetchUserData();
+    }
+  }, [user]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    if (!e.target.files || !e.target.files[0]) return;
 
     try {
       setIsLoading(true);
-      console.log("1. Bắt đầu upload ảnh");
-      const imageUrl = await uploadImage(file);
-      console.log("2. Upload thành công, URL:", imageUrl);
-
-      // Chỉ gửi avatar lên để update
-      const response = await fetch("/api/auth/update", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ avatar: imageUrl }),
-      });
-
-      const data = await response.json();
-      console.log("3. Response từ server:", data);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Không thể cập nhật avatar");
+      const imageUrl = await uploadImage(e.target.files[0]);
+      
+      if (imageUrl) {
+        await updateUser({ image: imageUrl });
+        toast.success("Cập nhật ảnh đại diện thành công");
       }
-
-      // Update local state và context sau khi server xác nhận thành công
-      setFormData((prev) => ({ ...prev, avatar: imageUrl }));
-      if (user) {
-        updateUser({ ...user, avatar: imageUrl });
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Thành công!",
-        text: "Cập nhật avatar thành công",
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-        toast: true,
-      });
-    } catch (error: unknown) {
-      console.error("4. Lỗi khi update avatar:", error);
-      const errorMsg =
-        error instanceof Error ? error.message : "Đã có lỗi xảy ra";
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi!",
-        text: errorMsg,
-        confirmButtonColor: "#000",
-      });
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      toast.error("Không thể cập nhật ảnh đại diện");
     } finally {
       setIsLoading(false);
     }
@@ -115,10 +77,8 @@ const ProfileInformation = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log("5. Bắt đầu submit form với data:", formData);
 
     try {
-      console.log("6. Gửi request update");
       const response = await fetch("/api/auth/update", {
         method: "PUT",
         headers: {
@@ -128,7 +88,6 @@ const ProfileInformation = () => {
       });
 
       const data = await response.json();
-      console.log("7. Response từ API update:", data);
 
       if (!response.ok) {
         throw new Error(data.error || "Có lỗi xảy ra");
@@ -136,40 +95,35 @@ const ProfileInformation = () => {
 
       // Update user trong context
       updateUser(data.user);
-
-      console.log("8. Update thành công");
-      Swal.fire({
-        icon: "success",
-        title: "Thành công!",
-        text: "Cập nhật thông tin thành công",
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-        toast: true,
-      });
-    } catch (error: unknown) {
-      console.error("9. Lỗi khi update:", error);
-      const errorMsg = error instanceof Error ? error.message : "Có lỗi xảy ra";
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi!",
-        text: errorMsg,
-        confirmButtonColor: "#000",
-      });
+      toast.success("Cập nhật thông tin thành công");
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
     } finally {
       setIsLoading(false);
-      console.log("10. Kết thúc quá trình update");
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log("11. Form field change:", name, value);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
+
+  if (!user) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black mx-auto mb-4"></div>
+            <p className="text-gray-500">Đang tải thông tin...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-6">
@@ -183,8 +137,8 @@ const ProfileInformation = () => {
             onClick={handleAvatarClick}
           >
             <Image
-              src={formData.avatar}
-              alt="User avatar"
+              src={user.image || '/images/default-avatar.png'}
+              alt={user.name || 'Avatar'}
               fill
               className="object-cover group-hover:opacity-75 transition-opacity"
             />
@@ -200,6 +154,7 @@ const ProfileInformation = () => {
             className="hidden"
             accept="image/*"
             onChange={handleAvatarChange}
+            disabled={isLoading}
           />
         </div>
       </div>
@@ -232,6 +187,7 @@ const ProfileInformation = () => {
             onChange={handleChange}
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
             required
+            disabled
           />
         </div>
         <div>

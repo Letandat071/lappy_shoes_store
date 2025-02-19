@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Cart, CartItem } from '@/types/cart';
 import { toast } from 'react-hot-toast';
 
@@ -16,7 +16,7 @@ export function useCart() {
   // Load cart from localStorage when user changes
   useEffect(() => {
     if (user) {
-      const userCartKey = `cart_${user._id}`;
+      const userCartKey = `cart_${user.id}`;
       const savedCart = localStorage.getItem(userCartKey);
       if (savedCart) {
         try {
@@ -36,7 +36,7 @@ export function useCart() {
   useEffect(() => {
     if (user && cart) {
       try {
-        const userCartKey = `cart_${user._id}`;
+        const userCartKey = `cart_${user.id}`;
         localStorage.setItem(userCartKey, JSON.stringify(cart));
       } catch (error) {
         console.error('Error saving cart:', error);

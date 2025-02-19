@@ -9,7 +9,7 @@ import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import { useWishlistContext } from '../../contexts/WishlistContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/format';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function WishlistPage() {
   const { wishlist, removeFromWishlist, clearWishlist } = useWishlistContext();

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import UserAvatar from "@/components/common/UserAvatar";
 import { useProducts } from "@/hooks/useProducts";
 import { useFeatures } from "@/hooks/useFeatures";
@@ -374,8 +374,8 @@ const Navbar = () => {
                         className="flex items-center space-x-2 hover:text-gray-600"
                       >
                         <UserAvatar
-                          name={user.name}
-                          image={user.avatar}
+                          name={user.name || ''}
+                          image={user.image || ''}
                           size={32}
                         />
                         <span className="hidden lg:inline">{user.name}</span>

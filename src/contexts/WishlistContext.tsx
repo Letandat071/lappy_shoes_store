@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
 interface WishlistItem {
@@ -37,7 +37,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   // Load wishlist from localStorage when user changes
   useEffect(() => {
     if (user) {
-      const userWishlistKey = `wishlist_${user._id}`;
+      const userWishlistKey = `wishlist_${user.id}`;
       const savedWishlist = localStorage.getItem(userWishlistKey);
       if (savedWishlist) {
         setWishlist(JSON.parse(savedWishlist));
@@ -53,7 +53,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   // Save wishlist to localStorage whenever it changes
   useEffect(() => {
     if (user) {
-      const userWishlistKey = `wishlist_${user._id}`;
+      const userWishlistKey = `wishlist_${user.id}`;
       localStorage.setItem(userWishlistKey, JSON.stringify(wishlist));
     }
   }, [wishlist, user]);

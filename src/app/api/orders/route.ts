@@ -1,52 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Order from "@/models/Order";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
 import mongoose from 'mongoose';
 import Product from '@/models/Product';
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import User from "@/models/User";
+
+interface OrderItem {
+  product: mongoose.Types.ObjectId;
+  quantity: number;
+  size: string;
+  color: string;
+  price: number;
+}
+
+interface OrderDocument extends mongoose.Document {
+  _id: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  items: OrderItem[];
+  totalAmount: number;
+  status: string;
+  createdAt: Date;
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    address: string;
+    city: string;
+  };
+  paymentMethod: string;
+  paymentStatus: string;
+}
 
 // Tạo đơn hàng mới
 export async function POST(request: NextRequest) {
   let session;
+  let mongoSession;
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized" }), 
+        { status: 401 }
+      );
+    }
+
     await connectDB();
     const orderData = await request.json();
 
-    // Lấy userId từ token
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: "User not found" }), 
+        { status: 404 }
+      );
     }
 
     // Thêm userId vào orderData
     const orderWithUser = {
       ...orderData,
-      user: userId,
+      user: user._id,
       status: 'processing',
       paymentStatus: orderData.paymentMethod === 'COD' ? 'pending' : 'completed'
     };
 
-    // console.log('=== START ORDER PROCESSING ===');
-    // console.log('Order Data:', JSON.stringify(orderWithUser, null, 2));
-
-    session = await mongoose.startSession();
-    session.startTransaction();
-    // console.log('Transaction started');
+    mongoSession = await mongoose.startSession();
+    mongoSession.startTransaction();
 
     // Xử lý từng item
     for (const item of orderData.items) {
-      // console.log(`\nProcessing item: ${item.product}, size: ${item.size}, quantity: ${item.quantity}`);
-
-      const product = await Product.findById(item.product).session(session);
+      const product = await Product.findById(item.product).session(mongoSession);
       if (!product) {
         throw new Error(`Product ${item.product} not found`);
       }
-
-      // console.log('Current product state:', {
-      //   id: product._id.toString(),
-      //   sizes: product.sizes,
-      //   totalQuantity: product.totalQuantity
-      // });
 
       const sizeIndex = product.sizes.findIndex((s: { size: string }) => s.size === item.size);
       if (sizeIndex === -1) {
@@ -65,68 +92,160 @@ export async function POST(request: NextRequest) {
       // Tính lại tổng số lượng
       product.totalQuantity = product.sizes.reduce((sum: number, size: { quantity: number }) => sum + size.quantity, 0);
 
-      // console.log('Quantity update:', {
-      //   productId: product._id.toString(),
-      //   size: item.size,
-      //   oldQuantity: currentQuantity,
-      //   newQuantity: product.sizes[sizeIndex].quantity,
-      //   newTotal: product.totalQuantity
-      // });
-
-      await product.save({ session });
-      // console.log('Product saved successfully');
+      await product.save({ session: mongoSession });
     }
 
     // Tạo đơn hàng với userId
-    const order = await Order.create([orderWithUser], { session });
-    // console.log('Order created:', order[0]._id.toString());
+    const order = await Order.create([orderWithUser], { session: mongoSession });
 
     // Commit transaction
-    await session.commitTransaction();
-    // console.log('=== TRANSACTION COMMITTED SUCCESSFULLY ===');
+    await mongoSession.commitTransaction();
 
-    return NextResponse.json(order[0], { status: 201 });
+    return new NextResponse(
+      JSON.stringify({ order: order[0] }), 
+      { status: 201 }
+    );
 
   } catch (error: unknown) {
     console.error('=== ORDER PROCESSING ERROR ===');
     console.error(error);
-    if (session) {
-      await session.abortTransaction();
-      // console.log('Transaction rolled back');
+    if (mongoSession) {
+      await mongoSession.abortTransaction();
     }
     const message = error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return new NextResponse(
+      JSON.stringify({ error: message }), 
+      { status: 500 }
+    );
   } finally {
-    if (session) {
-      await session.endSession();
-      // console.log('=== SESSION ENDED ===');
+    if (mongoSession) {
+      await mongoSession.endSession();
     }
   }
 }
 
-// GET /api/orders - Lấy danh sách đơn hàng của user
-export async function GET(request: NextRequest) {
+// GET: Lấy danh sách đơn hàng của người dùng
+export async function GET() {
   try {
-    await connectDB();
-    
-    // Lấy thông tin user từ token
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized" }), 
         { status: 401 }
       );
     }
 
-    const orders = await Order.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .populate('items.product', 'name image price');
+    await connectDB();
 
-    return NextResponse.json({ orders });
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: "User not found" }), 
+        { status: 404 }
+      );
+    }
+
+    const orders = await Order.find({ user: user._id })
+      .sort({ createdAt: -1 })
+      .populate('items.product', 'name images price');
+
+    // Format lại dữ liệu trước khi trả về
+    const formattedOrders = orders.map((order: any) => ({
+      _id: order._id.toString(),
+      createdAt: order.createdAt,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      items: order.items.map((item: any) => ({
+        product: {
+          _id: item.product._id.toString(),
+          name: item.product.name,
+          image: item.product.images?.[0]?.url || null,
+          price: item.product.price
+        },
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        price: item.price
+      })),
+      shippingAddress: order.shippingAddress,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus
+    }));
+
+    return new NextResponse(
+      JSON.stringify({ orders: formattedOrders }), 
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Error fetching orders:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
+    console.error("Error in GET /api/orders:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }), 
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Hủy đơn hàng
+export async function DELETE(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized" }), 
+        { status: 401 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const orderId = url.searchParams.get("id");
+
+    if (!orderId) {
+      return new NextResponse(
+        JSON.stringify({ error: "Order ID is required" }), 
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const user = await User.findOne({ email: session.user.email });
+    if (!user) {
+      return new NextResponse(
+        JSON.stringify({ error: "User not found" }), 
+        { status: 404 }
+      );
+    }
+
+    const order = await Order.findOne({ _id: orderId, user: user._id });
+    
+    if (!order) {
+      return new NextResponse(
+        JSON.stringify({ error: "Order not found" }), 
+        { status: 404 }
+      );
+    }
+
+    // Chỉ cho phép hủy đơn hàng ở trạng thái pending hoặc processing
+    if (!['pending', 'processing'].includes(order.status)) {
+      return new NextResponse(
+        JSON.stringify({ error: "Cannot cancel this order" }), 
+        { status: 400 }
+      );
+    }
+
+    order.status = 'cancelled';
+    await order.save();
+
+    return new NextResponse(
+      JSON.stringify({ message: "Order cancelled successfully" }), 
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error in DELETE /api/orders:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }), 
       { status: 500 }
     );
   }

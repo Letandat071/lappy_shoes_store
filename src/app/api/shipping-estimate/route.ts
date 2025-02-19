@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 // -----------------------
 // Định nghĩa giao diện cho tọa độ
@@ -197,54 +199,50 @@ function formatDuration(seconds: number): string {
 }
 
 // -----------------------
-// API Handler GET
+// API Handler POST
 // -----------------------
-export async function GET(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    // Lấy 3 thông tin: ward, district, province từ query parameters
-    const ward = searchParams.get("ward") || "";
-    const district = searchParams.get("district") || "";
-    const province = searchParams.get("province") || "";
+    const session = await getServerSession(authOptions);
 
-    // Kiểm tra bắt buộc (district và province phải có)
-    if (!district || !province) {
-      return NextResponse.json(
-        { error: "Thiếu thông tin địa chỉ. Vui lòng cung cấp các mã: district, province và ward nếu có." },
+    if (!session?.user?.email) {
+      return new NextResponse(
+        JSON.stringify({ error: "Unauthorized" }), 
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { city } = body;
+
+    if (!city) {
+      return new NextResponse(
+        JSON.stringify({ error: "City is required" }), 
         { status: 400 }
       );
     }
 
-    // Tọa độ shop (cố định)
-    const shopCoords = { lat: 10.825751, lon: 106.701578 };
-
-    // Lấy tọa độ người dùng dựa vào 3 mã (ward, district, province)
-    const userCoords = await getUserCoordinatesFromCodes(ward, district, province);
-    if (!userCoords) {
-      return NextResponse.json(
-        { error: `Không thể tìm thấy tọa độ cho các thông tin: ward="${ward}", district="${district}", province="${province}". Vui lòng kiểm tra lại thông tin.` },
-        { status: 400 }
-      );
+    // Tính phí vận chuyển dựa trên thành phố
+    let shippingFee = 0;
+    
+    // Hà Nội và HCM
+    if (["01", "79"].includes(city)) {
+      shippingFee = 30000;
+    } 
+    // Các tỉnh thành khác
+    else {
+      shippingFee = 40000;
     }
 
-    // Tính khoảng cách giữa shop và người dùng
-    const distanceKm = calculateDistance(shopCoords.lat, shopCoords.lon, userCoords.lat, userCoords.lon);
-    const durationSeconds = estimateDeliveryTime(distanceKm);
-
-    // console.log("Calculation results:", {
-    //   distance: distanceKm,
-    //   duration: durationSeconds,
-    //   from: shopCoords,
-    //   to: userCoords,
-    // });
-
-    return NextResponse.json({
-      shippingCost: calculateShippingCost(distanceKm),
-      estimatedTime: formatDuration(durationSeconds),
-      distance: Math.round(distanceKm * 10) / 10,
-    });
+    return new NextResponse(
+      JSON.stringify({ shippingFee }), 
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("Shipping estimate error:", error);
-    return NextResponse.json({ error: "Lỗi hệ thống" }, { status: 500 });
+    console.error("Error in shipping estimate:", error);
+    return new NextResponse(
+      JSON.stringify({ error: "Internal Server Error" }), 
+      { status: 500 }
+    );
   }
 }

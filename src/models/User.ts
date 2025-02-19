@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -9,15 +10,27 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Vui lòng nhập email'],
-    // unique: true,  // tạm comment dòng này
+    unique: true,  // bật lại unique
     trim: true,
     lowercase: true,
     match: [/^\S+@\S+\.\S+$/, 'Email không hợp lệ'],
   },
   password: {
     type: String,
-    required: [true, 'Vui lòng nhập mật khẩu'],
+    required: [function(this: any) {
+      // Chỉ yêu cầu password khi không phải OAuth
+      return !this.googleId;
+    }, 'Vui lòng nhập mật khẩu'],
     minlength: [8, 'Mật khẩu phải có ít nhất 8 ký tự'],
+  },
+  googleId: {
+    type: String,
+    sparse: true,
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   },
   avatar: {
     type: String,
@@ -50,6 +63,13 @@ userSchema.pre('save', function(next) {
   next();
 });
 
+// Hash password trước khi lưu nếu có thay đổi
+userSchema.pre('save', async function(next) {
+  if (this.isModified('password') && this.password) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
