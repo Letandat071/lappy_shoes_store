@@ -20,6 +20,8 @@ export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { id } = await Promise.resolve(context.params);
+  
   try {
     await connectDB();
 
@@ -35,7 +37,6 @@ export async function GET(
       }
     }
 
-    const id = context.params.id;
     if (!id) {
       return NextResponse.json(
         { error: "Product ID is required" },
@@ -55,7 +56,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json({ product });
   } catch (error) {
     console.error("Error in GET /api/products/[id]:", error);
     return NextResponse.json(
@@ -70,6 +71,8 @@ export async function PUT(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { id } = await Promise.resolve(context.params);
+  
   try {
     await connectDB();
 
@@ -82,7 +85,6 @@ export async function PUT(
       );
     }
 
-    const id = context.params.id;
     if (!id) {
       return NextResponse.json(
         { error: "Product ID is required" },
@@ -119,6 +121,8 @@ export async function DELETE(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { id } = await Promise.resolve(context.params);
+  
   try {
     await connectDB();
 
@@ -131,7 +135,6 @@ export async function DELETE(
       );
     }
 
-    const id = context.params.id;
     if (!id) {
       return NextResponse.json(
         { error: "Product ID is required" },

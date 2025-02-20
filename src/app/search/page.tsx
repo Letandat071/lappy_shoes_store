@@ -51,7 +51,7 @@ export default function SearchPage() {
       <Navbar />
       
       <Suspense fallback={
-        <div className="max-w-7xl mx-auto px-4 pt-32">
+        <div className="max-w-7xl mx-auto px-4 pt-20">
           {/* Loading skeleton for breadcrumb */}
           <div className="h-6 w-48 bg-gray-200 animate-pulse rounded mb-8" />
           
@@ -111,7 +111,7 @@ function SearchContent({
   return (
     <>
       {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
+      <div className="max-w-7xl mx-auto px-4 mb-8 pt-20">
         <nav className="flex text-gray-500 text-sm">
           <Link href="/" className="hover:text-black">Home</Link>
           <span className="mx-2">/</span>

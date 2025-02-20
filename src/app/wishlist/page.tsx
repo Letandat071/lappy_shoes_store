@@ -46,7 +46,7 @@ export default function WishlistPage() {
       <Navbar />
       <main className="min-h-screen bg-gray-50">
         {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 pt-32 pb-8">
+        <div className="max-w-7xl mx-auto px-4 pt-20 pb-8">
           <nav className="flex text-gray-500 text-sm">
             <Link href="/" className="hover:text-black">Trang chủ</Link>
             <span className="mx-2">/</span>

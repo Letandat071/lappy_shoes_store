@@ -1,90 +1,81 @@
-import React from "react";
-import Link from "next/link";
-import Image from "next/image";
+import React from 'react';
+import Link from 'next/link';
+import ImageWithFallback from '@/components/common/ImageWithFallback';
+import { formatPrice } from '@/utils/format';
 
-interface ProductSuggestProps {
-  categoryId: string;
-  currentProductId: string;
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  images: Array<{
+    url: string;
+    color?: string;
+  }>;
+  category: {
+    name: string;
+  };
 }
 
-const relatedProducts = [
-  {
-    id: "2",
-    name: "Nike Air Zoom Pegasus",
-    price: 129.99,
-    image: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa",
-    rating: 4.8,
-    reviewCount: 95,
-  },
-  {
-    id: "3",
-    name: "Nike Free RN",
-    price: 109.99,
-    image: "https://images.unsplash.com/photo-1605348532760-6753d2c43329",
-    rating: 4.6,
-    reviewCount: 82,
-  },
-  {
-    id: "4",
-    name: "Nike Revolution",
-    price: 89.99,
-    image: "https://images.unsplash.com/photo-1605408499391-6368c628ef42",
-    rating: 4.4,
-    reviewCount: 67,
-  },
-];
+interface ProductSuggestProps {
+  title?: string;
+  categoryId: string;
+  currentProductId: string;
+  products?: Product[];
+  onQuickView?: (product: Product) => void;
+}
 
-const ProductSuggest: React.FC<ProductSuggestProps> = ({
+export default function ProductSuggest({
+  title = "Có thể bạn cũng thích",
+  categoryId,
   currentProductId,
-}) => {
-  const filteredProducts = relatedProducts.filter(
-    (prod) => prod.id !== currentProductId
-  );
-
+  products = [],
+  onQuickView
+}: ProductSuggestProps) {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-8">You May Also Like</h2>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <Link
-            key={product.id}
-            href={`/product/${product.id}`}
-            className="group"
-          >
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <div className="relative mb-4 aspect-square">
-                <Image
-                  src={product.image}
+    <div className="bg-white">
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 sm:py-24 lg:max-w-7xl lg:px-8">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900">{title}</h2>
+
+        <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
+          {products.map((product) => (
+            <div key={product._id} className="group relative">
+              <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
+                <ImageWithFallback
+                  src={product.images[0]?.url || ''}
                   alt={product.name}
                   fill
-                  className="object-cover rounded-xl group-hover:scale-105 transition-transform"
+                  className="h-full w-full object-cover object-center lg:h-full lg:w-full"
                 />
               </div>
-              <h3 className="font-semibold mb-2 group-hover:text-blue-600">
-                {product.name}
-              </h3>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <i
-                      key={i}
-                      className={`fas fa-star${
-                        i + 1 > product.rating ? "-half-alt" : ""
-                      }`}
-                    ></i>
-                  ))}
+              <div className="mt-4 flex justify-between">
+                <div>
+                  <h3 className="text-sm text-gray-700">
+                    <Link href={`/product/${product._id}`}>
+                      <span aria-hidden="true" className="absolute inset-0" />
+                      {product.name}
+                    </Link>
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">{product.category.name}</p>
                 </div>
-                <span className="text-sm text-gray-600">
-                  ({product.reviewCount})
-                </span>
+                <p className="text-sm font-medium text-gray-900">{formatPrice(product.price)}₫</p>
               </div>
-              <span className="font-bold">${product.price}</span>
+
+              {onQuickView && (
+                <button
+                  onClick={() => onQuickView(product)}
+                  className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <span className="sr-only">Xem nhanh</span>
+                  <svg className="h-5 w-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              )}
             </div>
-          </Link>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
-};
-
-export default ProductSuggest;
+}

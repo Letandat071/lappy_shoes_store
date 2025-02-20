@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
-import Announcement from "@/models/Announcement";
+import Banner from "@/models/Banner";
 import { shouldCache, cacheResponse } from "@/middleware/cache";
 
-// GET: Lấy danh sách thông báo công khai (không cần xác thực)
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
+    const position = searchParams.get("position");
     const status = searchParams.get("status") || "active";
 
     const query: any = { status };
-    if (type) query.type = type;
+    if (position) query.position = position;
 
-    const announcements = await Announcement.find(query)
+    const banners = await Banner.find(query)
       .sort("-priority createdAt")
       .lean();
 
-    const response = NextResponse.json({ announcements });
+    const response = NextResponse.json({ banners });
 
     // Apply caching if applicable
     if (shouldCache(request)) {
@@ -29,7 +28,7 @@ export async function GET(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error("Error fetching announcements:", error);
+    console.error("Error fetching banners:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

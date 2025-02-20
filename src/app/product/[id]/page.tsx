@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
@@ -40,46 +40,46 @@ interface Product {
   features: Feature[];
 }
 
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-96">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+  </div>
+);
+
 const ProductPage = () => {
   const { id } = useParams();
-  const [product, setProduct] = React.useState<Product | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [selectedImage, setSelectedImage] = React.useState<Image | null>(null);
-  const [selectedSize, setSelectedSize] = React.useState("");
-  const [selectedColor, setSelectedColor] = React.useState("");
-  const [quantity, setQuantity] = React.useState(1);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<Image | null>(null);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
   const { addToCart } = useCartContext();
-  const { addToWishlist, isInWishlist, removeFromWishlist } =
-    useWishlistContext();
+  const { addToWishlist, isInWishlist, removeFromWishlist } = useWishlistContext();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/products/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        setLoading(true);
+        const res = await fetch(`/api/products/${id}`);
+        const data = await res.json();
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("API Error:", errorText);
-          throw new Error("Failed to fetch product");
+        if (!res.ok) {
+          throw new Error(data.error || 'Không thể tải thông tin sản phẩm');
         }
 
-        const data = await response.json();
-        if (!data) {
-          throw new Error("No data returned from API");
+        if (!data.product) {
+          throw new Error('Không tìm thấy sản phẩm');
         }
 
-        setProduct(data);
-        if (data.images && data.images.length > 0) {
-          setSelectedImage(data.images[0]);
+        setProduct(data.product);
+        if (data.product.images?.length > 0) {
+          setSelectedImage(data.product.images[0]);
         }
       } catch (error) {
-        console.error("Error fetching product details:", error);
-        toast.error("Không thể tải thông tin sản phẩm");
+        console.error('Error fetching product:', error);
+        toast.error(error instanceof Error ? error.message : 'Có lỗi xảy ra');
       } finally {
         setLoading(false);
       }
@@ -167,9 +167,29 @@ const ProductPage = () => {
     return (
       <main>
         <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center h-96">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        <div className="max-w-7xl mx-auto px-4 py-8 pt-20">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+              <div className="space-y-4">
+                <div className="aspect-square bg-gray-200 rounded-2xl"></div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="aspect-square bg-gray-200 rounded-lg"></div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-6">
+                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <Footer />
@@ -217,10 +237,10 @@ const ProductPage = () => {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative bg-white rounded-2xl p-8 shadow-lg">
-              {selectedImage && selectedImage.url && (
+              {selectedImage?.url && (
                 <Image
                   src={selectedImage.url}
-                  alt={product?.name || "Product image"}
+                  alt={product.name}
                   width={500}
                   height={500}
                   className="w-full h-[500px] object-contain"
@@ -230,28 +250,27 @@ const ProductPage = () => {
 
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-4">
-              {product?.images.map(
-                (image, index) =>
-                  image.url && (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(image)}
-                      className={`bg-white rounded-lg p-4 border-2 ${
-                        selectedImage === image
-                          ? "border-black"
-                          : "border-transparent hover:border-gray-200"
-                      }`}
-                    >
-                      <Image
-                        src={image.url}
-                        alt={`${product.name} view ${index + 1}`}
-                        width={100}
-                        height={100}
-                        className="w-full h-20 object-contain"
-                      />
-                    </button>
-                  )
-              )}
+              {product.images?.map((image, index) => (
+                image?.url && (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(image)}
+                    className={`bg-white rounded-lg p-4 border-2 ${
+                      selectedImage === image
+                        ? "border-black"
+                        : "border-transparent hover:border-gray-200"
+                    }`}
+                  >
+                    <Image
+                      src={image.url}
+                      alt={`${product.name} view ${index + 1}`}
+                      width={100}
+                      height={100}
+                      className="w-full h-20 object-contain"
+                    />
+                  </button>
+                )
+              ))}
             </div>
           </div>
 
@@ -263,7 +282,7 @@ const ProductPage = () => {
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center">
                   <span className="text-gray-600">
-                    Danh mục: {product.category.name}
+                    Danh mục: {product.category?.name}
                   </span>
                 </div>
                 <span className="text-gray-400">|</span>
@@ -295,7 +314,7 @@ const ProductPage = () => {
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-3">
-                {product.sizes.map((sizeObj) => (
+                {product.sizes?.map((sizeObj) => (
                   <button
                     key={sizeObj.size}
                     onClick={() => setSelectedSize(sizeObj.size)}
@@ -380,7 +399,7 @@ const ProductPage = () => {
             </div>
 
             {/* Features */}
-            {product.features && product.features.length > 0 && (
+            {product.features?.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-4">Tính năng</h3>
                 <ul className="list-disc list-inside space-y-2">
@@ -394,24 +413,26 @@ const ProductPage = () => {
             )}
 
             {/* Color Options */}
-            <div>
-              <h3 className="font-semibold mb-4">Chọn Màu</h3>
-              <div className="flex gap-3">
-                {product.images.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedColor(img.color || "")}
-                    className={`px-4 py-2 border ${
-                      selectedColor === (img.color || "")
-                        ? "bg-black text-white"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    {img.color || "Mặc định"}
-                  </button>
-                ))}
+            {product.images?.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-4">Chọn Màu</h3>
+                <div className="flex gap-3">
+                  {product.images.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedColor(img.color || "")}
+                      className={`px-4 py-2 border ${
+                        selectedColor === (img.color || "")
+                          ? "bg-black text-white"
+                          : "bg-white text-black"
+                      }`}
+                    >
+                      {img.color || "Mặc định"}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -420,7 +441,7 @@ const ProductPage = () => {
 
         {/* Related Products */}
         <ProductSuggest
-          categoryId={product.category._id}
+          categoryId={product.category?._id}
           currentProductId={product._id}
         />
       </div>

@@ -105,17 +105,35 @@ export default function OrdersManagement() {
                       }
                     }
                   );
-                  if (!productResponse.ok)
-                    throw new Error("Failed to fetch product");
+                  if (!productResponse.ok) {
+                    const errorData = await productResponse.json();
+                    throw new Error(`Failed to fetch product: ${errorData.error || productResponse.statusText}`);
+                  }
 
                   const productData = await productResponse.json();
+
+                  // Kiểm tra null và xử lý lỗi
+                  if (!productData || !productData.product) {
+                    console.error("Invalid product data received:", productData);
+                    console.error("Product ID:", item.product._id);
+                    return {
+                      ...item,
+                      product: {
+                        ...item.product,
+                        image: null,
+                        name: `Unknown Product (${item.product._id})`,
+                        price: 0,
+                      },
+                    };
+                  }
+
                   return {
                     ...item,
                     product: {
                       ...item.product,
-                      image: productData.product.images?.[0]?.url || null,
-                      name: productData.product.name || "Unknown Product",
-                      price: productData.product.price || 0,
+                      image: productData.product?.images?.[0]?.url || null,
+                      name: productData.product?.name || "Unknown Product",
+                      price: productData.product?.price || 0,
                     },
                   };
                 } catch (error) {

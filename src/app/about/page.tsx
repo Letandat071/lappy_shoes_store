@@ -11,7 +11,7 @@ const AboutPage = () => {
   return (
     <>
       <Navbar />
-      <main className="pt-32">
+      <main className="pt-20">
         {/* Breadcrumb */}
         <div className="max-w-7xl mx-auto px-4 mb-8">
           <nav className="flex text-gray-500 text-sm">

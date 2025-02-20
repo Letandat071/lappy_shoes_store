@@ -7,6 +7,13 @@
 - Mongoose cho MongoDB
 - Font Awesome cho icons
 - Vercel cho deployment
+- ImageWithFallback component cho image optimization
+- Dynamic imports cho code splitting
+- Cache middleware cho API optimization
+- JWT và Cookie based auth cho security
+- React Hot Toast cho notifications
+- Custom Error Boundary cho error handling
+- Custom Form Hook cho form validation
 
 ## Scratchpad
 
@@ -18,7 +25,7 @@
 [X] Styles
 [X] Types
 
-### Các tính năng cần nâng cấp:
+### Các tính năng đã hoàn thành:
 
 1. Authentication & Authorization
 [X] JWT token validation cơ bản
@@ -26,40 +33,40 @@
 [X] Protected routes
 [X] Basic role-based access control
 [X] Tích hợp NextAuth.js
-  [X] Multiple providers (Google, Credentials)
+  [X] Multiple providers
   [X] Session management
   [X] OAuth integration
-[x] Advanced RBAC 
-  - [x] Detailed permission system
-  - [x] Role hierarchy
-  - [x] Dynamic permissions
-[x] Token Security
-  - [x] Refresh token mechanism
-  - [x] Token rotation
-  - [x] Token blacklisting
-[x] Session Enhancement
-  - [x] Session tracking
-  - [x] Rate limiting
-  - [x] Device management
+[X] Advanced RBAC 
+  [X] Detailed permission system
+  [X] Role hierarchy
+  [X] Dynamic permissions
+[X] Token Security
+  [X] Refresh token mechanism
+  [X] Token rotation
+  [X] Token blacklisting
+[X] Session Enhancement
+  [X] Session tracking
+  [X] Rate limiting
+  [X] Device management
 
 2. Performance Optimization
-[ ] Image optimization
-[ ] Code splitting
-[ ] Lazy loading
-[ ] Caching strategies
-[ ] API route optimization
+[X] Image optimization
+[X] Code splitting
+[X] Lazy loading
+[X] Caching strategies
+[X] API route optimization
 
 3. User Experience
-[ ] Loading states
-[ ] Error boundaries
-[ ] Toast notifications
-[ ] Form validation
-[ ] Responsive design improvements
+[X] Loading states
+[X] Error boundaries
+[X] Toast notifications
+[X] Form validation
+[X] Responsive design improvements
 
 4. Security
 [ ] Input sanitization
 [ ] CSRF protection
-[ ] Rate limiting
+[X] Rate limiting
 [ ] Security headers
 [ ] Data encryption
 
@@ -80,16 +87,35 @@
 [ ] Dark mode
 [ ] Advanced search
 [ ] Wishlist
-[ ] Reviews & ratings
-[ ] Order tracking
+[X] Reviews & ratings
+[X] Order tracking
 [ ] Payment integration
 [ ] Email notifications
 
 ### Priority Tasks:
-1. Security enhancements
-2. Performance optimization
-3. Testing implementation
-4. Feature additions
+1. Hoàn thiện Security features
+   - Input sanitization
+   - CSRF protection
+   - Security headers
+   - Data encryption
+
+2. Implement Testing
+   - Setup testing environment
+   - Write unit tests
+   - Write integration tests
+   - Write E2E tests
+
+3. Add Monitoring & Analytics
+   - Error tracking
+   - Performance monitoring
+   - User analytics
+   - SEO optimization
+
+4. Enhance User Experience
+   [X] Error boundaries
+   [X] Toast notifications
+   [X] Form validation
+   [ ] Dark mode
 
 ### Notes:
 - Cần review và update dependencies

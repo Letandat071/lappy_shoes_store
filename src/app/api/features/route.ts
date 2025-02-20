@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
-import Announcement from "@/models/Announcement";
+import Feature from "@/models/Feature";
 import { shouldCache, cacheResponse } from "@/middleware/cache";
 
-// GET: Lấy danh sách thông báo công khai (không cần xác thực)
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get("type");
-    const status = searchParams.get("status") || "active";
+    const includeProducts = searchParams.get("includeProducts") === "true";
 
-    const query: any = { status };
-    if (type) query.type = type;
+    let query = Feature.find().sort("order name");
+    
+    if (includeProducts) {
+      query = query.populate({
+        path: "products",
+        match: { status: "in-stock" },
+        select: "name images price status",
+      });
+    }
 
-    const announcements = await Announcement.find(query)
-      .sort("-priority createdAt")
-      .lean();
+    const features = await query.lean();
 
-    const response = NextResponse.json({ announcements });
+    const response = NextResponse.json({ features });
 
     // Apply caching if applicable
     if (shouldCache(request)) {
@@ -29,7 +32,7 @@ export async function GET(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error("Error fetching announcements:", error);
+    console.error("Error fetching features:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

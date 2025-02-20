@@ -237,7 +237,7 @@ export default function ShopPage() {
         <Navbar />
 
         {/* Breadcrumb */}
-        <div className="max-w-7xl mx-auto px-4 mb-8 pt-32">
+        <div className="max-w-7xl mx-auto px-4 mb-2 pt-20">
           <nav className="flex text-gray-500 text-sm">
             <Link href="/" className="hover:text-black">
               Home
