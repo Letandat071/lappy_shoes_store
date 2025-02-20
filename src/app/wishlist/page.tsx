@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
+import ProductSuggest from '@/components/product/ProductSuggest';
 import { useWishlistContext } from '../../contexts/WishlistContext';
 import { useCartContext } from '@/contexts/CartContext';
 import { formatPrice } from '@/utils/format';
@@ -161,12 +162,7 @@ export default function WishlistPage() {
               )}
 
               {/* Product Recommendations */}
-              <section className="mt-16">
-                <h2 className="text-2xl font-bold mb-8">Có thể bạn cũng thích</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Product cards will be added here */}
-                </div>
-              </section>
+              <ProductSuggest />
             </div>
           </div>
         </div>
