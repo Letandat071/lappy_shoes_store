@@ -98,7 +98,12 @@ export default function OrdersManagement() {
               order.items.map(async (item) => {
                 try {
                   const productResponse = await fetch(
-                    `/api/products/${item.product._id}`
+                    `/api/products/${item.product._id}`,
+                    {
+                      headers: {
+                        'x-admin-request': 'true'
+                      }
+                    }
                   );
                   if (!productResponse.ok)
                     throw new Error("Failed to fetch product");
@@ -108,9 +113,9 @@ export default function OrdersManagement() {
                     ...item,
                     product: {
                       ...item.product,
-                      image: productData.images?.[0]?.url || null,
-                      name: productData.name || "Unknown Product",
-                      price: productData.price || 0,
+                      image: productData.product.images?.[0]?.url || null,
+                      name: productData.product.name || "Unknown Product",
+                      price: productData.product.price || 0,
                     },
                   };
                 } catch (error) {

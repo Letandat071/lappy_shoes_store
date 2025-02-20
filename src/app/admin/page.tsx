@@ -1,11 +1,5 @@
-"use client";
-
-import AdminDashboard from "@/components/admin/Dashboard";
+import { redirect } from 'next/navigation';
 
 export default function AdminPage() {
-  return (
-    <div className="relative">
-      <AdminDashboard />
-    </div>
-  );
+  redirect('/admin/dashboard');
 }

@@ -48,7 +48,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, image, size = 32 }) => {
           alt={name}
           width={size}
           height={size}
-          className="object-cover grayscale" // Thêm filter grayscale cho ảnh
+          className="object-cover"
         />
       </div>
     );

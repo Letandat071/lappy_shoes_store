@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import connectDB from '@/lib/mongoose';
 import Product from '@/models/Product';
-import User from '@/models/User';
+import * as jose from 'jose';
 
-interface ProductParams {
-  params: {
-    id: string;
-  };
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
 }
 
-export async function GET(request: NextRequest, context: ProductParams) {
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     await connectDB();
 
-    const { id } = context.params;
+    // Kiểm tra quyền admin nếu request từ admin dashboard
+    const isAdminRequest = request.headers.get('x-admin-request') === 'true';
+    if (isAdminRequest) {
+      const adminId = await verifyAdminToken(request);
+      if (!adminId) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+    }
+
+    const id = context.params.id;
     if (!id) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product ID is required" }), 
+      return NextResponse.json(
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -29,57 +49,48 @@ export async function GET(request: NextRequest, context: ProductParams) {
       .lean();
 
     if (!product) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product not found" }), 
+      return NextResponse.json(
+        { error: "Product not found" },
         { status: 404 }
       );
     }
 
-    return new NextResponse(
-      JSON.stringify({ product }), 
-      { status: 200 }
-    );
+    return NextResponse.json(product);
   } catch (error) {
     console.error("Error in GET /api/products/[id]:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal Server Error" }), 
+    return NextResponse.json(
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
 }
 
 // PUT: Cập nhật sản phẩm (chỉ admin)
-export async function PUT(request: NextRequest, context: ProductParams) {
+export async function PUT(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    const session = await getServerSession(authOptions);
+    await connectDB();
 
-    if (!session?.user?.email) {
-      return new NextResponse(
-        JSON.stringify({ error: "Unauthorized" }), 
+    // Kiểm tra quyền admin
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user || user.role !== 'admin') {
-      return new NextResponse(
-        JSON.stringify({ error: "Forbidden" }), 
-        { status: 403 }
-      );
-    }
-
-    const { id } = context.params;
+    const id = context.params.id;
     if (!id) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product ID is required" }), 
+      return NextResponse.json(
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
 
     const body = await request.json();
-
-    await connectDB();
-
     const product = await Product.findByIdAndUpdate(
       id,
       body,
@@ -87,69 +98,64 @@ export async function PUT(request: NextRequest, context: ProductParams) {
     );
 
     if (!product) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product not found" }), 
+      return NextResponse.json(
+        { error: "Product not found" },
         { status: 404 }
       );
     }
 
-    return new NextResponse(
-      JSON.stringify({ product }), 
-      { status: 200 }
-    );
+    return NextResponse.json(product);
   } catch (error) {
     console.error("Error in PUT /api/products/[id]:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal Server Error" }), 
+    return NextResponse.json(
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
 }
 
 // DELETE: Xóa sản phẩm (chỉ admin)
-export async function DELETE(request: NextRequest, context: ProductParams) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
-    const session = await getServerSession(authOptions);
+    await connectDB();
 
-    if (!session?.user?.email) {
-      return new NextResponse(
-        JSON.stringify({ error: "Unauthorized" }), 
+    // Kiểm tra quyền admin
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user || user.role !== 'admin') {
-      return new NextResponse(
-        JSON.stringify({ error: "Forbidden" }), 
-        { status: 403 }
-      );
-    }
-
-    const { id } = context.params;
+    const id = context.params.id;
     if (!id) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product ID is required" }), 
+      return NextResponse.json(
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
 
-    await connectDB();
-
     const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
-      return new NextResponse(
-        JSON.stringify({ error: "Product not found" }), 
+      return NextResponse.json(
+        { error: "Product not found" },
         { status: 404 }
       );
     }
 
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json(
+      { message: "Product deleted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error in DELETE /api/products/[id]:", error);
-    return new NextResponse(
-      JSON.stringify({ error: "Internal Server Error" }), 
+    return NextResponse.json(
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }

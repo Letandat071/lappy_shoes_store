@@ -38,6 +38,15 @@ interface Order {
   _id: string;
   createdAt: string;
   totalAmount: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  shippingAddress: {
+    fullName: string;
+    phone: string;
+    address: string;
+    city: string;
+  };
 }
 
 // Định nghĩa giao diện cho dữ liệu vùng (region) từ API
@@ -174,7 +183,12 @@ export default function UsersManagement() {
         setLoadingOrders(true);
         try {
           const res = await fetch(
-            `/api/admin/orders?userId=${selectedUser._id}`
+            `/api/admin/orders?userId=${selectedUser._id}`,
+            {
+              headers: {
+                'x-admin-request': 'true'
+              }
+            }
           );
           const data = await res.json();
           if (res.ok) {
@@ -418,22 +432,49 @@ export default function UsersManagement() {
                 ) : orders.length === 0 ? (
                   <p>Không có đơn hàng</p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-4">
                     {orders.map((order: Order) => (
-                      <li key={order._id} className="border p-2 rounded">
-                        <p>
-                          <strong>Mã đơn hàng:</strong> #{order._id.slice(-6)}
-                        </p>
-                        <p>
-                          <strong>Ngày:</strong>{" "}
-                          {new Date(order.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </p>
-                        <p>
-                          <strong>Tổng tiền:</strong>{" "}
-                          {order.totalAmount ? order.totalAmount : "0"}₫
-                        </p>
+                      <li key={order._id} className="border p-4 rounded-lg bg-gray-50">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-semibold text-lg">
+                              Mã đơn: #{order._id.slice(-6)}
+                            </p>
+                            <p className="text-gray-600">
+                              {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-lg">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}
+                            </p>
+                            <p className={`text-sm ${
+                              order.paymentStatus === 'completed' ? 'text-green-600' :
+                              order.paymentStatus === 'pending' ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              {order.paymentStatus === 'completed' ? 'Đã thanh toán' :
+                               order.paymentStatus === 'pending' ? 'Chờ thanh toán' :
+                               'Thanh toán thất bại'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <div>
+                            <p className="text-gray-600">Trạng thái</p>
+                            <p className="font-medium capitalize">{order.status}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Phương thức thanh toán</p>
+                            <p className="font-medium capitalize">{order.paymentMethod}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <p className="text-gray-600">Địa chỉ giao hàng</p>
+                          <p className="font-medium">{order.shippingAddress.fullName}</p>
+                          <p className="font-medium">{order.shippingAddress.phone}</p>
+                          <p>{order.shippingAddress.address}, {order.shippingAddress.city}</p>
+                        </div>
                       </li>
                     ))}
                   </ul>

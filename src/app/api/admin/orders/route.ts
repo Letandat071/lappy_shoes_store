@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Order from "@/models/Order";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
 import { FilterQuery } from "mongoose";
 import mongoose from "mongoose";
 import Product from "@/models/Product";
+import * as jose from 'jose';
 
 interface OrderDocument {
   status?: string;
@@ -15,14 +15,27 @@ interface OrderDocument {
   };
 }
 
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
+
 // Lấy danh sách đơn hàng (Admin)
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
     // Kiểm tra quyền admin qua token
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -36,11 +49,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const paymentStatus = searchParams.get('paymentStatus');
     const search = searchParams.get('search');
+    const userId = searchParams.get('userId');
 
     // Tạo query
     const query: FilterQuery<OrderDocument> = {};
     if (status) query.status = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
+    if (userId) query.user = new mongoose.Types.ObjectId(userId);
     if (search) {
       query.$or = [
         { 'shippingAddress.fullName': { $regex: search, $options: 'i' } },
@@ -86,8 +101,8 @@ export async function PATCH(request: NextRequest) {
     await connectDB();
 
     // Kiểm tra quyền admin qua token
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -141,6 +156,16 @@ export async function POST(request: NextRequest) {
   let session;
   try {
     await connectDB();
+    
+    // Kiểm tra quyền admin qua token
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const orderData = await request.json();
 
     // console.log('Starting order process with data:', {

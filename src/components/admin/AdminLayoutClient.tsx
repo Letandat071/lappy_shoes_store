@@ -16,31 +16,39 @@ export default function AdminLayoutClient({
 
   useEffect(() => {
     setMounted(true);
-    // Chỉ check auth khi ở route admin
-    if (window.location.pathname.startsWith('/admin')) {
-      const checkAuth = async () => {
-        try {
-          const res = await fetch('/api/admin/auth/check');
-          const data = await res.json();
-          
-          if (!data.authenticated) {
-            router.replace('/admin/login');
-          } else {
-            setLoading(false);
-          }
-        } catch (error) {
-          console.error('Auth check failed:', error);
+    let isSubscribed = true;
+
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/auth/check');
+        const data = await res.json();
+        
+        if (!isSubscribed) return;
+
+        if (!data.authenticated) {
+          router.replace('/admin/login');
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        if (isSubscribed) {
           router.replace('/admin/login');
         }
-      };
+      }
+    };
 
-      checkAuth();
-    }
+    checkAuth();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [router]);
 
   // Tránh hydration mismatch
   if (!mounted) return null;
 
+  // Hiển thị loading state
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">

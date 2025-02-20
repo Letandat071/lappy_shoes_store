@@ -1,6 +1,6 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import * as jose from 'jose';
 
 // Các routes cần xác thực
 const protectedRoutes = [
@@ -16,60 +16,81 @@ const authRoutes = ['/auth'];
 // Các routes admin chỉ cho phép truy cập khi chưa đăng nhập
 const adminAuthRoutes = ['/admin/login'];
 
-export default withAuth(
-  async function middleware(req) {
-    const token = req.nextauth.token;
-    const { pathname } = req.nextUrl;
+// Các routes admin cần xác thực
+const protectedAdminRoutes = [
+  '/admin/dashboard',
+  '/admin/products',
+  '/admin/orders',
+  '/admin/users',
+  '/admin/categories',
+  '/admin/features',
+  '/admin/banner',
+  '/admin/announcements'
+];
 
-    // Xử lý admin routes
-    if (pathname.startsWith('/admin')) {
-      const isAdmin = token?.role === 'admin';
-      
-      if (isAdmin) {
-        // Nếu đã đăng nhập và cố truy cập trang login admin
-        if (adminAuthRoutes.some(route => pathname.startsWith(route))) {
-          return NextResponse.redirect(new URL('/admin', req.url));
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Xử lý admin routes
+  if (pathname.startsWith('/admin')) {
+    const adminToken = req.cookies.get('admin_token')?.value;
+    
+    // Nếu đang truy cập trang login admin
+    if (adminAuthRoutes.some(route => pathname.startsWith(route))) {
+      // Nếu đã có token, redirect về dashboard
+      if (adminToken) {
+        try {
+          const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+          await jose.jwtVerify(adminToken, secret);
+          return NextResponse.redirect(new URL('/admin/dashboard', req.url));
+        } catch (error) {
+          // Token không hợp lệ, cho phép tiếp tục vào trang login
+          const response = NextResponse.next();
+          response.cookies.delete('admin_token');
+          return response;
         }
-        return NextResponse.next();
       }
+      return NextResponse.next();
+    }
 
-      // Nếu không phải admin hoặc chưa đăng nhập
-      if (!adminAuthRoutes.some(route => pathname.startsWith(route))) {
+    // Kiểm tra token cho các routes được bảo vệ
+    if (protectedAdminRoutes.some(route => pathname.startsWith(route))) {
+      if (!adminToken) {
         return NextResponse.redirect(new URL('/admin/login', req.url));
       }
-      return NextResponse.next();
-    }
 
-    // Xử lý user routes
-    if (token) {
-      // Nếu đã đăng nhập và cố truy cập trang auth
-      if (authRoutes.includes(pathname)) {
-        return NextResponse.redirect(new URL('/', req.url));
+      try {
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+        await jose.jwtVerify(adminToken, secret);
+        return NextResponse.next();
+      } catch (error) {
+        const response = NextResponse.redirect(new URL('/admin/login', req.url));
+        response.cookies.delete('admin_token');
+        return response;
       }
-      return NextResponse.next();
-    }
-
-    // Nếu chưa đăng nhập và cố truy cập routes được bảo vệ
-    if (protectedRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.redirect(new URL('/auth', req.url));
     }
 
     return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Cho phép truy cập vào trang login khi chưa đăng nhập
-        if (authRoutes.includes(req.nextUrl.pathname) || 
-            adminAuthRoutes.some(route => req.nextUrl.pathname.startsWith(route))) {
-          return true;
-        }
-        // Yêu cầu token cho các routes được bảo vệ
-        return !!token;
-      },
-    },
   }
-);
+
+  // Xử lý user routes
+  if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    const token = req.cookies.get('next-auth.session-token')?.value;
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth', req.url));
+    }
+  }
+
+  // Nếu đã đăng nhập và cố truy cập trang auth
+  if (authRoutes.includes(pathname)) {
+    const token = req.cookies.get('next-auth.session-token')?.value;
+    if (token) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

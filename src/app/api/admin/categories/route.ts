@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as jose from 'jose';
 import connectDB from "@/lib/mongoose";
 import Category from "@/models/Category";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
+
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
 
 // Get all categories
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const categories = await Category.find({})
       .select('_id name slug description image isActive isHighlight createdAt updatedAt')
       .sort({ createdAt: -1 });
-
 
     // Chuyển đổi Mongoose Document thành plain object và đảm bảo có trường isHighlight
     const formattedCategories = categories.map(cat => ({
@@ -30,15 +47,12 @@ export async function GET() {
 // Create new category
 export async function POST(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    await connectDB();
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
     const { name, description, image, isHighlight } = await request.json();
     
     // Create slug from name
@@ -63,21 +77,16 @@ export async function POST(request: NextRequest) {
 // Update category
 export async function PUT(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    await connectDB();
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
     const { id, name, description, image, isHighlight } = await request.json();
     
     // Update slug if name is changed
     const slug = name.toLowerCase().replace(/ /g, "-");
-    
-    // console.log('Updating category:', { id, name, isHighlight });
     
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
@@ -95,13 +104,8 @@ export async function PUT(request: NextRequest) {
     .lean();
 
     if (!updatedCategory) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
-
-    // console.log('Updated category:', updatedCategory);
 
     // Format response để đảm bảo trường isHighlight được trả về đúng
     const formattedCategory = {
@@ -122,25 +126,19 @@ export async function PUT(request: NextRequest) {
 // Delete category
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    await connectDB();
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
-    await connectDB();
     const category = await Category.findByIdAndDelete(id);
 
     if (!category) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
     return NextResponse.json({ message: "Category deleted successfully" }, { status: 200 });

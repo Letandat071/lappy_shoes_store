@@ -1,11 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import Feature from "@/models/Feature";
+import * as jose from 'jose';
+
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
 
 // Get all features
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    // Kiểm tra quyền admin nếu request từ admin dashboard
+    const isAdminRequest = request.headers.get('x-admin-request') === 'true';
+    if (isAdminRequest) {
+      const adminId = await verifyAdminToken(request);
+      if (!adminId) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+    }
+
     // Lấy query param để kiểm tra xem có cần filter isHighlight không
     const { searchParams } = new URL(request.url);
     const filterHighlight = searchParams.get('highlight') === 'true';
@@ -43,6 +70,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
+
+    // Kiểm tra quyền admin
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();
@@ -87,6 +123,15 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     await connectDB();
+
+    // Kiểm tra quyền admin
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();
@@ -174,6 +219,15 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await connectDB();
+
+    // Kiểm tra quyền admin
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");

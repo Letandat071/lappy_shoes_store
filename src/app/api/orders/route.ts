@@ -6,6 +6,7 @@ import Product from '@/models/Product';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import User from "@/models/User";
+import Notification from "@/models/Notification";
 
 interface OrderItem {
   product: mongoose.Types.ObjectId;
@@ -30,6 +31,38 @@ interface OrderDocument extends mongoose.Document {
   };
   paymentMethod: string;
   paymentStatus: string;
+}
+
+// Hàm tạo thông báo cho admin
+async function createOrderNotification(order: any) {
+  try {
+    await Notification.create({
+      title: "Đơn hàng mới",
+      message: `Đơn hàng mới #${order._id.toString().slice(-6)} từ ${order.shippingAddress.fullName}`,
+      type: "order",
+      link: `/admin/dashboard/orders?id=${order._id}`,
+      isRead: false,
+      createdAt: new Date()
+    });
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
+}
+
+// Hàm tạo thông báo khi đơn hàng bị hủy
+async function createCancelOrderNotification(order: any) {
+  try {
+    await Notification.create({
+      title: "Đơn hàng đã bị hủy",
+      message: `Đơn hàng #${order._id.toString().slice(-6)} đã bị hủy bởi khách hàng ${order.shippingAddress.fullName}`,
+      type: "order",
+      link: `/admin/dashboard/orders?id=${order._id}`,
+      isRead: false,
+      createdAt: new Date()
+    });
+  } catch (error) {
+    console.error("Error creating cancel notification:", error);
+  }
 }
 
 // Tạo đơn hàng mới
@@ -92,6 +125,10 @@ export async function POST(request: NextRequest) {
       // Tính lại tổng số lượng
       product.totalQuantity = product.sizes.reduce((sum: number, size: { quantity: number }) => sum + size.quantity, 0);
 
+      if (product.totalQuantity === 0) {
+        product.status = 'out-of-stock';
+      }
+
       await product.save({ session: mongoSession });
     }
 
@@ -100,6 +137,9 @@ export async function POST(request: NextRequest) {
 
     // Commit transaction
     await mongoSession.commitTransaction();
+
+    // Tạo thông báo cho admin sau khi đơn hàng được tạo thành công
+    await createOrderNotification(order[0]);
 
     return new NextResponse(
       JSON.stringify({ order: order[0] }), 
@@ -218,7 +258,9 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const order = await Order.findOne({ _id: orderId, user: user._id });
+    const order = await Order.findOne({ _id: orderId, user: user._id })
+      .populate('user', 'name email')
+      .populate('items.product', 'name');
     
     if (!order) {
       return new NextResponse(
@@ -237,6 +279,9 @@ export async function DELETE(request: Request) {
 
     order.status = 'cancelled';
     await order.save();
+
+    // Tạo thông báo khi đơn hàng bị hủy
+    await createCancelOrderNotification(order);
 
     return new NextResponse(
       JSON.stringify({ message: "Order cancelled successfully" }), 

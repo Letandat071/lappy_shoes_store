@@ -1,5 +1,3 @@
-"use client";
-
 import AdminLayoutClient from "@/components/admin/AdminLayoutClient";
 
 export default function DashboardLayout({
@@ -7,5 +5,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AdminLayoutClient>{children}</AdminLayoutClient>;
-}
+  return (
+    <AdminLayoutClient>
+      {children}
+    </AdminLayoutClient>
+  );
+} 

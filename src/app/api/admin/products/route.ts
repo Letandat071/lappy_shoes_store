@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import mongoose, { FilterQuery } from "mongoose";
-import { getDataFromToken } from "@/helpers/getDataFromToken";
+import * as jose from 'jose';
 
 // Import models after mongoose
 import "@/models/Category";
@@ -69,11 +69,24 @@ interface ProductDocument extends mongoose.Document {
   totalQuantity: number;
 }
 
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
+
 // Get all products with pagination and filters
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -185,8 +198,8 @@ export async function GET(request: NextRequest) {
 // Create new product
 export async function POST(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -241,8 +254,8 @@ export async function POST(request: NextRequest) {
 // Update product
 export async function PUT(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -338,8 +351,8 @@ export async function PUT(request: NextRequest) {
 // Delete product
 export async function DELETE(request: NextRequest) {
   try {
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

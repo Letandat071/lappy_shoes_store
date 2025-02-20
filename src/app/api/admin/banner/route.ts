@@ -1,7 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongoose";
 import HeroBanner from "@/models/HeroBanner";
-import { getAdminFromToken } from "@/lib/auth";
+import * as jose from 'jose';
+
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
 
 const DEFAULT_BANNER = {
   image: '',
@@ -67,9 +80,22 @@ const DEFAULT_BANNER = {
   particlesEnabled: true
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    // Kiểm tra quyền admin nếu request từ admin dashboard
+    const isAdminRequest = request.headers.get('x-admin-request') === 'true';
+    if (isAdminRequest) {
+      const adminId = await verifyAdminToken(request);
+      if (!adminId) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
+    }
+
     const banner = await HeroBanner.findOne().sort({ createdAt: -1 });
     
     if (!banner) {
@@ -97,12 +123,12 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const admin = await getAdminFromToken();
-    if (!admin) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -203,7 +229,7 @@ export async function PUT(request: Request) {
             styles: updatedStyles,
             overlayOpacity,
             particlesEnabled,
-            updatedBy: admin._id
+            updatedBy: adminId
           },
           { new: true }
         )
@@ -219,8 +245,8 @@ export async function PUT(request: Request) {
           styles: updatedStyles,
           overlayOpacity,
           particlesEnabled,
-          createdBy: admin._id,
-          updatedBy: admin._id
+          createdBy: adminId,
+          updatedBy: adminId
         });
 
     return NextResponse.json(result);

@@ -10,5 +10,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="relative z-0">{children}</div>;
+  return children;
 }

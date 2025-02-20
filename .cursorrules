@@ -29,18 +29,18 @@
   [X] Multiple providers (Google, Credentials)
   [X] Session management
   [X] OAuth integration
-[ ] Advanced RBAC 
-  - [ ] Detailed permission system
-  - [ ] Role hierarchy
-  - [ ] Dynamic permissions
-[ ] Token Security
-  - [ ] Refresh token mechanism
-  - [ ] Token rotation
-  - [ ] Token blacklisting
-[ ] Session Enhancement
-  - [ ] Session tracking
-  - [ ] Rate limiting
-  - [ ] Device management
+[x] Advanced RBAC 
+  - [x] Detailed permission system
+  - [x] Role hierarchy
+  - [x] Dynamic permissions
+[x] Token Security
+  - [x] Refresh token mechanism
+  - [x] Token rotation
+  - [x] Token blacklisting
+[x] Session Enhancement
+  - [x] Session tracking
+  - [x] Rate limiting
+  - [x] Device management
 
 2. Performance Optimization
 [ ] Image optimization

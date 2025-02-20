@@ -1,68 +1,174 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import {
   CurrencyDollarIcon,
   ShoppingCartIcon,
   UserGroupIcon,
   ShoppingBagIcon,
 } from "@heroicons/react/24/outline";
+import { formatPrice } from "@/utils/format";
+import { toast } from "react-hot-toast";
 
-const stats = [
-  {
-    name: "Doanh thu tháng",
-    value: "150.5M",
-    change: "+12.5%",
-    changeType: "positive",
-    icon: CurrencyDollarIcon,
-  },
-  {
-    name: "Đơn hàng mới",
-    value: "256",
-    change: "+5.2%",
-    changeType: "positive",
-    icon: ShoppingCartIcon,
-  },
-  {
-    name: "Khách hàng mới",
-    value: "125",
-    change: "+3.1%",
-    changeType: "positive",
-    icon: UserGroupIcon,
-  },
-  {
-    name: "Sản phẩm đã bán",
-    value: "452",
-    change: "+2.5%",
-    changeType: "positive",
-    icon: ShoppingBagIcon,
-  },
-];
+interface DashboardStats {
+  monthlyRevenue: number;
+  newOrders: number;
+  newCustomers: number;
+  soldProducts: number;
+  revenueChange: number;
+  ordersChange: number;
+  customersChange: number;
+  productsChange: number;
+}
 
-const recentOrders = [
-  {
-    id: "1",
-    customer: "Nguyễn Văn A",
-    date: "2024-01-14",
-    amount: "2.5M",
-    status: "Đang xử lý",
-  },
-  {
-    id: "2",
-    customer: "Trần Thị B",
-    date: "2024-01-14",
-    amount: "1.8M",
-    status: "Đã giao",
-  },
-];
+interface Order {
+  _id: string;
+  user: {
+    name: string;
+    email: string;
+  } | null;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+const STATUS_MAP = {
+  pending: 'Chờ xử lý',
+  processing: 'Đang xử lý',
+  shipped: 'Đang giao',
+  delivered: 'Đã giao',
+  cancelled: 'Đã hủy'
+};
+
+const STATUS_STYLES = {
+  delivered: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800',
+  default: 'bg-yellow-100 text-yellow-800'
+};
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        const [statsRes, ordersRes] = await Promise.all([
+          fetch('/api/admin/dashboard', {
+            headers: {
+              'x-admin-request': 'true'
+            }
+          }),
+          fetch('/api/admin/orders?limit=5', {
+            headers: {
+              'x-admin-request': 'true'
+            }
+          })
+        ]);
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData.stats);
+        }
+
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          setRecentOrders(ordersData.orders || []);
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        toast.error('Có lỗi xảy ra khi tải dữ liệu');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (mounted) {
+      fetchDashboardData();
+    }
+  }, [mounted]);
+
+  const statsItems = useMemo(() => {
+    if (!stats) return [];
+    
+    return [
+      {
+        name: "Doanh thu tháng",
+        value: formatPrice(stats.monthlyRevenue || 0),
+        change: `${stats.revenueChange > 0 ? '+' : ''}${stats.revenueChange || 0}%`,
+        changeType: (stats.revenueChange || 0) >= 0 ? "positive" : "negative",
+        icon: CurrencyDollarIcon,
+      },
+      {
+        name: "Đơn hàng mới",
+        value: (stats.newOrders || 0).toString(),
+        change: `${stats.ordersChange > 0 ? '+' : ''}${stats.ordersChange || 0}%`,
+        changeType: (stats.ordersChange || 0) >= 0 ? "positive" : "negative",
+        icon: ShoppingCartIcon,
+      },
+      {
+        name: "Khách hàng mới",
+        value: (stats.newCustomers || 0).toString(),
+        change: `${stats.customersChange > 0 ? '+' : ''}${stats.customersChange || 0}%`,
+        changeType: (stats.customersChange || 0) >= 0 ? "positive" : "negative",
+        icon: UserGroupIcon,
+      },
+      {
+        name: "Sản phẩm đã bán",
+        value: (stats.soldProducts || 0).toString(),
+        change: `${stats.productsChange > 0 ? '+' : ''}${stats.productsChange || 0}%`,
+        changeType: (stats.productsChange || 0) >= 0 ? "positive" : "negative",
+        icon: ShoppingBagIcon,
+      },
+    ];
+  }, [stats]);
+
+  if (!mounted) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div>
+    <div className="p-6">
       <h1 className="text-2xl font-semibold text-gray-900">Tổng quan</h1>
 
       {/* Stats */}
       <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
+        {statsItems.map((item) => (
           <div
             key={item.name}
             className="relative overflow-hidden rounded-lg bg-white px-4 pt-5 pb-12 shadow sm:px-6 sm:pt-6"
@@ -118,27 +224,37 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {recentOrders.map((order) => (
-                <tr key={order.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    #{order.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.customer}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.amount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      {order.status}
-                    </span>
+              {(!recentOrders || recentOrders.length === 0) ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    Không có đơn hàng nào
                   </td>
                 </tr>
-              ))}
+              ) : (
+                recentOrders.map((order) => (
+                  <tr key={order._id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      #{order._id?.slice(-6) || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {order.user?.name || "Không có tên"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatPrice(order.totalAmount || 0)}₫
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        STATUS_STYLES[order.status as keyof typeof STATUS_STYLES] || STATUS_STYLES.default
+                      }`}>
+                        {STATUS_MAP[order.status as keyof typeof STATUS_MAP] || order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

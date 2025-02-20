@@ -1,14 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import * as jose from 'jose';
 import connectDB from '@/lib/mongoose';
 import AnnouncementBar from '@/models/AnnouncementBar';
-import { getDataFromToken } from '@/helpers/getDataFromToken';
+
+// Hàm kiểm tra admin token
+async function verifyAdminToken(request: NextRequest) {
+  try {
+    const token = request.cookies.get("admin_token")?.value || "";
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '');
+    const { payload } = await jose.jwtVerify(token, secret);
+    return payload.adminId;
+  } catch (error) {
+    console.error("Error verifying admin token:", error);
+    return null;
+  }
+}
 
 // GET: Lấy danh sách thông báo
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -28,10 +41,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const data = await request.json();
     const { message, link, backgroundColor, textColor, isActive, startDate, endDate } = data;
 
@@ -65,10 +79,11 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     await connectDB();
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
     const data = await request.json();
     const { announcementId, message, link, backgroundColor, textColor, isActive, startDate, endDate } = data;
     
@@ -106,8 +121,8 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     await connectDB();
-    const userId = await getDataFromToken(request);
-    if (!userId) {
+    const adminId = await verifyAdminToken(request);
+    if (!adminId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
